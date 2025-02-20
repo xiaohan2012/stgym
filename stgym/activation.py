@@ -1,7 +1,8 @@
 import torch
 
+
 def get_activation_function(name):
-    if name == 'prelu':
+    if name == "prelu":
         return torch.nn.PReLU()
-    elif name == 'relu':
+    elif name == "relu":
         return torch.nn.ReLU()

@@ -1,25 +1,25 @@
 import torch
 import torch.nn.functional as F
+import torch_geometric as pyg
 from torch_geometric.nn import Linear as Linear_pyg
 
-import torch
-import torch.nn.functional as F
-import torch_geometric as pyg
-from stgym.config_schema import MessagePassingConfig, LayerConfig, Config, MemoryConfig
 from stgym.activation import get_activation_function
+from stgym.config_schema import LayerConfig, MemoryConfig, MessagePassingConfig
+
 
 def get_layer_class(name):
-    if name == 'gcnconv':
+    if name == "gcnconv":
         return GCNConv
-    elif name == 'sageconv':
+    elif name == "sageconv":
         return SAGEConv
-    elif name == 'ginconv':
+    elif name == "ginconv":
         return GINConv
-    elif name == 'linear':
+    elif name == "linear":
         return Linear
     else:
         raise ValueError
-    
+
+
 class Linear(torch.nn.Module):
     r"""A basic Linear layer.
 
@@ -28,6 +28,7 @@ class Linear(torch.nn.Module):
         dim_out (int): The output dimension.
         mp_config (MessagePassingConfig): The configuration of the message passing layer.
     """
+
     def __init__(self, dim_in: int, dim_out: int, mp_config: LayerConfig, **kwargs):
         super().__init__()
         self.model = Linear_pyg(
@@ -46,7 +47,10 @@ class Linear(torch.nn.Module):
 
 class GCNConv(torch.nn.Module):
     r"""A Graph Convolutional Network (GCN) layer."""
-    def __init__(self, dim_in:int, dim_out:int, mp_config: MessagePassingConfig, **kwargs):
+
+    def __init__(
+        self, dim_in: int, dim_out: int, mp_config: MessagePassingConfig, **kwargs
+    ):
         super().__init__()
         self.model = pyg.nn.GCNConv(
             dim_in,
@@ -59,8 +63,10 @@ class GCNConv(torch.nn.Module):
         batch.x = self.model(batch.x, batch.edge_index)
         return batch
 
+
 class SAGEConv(torch.nn.Module):
     r"""A GraphSAGE layer."""
+
     def __init__(self, dim_in: int, dim_out: int, layer_config: LayerConfig, **kwargs):
         super().__init__()
         self.model = pyg.nn.SAGEConv(
@@ -73,8 +79,10 @@ class SAGEConv(torch.nn.Module):
         batch.x = self.model(batch.x, batch.edge_index)
         return batch
 
+
 class GINConv(torch.nn.Module):
     r"""A Graph Isomorphism Network (GIN) layer."""
+
     def __init__(self, dim_in: int, dim_out: int, layer_config: LayerConfig, **kwargs):
         super().__init__()
         gin_nn = torch.nn.Sequential(
@@ -88,9 +96,19 @@ class GINConv(torch.nn.Module):
         batch.x = self.model(batch.x, batch.edge_index)
         return batch
 
+
 class GeneralLayer(torch.nn.Module):
     r"""A general wrapper for layers."""
-    def __init__(self, name, dim_in:int, dim_out:int, layer_config: LayerConfig, mem_config: MemoryConfig, **kwargs):
+
+    def __init__(
+        self,
+        name,
+        dim_in: int,
+        dim_out: int,
+        layer_config: LayerConfig,
+        mem_config: MemoryConfig,
+        **kwargs
+    ):
         super().__init__()
         self.has_l2norm = layer_config.l2norm
 
@@ -102,13 +120,15 @@ class GeneralLayer(torch.nn.Module):
                     dim_out,
                     eps=layer_config.bn_eps,
                     momentum=layer_config.bn_momentum,
-                ))
+                )
+            )
         if layer_config.dropout > 0:
             layer_wrapper.append(
                 torch.nn.Dropout(
                     p=layer_config.dropout,
                     inplace=mem_config.inplace,
-                ))
+                )
+            )
         if layer_config.has_act:
             layer_wrapper.append(get_activation_function(layer_config.act))
         self.post_layer = torch.nn.Sequential(*layer_wrapper)

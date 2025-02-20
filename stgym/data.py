@@ -59,7 +59,6 @@ class MIBITNBCDataSet(InMemoryDataset):
         self.data.val_graph_index = split_indices[1]
         self.data.test_graph_index = split_indices[2]
 
-
     @property
     def download_url_suffix(self):
         return MIBITNBCSourceInfo.download_url_suffix
@@ -120,7 +119,7 @@ class MIBITNBCDataSet(InMemoryDataset):
             pd.read_csv(graph_label_file_path, header=None).to_numpy()[0],
             dtype=torch.float,
         )
-        print("label: {}".format(label))
+        print(f"label: {label}")
         return Data(y=label, pos=torch.Tensor(coordinates))
 
     def assign_x_to_graph(self, data_list: list[Data]) -> None:
