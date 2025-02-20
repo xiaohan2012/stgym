@@ -1,6 +1,12 @@
 from typing import Literal, Optional
 
-from pydantic import BaseModel, PositiveFloat, PositiveInt, model_validator
+from pydantic import (
+    BaseModel,
+    NonNegativeFloat,
+    PositiveFloat,
+    PositiveInt,
+    model_validator,
+)
 
 ActivationType = Literal["prelu", "relu", "swish"]
 AggregationType = Literal["mean", "sum", "max"]
@@ -18,7 +24,7 @@ class LayerConfig(BaseModel):
     bn_eps: PositiveFloat = 1e-5
     bn_momentum: PositiveFloat = 0.1
 
-    dropout: PositiveFloat = 0.1
+    dropout: NonNegativeFloat = 0.0
 
     has_bias: bool = True
     l2norm: bool = False

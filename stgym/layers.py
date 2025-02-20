@@ -107,7 +107,7 @@ class GeneralLayer(torch.nn.Module):
         dim_out: int,
         layer_config: LayerConfig,
         mem_config: MemoryConfig,
-        **kwargs
+        **kwargs,
     ):
         super().__init__()
         self.has_l2norm = layer_config.l2norm
@@ -143,4 +143,64 @@ class GeneralLayer(torch.nn.Module):
             batch.x = self.post_layer(batch.x)
             if self.has_l2norm:
                 batch.x = F.normalize(batch.x, p=2, dim=1)
+        return batch
+
+
+class GeneralMultiLayer(torch.nn.Module):
+    r"""A general wrapper class for a stacking multiple NN layers."""
+
+    def __init__(
+        self,
+        name,
+        dim_in: int,
+        dim_out: int,
+        layer_config: LayerConfig,
+        mem_config: MemoryConfig,
+        **kwargs,
+    ):
+        super().__init__()
+        dim_inner = layer_config.dim_inner
+        for i in range(layer_config.n_layers):
+            d_in = dim_in if i == 0 else dim_inner
+            d_out = dim_out if i == layer_config.n_layers - 1 else dim_inner
+            layer = GeneralLayer(name, d_in, d_out, layer_config, mem_config, **kwargs)
+            self.add_module(f"Layer_{i}", layer)
+
+    def forward(self, batch):
+        for layer in self.children():
+            batch = layer(batch)
+        return batch
+
+
+class MLP(torch.nn.Module):
+    """A basic MLP model."""
+
+    def __init__(
+        self,
+        dim_in: int,
+        dim_out: int,
+        layer_config: LayerConfig,
+        mem_config: MemoryConfig,
+        **kwargs,
+    ):
+        super().__init__()
+
+        layer_config.dim_inner
+
+        layer_config.has_bias = True
+        self.model = torch.nn.Sequential(
+            GeneralMultiLayer(
+                "linear",
+                dim_in=dim_in,
+                dim_out=dim_out,
+                layer_config=layer_config,
+                mem_config=mem_config,
+            )
+        )
+
+    def forward(self, batch):
+        if isinstance(batch, torch.Tensor):
+            batch = self.model(batch)
+        else:
+            batch.x = self.model(batch.x)
         return batch
