@@ -29,6 +29,7 @@ class GNNGraphHead(torch.nn.Module):
             graph_emb = self.pooling_fun(batch.x, batch.adj_t, batch.s)
         else:
             graph_emb = self.pooling_fun(batch.x, batch.batch)
+
         graph_emb = self.layer_post_mp(graph_emb)
 
         # TODO: what should forward return?

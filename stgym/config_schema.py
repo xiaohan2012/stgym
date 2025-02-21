@@ -10,7 +10,7 @@ from pydantic import (
 
 ActivationType = Literal["prelu", "relu", "swish"]
 AggregationType = Literal["mean", "sum", "max"]
-PoolingType = Literal["mincut", "sum", "max", "dmod"]
+PoolingType = Literal["mincut", "sum", "max", "dmod", "mean"]
 StageType = Literal["skipsum", "skipconcat"]
 
 
