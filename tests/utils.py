@@ -35,3 +35,18 @@ def create_data_batch(
 
     batch = next(iter(dataloader))
     return batch
+
+
+class BatchLoaderMixin:
+    num_nodes = 100
+    num_features = 128
+    num_classes = 10
+    batch_size = 2
+
+    def load_batch(self):
+        return create_data_batch(
+            num_nodes=self.num_nodes,
+            num_features=self.num_features,
+            num_classes=self.num_classes,
+            batch_size=self.batch_size,
+        )
