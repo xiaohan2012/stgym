@@ -1,9 +1,5 @@
-import torch
-
-from stgym.config_schema import PoolingConfig
-
 # from torch_geometric.nn.dense import DMoNPooling
-from .dmon import DMoNPooling  # noqa
+from .dmon import DMoNPoolingLayer  # noqa
 
 # def get_pooling_function(name):
 #     if name == "mincut":
@@ -18,17 +14,6 @@ from .dmon import DMoNPooling  # noqa
 #         return pyg.nn.dense.dmon_pool
 #     else:
 #         raise ValueError
-
-
-class DMoNPoolingLayer(torch.nn.Module):
-    def __init__(self, cfg: PoolingConfig, **kwargs):
-        super().__init__()
-        # one linear layer
-        self.model = DMoNPooling(channels=[], k=[cfg.n_clusters], dropout=0.0)
-
-    def forward(self, batch):
-        batch.x = self.model(batch.x, batch.adj)
-        return batch
 
 
 def get_pooling_class(name):

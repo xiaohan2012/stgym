@@ -6,6 +6,8 @@ from torch import Tensor
 from torch_geometric.nn.dense.linear import Linear
 from torch_geometric.nn.dense.mincut_pool import _rank3_trace
 
+from stgym.config_schema import PoolingConfig
+
 EPS = 1e-15
 
 
@@ -112,3 +114,17 @@ class DMoNPooling(torch.nn.Module):
             f"{self.__class__.__name__}({self.linear.in_channels}, "
             f"num_clusters={self.linear.out_channels})"
         )
+
+
+class DMoNPoolingLayer(torch.nn.Module):
+    def __init__(self, cfg: PoolingConfig, **kwargs):
+        super().__init__()
+        # one linear layer
+        self.model = DMoNPooling(k=[cfg.n_clusters])
+
+    def forward(self, batch):
+        _, out_x, out_adj, _, _, _ = self.model(batch.x, batch.adj)
+
+        batch.x = out_x
+        batch.adj = out_adj
+        return batch

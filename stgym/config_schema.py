@@ -2,6 +2,7 @@ from typing import Literal, Optional
 
 from pydantic import (
     BaseModel,
+    Field,
     NonNegativeFloat,
     PositiveFloat,
     PositiveInt,
@@ -9,14 +10,18 @@ from pydantic import (
 )
 
 ActivationType = Literal["prelu", "relu", "swish"]
-AggregationType = Literal["mean", "sum", "max"]
-PoolingType = Literal["mincut", "sum", "max", "dmod", "mean"]
+GlobalPoolingType = Literal["mean", "sum", "max"]
+HierarchicalPoolingType = Literal["mincut", "dmon"]  # hierarchical pooling
 StageType = Literal["skipsum", "skipconcat"]
+
+
+class PoolingConfig(BaseModel):
+    type: HierarchicalPoolingType
+    n_clusters: PositiveInt = Field(gt=1)
 
 
 class LayerConfig(BaseModel):
     dim_inner: PositiveInt = 256
-    n_layers: PositiveInt = 2
 
     act: Optional[ActivationType] = "prelu"
 
@@ -40,13 +45,25 @@ class LayerConfig(BaseModel):
 
 
 class MessagePassingConfig(LayerConfig):
-    layer_type: Literal["gcnconv", "generalconv"] = "gcnconv"
+    mp_type: Literal["gcnconv", "generalconv"] = "gcnconv"
+
     normalize_adj: bool = False
-    agg: Optional[AggregationType] = "mean"
+
+    pooling: Optional[PoolingConfig] = None
+
+    readout: Optional[GlobalPoolingType] = "mean"
+
+    @property
+    def has_pooling(self):
+        return self.pooling is not None
 
 
 class PostMPConfig(LayerConfig):
-    graph_pooling: Optional[PoolingType] = "mincut"
+    pass
+
+
+class MultiLayerConfig(BaseModel):
+    layers: list[MessagePassingConfig | PostMPConfig | LayerConfig]
 
 
 class MemoryConfig(BaseModel):

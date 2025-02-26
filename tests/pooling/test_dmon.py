@@ -2,7 +2,7 @@ import math
 
 import torch
 
-from stgym.pooling import DMoNPooling
+from stgym.pooling.dmon import DMoNPooling
 
 
 def test_dmon_pooling():
@@ -10,6 +10,8 @@ def test_dmon_pooling():
     x = torch.randn((batch_size, num_nodes, channels))
     adj = torch.ones((batch_size, num_nodes, num_nodes))
     mask = torch.randint(0, 2, (batch_size, num_nodes), dtype=torch.bool)
+
+    # cfg = PoolingConfig(type="dmon", n_clusters=num_clusters)
 
     pool = DMoNPooling(num_clusters)
     assert str(pool) == "DMoNPooling(-1, num_clusters=10)"

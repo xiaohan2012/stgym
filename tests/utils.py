@@ -16,7 +16,9 @@ def create_synthetic_data(
     y = torch.randint(0, num_classes, (num_nodes,))
 
     # Create a Data object
-    return Data(x=x, edge_index=edge_index, y=y)
+    adj = torch.zeros((num_nodes, num_nodes))
+    adj[edge_index[0], edge_index[1]] = 1
+    return Data(x=x, edge_index=edge_index, y=y, adj=adj)
 
 
 def create_data_batch(

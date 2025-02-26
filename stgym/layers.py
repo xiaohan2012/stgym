@@ -3,8 +3,14 @@ import torch.nn.functional as F
 import torch_geometric as pyg
 from torch_geometric.nn import Linear as Linear_pyg
 
-from stgym.activation import get_activation_function
-from stgym.config_schema import LayerConfig, MemoryConfig, MessagePassingConfig
+from stgym.config_schema import (
+    LayerConfig,
+    MemoryConfig,
+    MessagePassingConfig,
+    MultiLayerConfig,
+    PostMPConfig,
+)
+from stgym.pooling import get_pooling_class
 
 
 def get_layer_class(name):
@@ -105,7 +111,7 @@ class GeneralLayer(torch.nn.Module):
         name,
         dim_in: int,
         dim_out: int,
-        layer_config: LayerConfig,
+        layer_config: LayerConfig | MessagePassingConfig | PostMPConfig,
         mem_config: MemoryConfig,
         **kwargs,
     ):
@@ -114,27 +120,36 @@ class GeneralLayer(torch.nn.Module):
 
         self.layer = get_layer_class(name)(dim_in, dim_out, layer_config, **kwargs)
         layer_wrapper = []
-        if layer_config.use_batchnorm:
-            layer_wrapper.append(
-                torch.nn.BatchNorm1d(
-                    dim_out,
-                    eps=layer_config.bn_eps,
-                    momentum=layer_config.bn_momentum,
-                )
+        # if layer_config.use_batchnorm:
+        #     layer_wrapper.append(
+        #         torch.nn.BatchNorm1d(
+        #             dim_out,
+        #             eps=layer_config.bn_eps,
+        #             momentum=layer_config.bn_momentum,
+        #         )
+        #     )
+        # if layer_config.dropout > 0:
+        #     layer_wrapper.append(
+        #         torch.nn.Dropout(
+        #             p=layer_config.dropout,
+        #             inplace=mem_config.inplace,
+        #         )
+        #     )
+        # if layer_config.has_act:
+        #     layer_wrapper.append(get_activation_function(layer_config.act))
+
+        if isinstance(layer_config, MessagePassingConfig) and layer_config.has_pooling:
+            self.pooling_layer = get_pooling_class(layer_config.pooling.type)(
+                layer_config.pooling
             )
-        if layer_config.dropout > 0:
-            layer_wrapper.append(
-                torch.nn.Dropout(
-                    p=layer_config.dropout,
-                    inplace=mem_config.inplace,
-                )
-            )
-        if layer_config.has_act:
-            layer_wrapper.append(get_activation_function(layer_config.act))
+        else:
+            self.pooling_layer = lambda _: _
+
         self.post_layer = torch.nn.Sequential(*layer_wrapper)
 
     def forward(self, batch):
         batch = self.layer(batch)
+        print(f"batch after self.layer: {batch}")
         if isinstance(batch, torch.Tensor):
             batch = self.post_layer(batch)
             if self.has_l2norm:
@@ -143,6 +158,7 @@ class GeneralLayer(torch.nn.Module):
             batch.x = self.post_layer(batch.x)
             if self.has_l2norm:
                 batch.x = F.normalize(batch.x, p=2, dim=1)
+            batch = self.pooling_layer(batch)
         return batch
 
 
@@ -154,13 +170,13 @@ class GeneralMultiLayer(torch.nn.Module):
         name,
         dim_in: int,
         dim_out: int,
-        layer_config: LayerConfig,
+        layer_config: MultiLayerConfig,
         mem_config: MemoryConfig,
         **kwargs,
     ):
         super().__init__()
         dim_inner = layer_config.dim_inner
-        for i in range(layer_config.n_layers):
+        for i, layer_config in enumerate(layer_config.layers):
             d_in = dim_in if i == 0 else dim_inner
             d_out = dim_out if i == layer_config.n_layers - 1 else dim_inner
             layer = GeneralLayer(name, d_in, d_out, layer_config, mem_config, **kwargs)
