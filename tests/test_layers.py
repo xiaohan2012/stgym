@@ -49,16 +49,18 @@ class TestGeneralLayer(BatchLoaderMixin):
             type="dmon",
             n_clusters=n_clusters,
         )
+        inner_dim = 64
         layer_config = MessagePassingConfig(pooling=pooling_config)
 
         mem_config = MemoryConfig()
         batch = self.load_batch()
         layer = GeneralLayer(
-            layer_type, self.num_features, self.num_classes, layer_config, mem_config
+            layer_type, self.num_features, inner_dim, layer_config, mem_config
         )
 
-        output = layer(batch)
-        assert output.x.shape == (self.num_nodes * self.batch_size, n_clusters)
+        output_batch = layer(batch)
+        assert output_batch.adj.shape == (self.batch_size, n_clusters, n_clusters)
+        assert output_batch.x.shape == (self.batch_size, n_clusters, inner_dim)
 
 
 @pytest.mark.skip(reason="to fix!")

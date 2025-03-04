@@ -3,6 +3,7 @@ import torch.nn.functional as F
 import torch_geometric as pyg
 from torch_geometric.nn import Linear as Linear_pyg
 
+from stgym.activation import get_activation_function
 from stgym.config_schema import (
     LayerConfig,
     MemoryConfig,
@@ -120,25 +121,25 @@ class GeneralLayer(torch.nn.Module):
 
         self.layer = get_layer_class(name)(dim_in, dim_out, layer_config, **kwargs)
         layer_wrapper = []
-        # if layer_config.use_batchnorm:
-        #     layer_wrapper.append(
-        #         torch.nn.BatchNorm1d(
-        #             dim_out,
-        #             eps=layer_config.bn_eps,
-        #             momentum=layer_config.bn_momentum,
-        #         )
-        #     )
-        # if layer_config.dropout > 0:
-        #     layer_wrapper.append(
-        #         torch.nn.Dropout(
-        #             p=layer_config.dropout,
-        #             inplace=mem_config.inplace,
-        #         )
-        #     )
-        # if layer_config.has_act:
-        #     layer_wrapper.append(get_activation_function(layer_config.act))
+        if layer_config.use_batchnorm:
+            layer_wrapper.append(
+                torch.nn.BatchNorm1d(
+                    dim_out,
+                    eps=layer_config.bn_eps,
+                    momentum=layer_config.bn_momentum,
+                )
+            )
+        if layer_config.dropout > 0:
+            layer_wrapper.append(
+                torch.nn.Dropout(
+                    p=layer_config.dropout,
+                    inplace=mem_config.inplace,
+                )
+            )
+        if layer_config.has_act:
+            layer_wrapper.append(get_activation_function(layer_config.act))
 
-        if isinstance(layer_config, MessagePassingConfig) and layer_config.has_pooling:
+        if self.should_apply_pooling(layer_config):
             self.pooling_layer = get_pooling_class(layer_config.pooling.type)(
                 layer_config.pooling
             )
@@ -147,18 +148,25 @@ class GeneralLayer(torch.nn.Module):
 
         self.post_layer = torch.nn.Sequential(*layer_wrapper)
 
+    def should_apply_pooling(self, layer_config):
+        return (
+            isinstance(layer_config, MessagePassingConfig) and layer_config.has_pooling
+        )
+
     def forward(self, batch):
         batch = self.layer(batch)
-        print(f"batch after self.layer: {batch}")
         if isinstance(batch, torch.Tensor):
             batch = self.post_layer(batch)
             if self.has_l2norm:
                 batch = F.normalize(batch, p=2, dim=1)
-        else:
+        elif isinstance(batch, pyg.data.Data):
             batch.x = self.post_layer(batch.x)
             if self.has_l2norm:
                 batch.x = F.normalize(batch.x, p=2, dim=1)
+            # apply pooling only if batch is not a Tensor
             batch = self.pooling_layer(batch)
+        else:
+            raise TypeError(f"Unsupported type: {type(batch)}")
         return batch
 
 
