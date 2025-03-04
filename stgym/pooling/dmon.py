@@ -5,6 +5,7 @@ import torch.nn.functional as F
 from torch import Tensor
 from torch_geometric.nn.dense.linear import Linear
 from torch_geometric.nn.dense.mincut_pool import _rank3_trace
+from torch_geometric.utils import to_dense_batch
 
 from stgym.config_schema import PoolingConfig
 
@@ -120,10 +121,17 @@ class DMoNPoolingLayer(torch.nn.Module):
     def __init__(self, cfg: PoolingConfig, **kwargs):
         super().__init__()
         # one linear layer
-        self.model = DMoNPooling(k=[cfg.n_clusters])
+        self.model = DMoNPooling(k=cfg.n_clusters)
 
     def forward(self, batch):
-        _, out_x, out_adj, _, _, _ = self.model(batch.x, batch.adj)
+        x, mask = to_dense_batch(batch.x, batch.batch)
+        # print("mask: {}".format(mask))
+        adj, mask = to_dense_batch(batch.adj, batch.batch)
+        # print("mask: {}".format(mask))
+        # print("adj: {}".format(adj))
+        (_, out_x, out_adj, spectral_loss, ortho_loss, cluster_loss) = self.model(
+            x, adj, mask
+        )
 
         batch.x = out_x
         batch.adj = out_adj
