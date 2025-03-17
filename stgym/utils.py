@@ -4,7 +4,11 @@ import torch
 def stacked_blocks_to_block_diagonal(
     A: torch.Tensor, ptr: torch.Tensor
 ) -> torch.Tensor:
-    """ """
+    """
+    Convert vertically stacked matrix blocks to a block diagonal matrix.
+
+    the sizes of the blocks are given by ptr[1:] - ptr[:-1]
+    """
     assert A.ndim == 2, A.ndim
     assert ptr.ndim == 1, ptr.ndim
 
