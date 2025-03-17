@@ -1,11 +1,47 @@
 import math
 
+import numpy as np
 import torch
 
 from stgym.config_schema import PoolingConfig
-from stgym.pooling.dmon import DMoNPooling, DMoNPoolingLayer
+from stgym.pooling.dmon import DMoNPooling, DMoNPoolingLayer, dmon_pool
 
 from ..utils import BatchLoaderMixin
+from .dense_dmon import dense_dmon_pool
+
+
+def test_dmon_pool():
+    from os import path as osp
+
+    from torch_geometric.datasets import TUDataset
+    from torch_geometric.loader import DataLoader
+    from torch_geometric.utils import to_dense_adj, to_dense_batch
+
+    path = osp.join("data", "TU")
+    dataset = TUDataset(path, name="MUTAG").shuffle()
+
+    train_loader = DataLoader(dataset[:0.9], 4, shuffle=True)
+
+    batch = next(iter(train_loader))
+    n_nodes = batch.x.shape[0]
+    s, t = batch.edge_index[0], batch.edge_index[1]
+    adj = torch.sparse_coo_tensor(
+        torch.stack([s, t]), torch.ones(s.size(0)), (n_nodes, n_nodes)
+    )
+    batch.adj = adj
+
+    n_nodes = batch.x.shape[0]
+    n_clusters = 3
+    C = torch.rand(n_nodes, n_clusters)
+
+    C_3d, mask = to_dense_batch(C, batch.batch)
+    adj_3d = to_dense_adj(batch.edge_index, batch=batch.batch)
+    s, out_adj, expected_spectral_loss, ortho_loss, cluster_loss = dense_dmon_pool(
+        C_3d, adj_3d, mask
+    )
+
+    actual_spectral_loss = dmon_pool(batch.adj, batch.batch, batch.ptr, C)
+    np.testing.assert_allclose(expected_spectral_loss, actual_spectral_loss)
 
 
 class TestDmonPooling:

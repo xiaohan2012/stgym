@@ -6,10 +6,52 @@ from torch import Tensor
 from torch_geometric.nn.dense.linear import Linear
 from torch_geometric.nn.dense.mincut_pool import _rank3_trace
 from torch_geometric.utils import to_dense_batch
+from torch_scatter import scatter_sum
 
 from stgym.config_schema import PoolingConfig
+from stgym.utils import stacked_blocks_to_block_diagonal
 
 EPS = 1e-15
+
+
+def dmon_pool(
+    adj: torch.Tensor, batch: torch.Tensor, ptr: torch.Tensor, s: torch.Tensor
+) -> torch.Tensor:
+    assert adj.ndim == 2
+    assert batch.ndim == 1
+    assert ptr.ndim == 1
+    assert s.ndim == 2
+
+    s = torch.softmax(s, dim=-1)
+
+    K = s.shape[1]  # number of clusters
+    B = ptr.shape[0] - 1  # number of blocks
+
+    d = adj.sum(axis=0).to_dense()  # degree vector
+
+    # compute the 1/2m term for each graph, laied out as a diagonal matrix
+    # of shape BxK by BxK
+    m2 = scatter_sum(d, batch)
+    m_inv = torch.repeat_interleave(1 / m2, K)
+    indices = torch.stack([torch.arange(K * B), torch.arange(K * B)])
+    m_inv_sp = torch.sparse_coo_tensor(indices, m_inv)
+
+    # block diagonal matrices of C and d
+    C_bd = stacked_blocks_to_block_diagonal(s, ptr)
+    d_bd = stacked_blocks_to_block_diagonal(d.unsqueeze(0).T, ptr)
+
+    # the normalizer
+    # (d.T x).T (d.T x) / 2m
+    Cd = C_bd.T @ d_bd
+    Cd2 = Cd @ Cd.T
+    normalizer = m_inv_sp @ Cd2
+
+    # C.T A C
+    out_adj = C_bd.T @ adj @ C_bd
+
+    spectral_loss = torch.trace((m_inv_sp @ (out_adj - normalizer)).to_dense())
+
+    return spectral_loss
 
 
 class DMoNPooling(torch.nn.Module):
