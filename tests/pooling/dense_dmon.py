@@ -79,6 +79,9 @@ def dense_dmon_pool(
     # Cluster loss:
     cluster_size = torch.einsum("ijk->ik", s)  # B x C
     cluster_loss = torch.norm(input=cluster_size, dim=1)
+
+    # mask.sum(dim=1) produces a [N x 1] matrix, it should be flattened to [K]
+    # correct version: cluster_loss = cluster_loss / mask.sum(dim=1).squeeze() * torch.norm(i_s) - 1
     cluster_loss = cluster_loss / mask.sum(dim=1) * torch.norm(i_s) - 1
     cluster_loss = cluster_loss.mean()
 
