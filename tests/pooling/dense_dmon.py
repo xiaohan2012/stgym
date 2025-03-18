@@ -33,13 +33,13 @@ def dense_dmon_pool(
         :class:`torch.Tensor`, :class:`torch.Tensor`)
     """
     s = s.unsqueeze(0) if s.dim() == 2 else s
-    # print(s.shape)
+
     adj = adj.unsqueeze(0) if adj.dim() == 2 else adj
 
-    # s = torch.softmax(s, dim=-1)
+    s = torch.softmax(s, dim=-1)
 
     (batch_size, num_nodes, C) = s.size()
-    # print("batch_size, num_nodes, C", batch_size, num_nodes, C)
+
     if mask is None:
         mask = torch.ones(batch_size, num_nodes, dtype=torch.bool, device=adj.device)
 
@@ -52,24 +52,19 @@ def dense_dmon_pool(
     # Spectral loss:
     degrees = torch.einsum("ijk->ij", adj)  # B X N
     degrees = degrees.unsqueeze(-1) * mask  # B x N x 1
-    # print('degrees', degrees)
     degrees_t = degrees.transpose(1, 2)  # B x 1 x N
 
     m = torch.einsum("ijk->i", degrees) / 2  # B
-    # print(m)
     m_expand = m.view(-1, 1, 1).expand(-1, C, C)  # B x C x C
 
     ca = torch.matmul(s.transpose(1, 2), degrees)  # B x C x 1
     cb = torch.matmul(degrees_t, s)  # B x 1 x C
 
     normalizer = torch.matmul(ca, cb) / 2 / m_expand
+
     decompose = out_adj - normalizer
-    # print('sum.shape', out_adj.sum(axis=0).shape)
-    # print(out_adj)
-    # print(out_adj.sum(axis=0))
-    # print('out_adj / 2 / m', out_adj / 2 / m)
     spectral_loss = -_rank3_trace(decompose) / 2 / m
-    # print('decompose', decompose.shape)
+
     spectral_loss = spectral_loss.mean()
 
     # Orthogonality regularization:

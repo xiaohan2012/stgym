@@ -32,6 +32,7 @@ def dmon_pool(
     # compute the 1/2m term for each graph, laied out as a diagonal matrix
     # of shape BxK by BxK
     m2 = scatter_sum(d, batch)
+
     m_inv = torch.repeat_interleave(1 / m2, K)
     indices = torch.stack([torch.arange(K * B), torch.arange(K * B)])
     m_inv_sp = torch.sparse_coo_tensor(indices, m_inv)
@@ -42,14 +43,18 @@ def dmon_pool(
 
     # the normalizer
     # (d.T x).T (d.T x) / 2m
-    Cd = C_bd.T @ d_bd
-    Cd2 = Cd @ Cd.T
+    Ca = C_bd.T @ d_bd
+    Cb = d_bd.T @ C_bd
+    Cd2 = Ca @ Cb
+
     normalizer = m_inv_sp @ Cd2
 
     # C.T A C
     out_adj = C_bd.T @ adj @ C_bd
+    print(f"out_adj: {out_adj.to_dense()}")
 
-    spectral_loss = torch.trace((m_inv_sp @ (out_adj - normalizer)).to_dense())
+    # take the mean over the batch and negate (maximize modularity = minimize negative modularity)
+    spectral_loss = -torch.trace((m_inv_sp @ (out_adj - normalizer)).to_dense()) / B
 
     return spectral_loss
 

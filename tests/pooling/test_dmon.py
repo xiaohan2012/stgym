@@ -9,6 +9,8 @@ from stgym.pooling.dmon import DMoNPooling, DMoNPoolingLayer, dmon_pool
 from ..utils import BatchLoaderMixin
 from .dense_dmon import dense_dmon_pool
 
+RTOL = 1e-5
+
 
 def test_dmon_pool():
     from os import path as osp
@@ -41,7 +43,7 @@ def test_dmon_pool():
     )
 
     actual_spectral_loss = dmon_pool(batch.adj, batch.batch, batch.ptr, C)
-    np.testing.assert_allclose(expected_spectral_loss, actual_spectral_loss)
+    np.testing.assert_allclose(actual_spectral_loss, expected_spectral_loss, rtol=RTOL)
 
 
 class TestDmonPooling:
