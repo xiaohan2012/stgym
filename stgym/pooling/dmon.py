@@ -86,7 +86,7 @@ def dmon_pool(
         diagonal_indices, 1 / CC_norm.repeat_interleave(K)
     )
     I_div_k = torch.sparse_coo_tensor(
-        diagonal_indices, torch.tensor(1 / sqrt_K).repeat(K * B)
+        diagonal_indices, torch.Tensor(1 / sqrt_K).repeat(K * B)
     )
 
     # compute the norm of the block diagonal over graph batches
