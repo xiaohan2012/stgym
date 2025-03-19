@@ -9,7 +9,7 @@ from torch_geometric.utils import to_dense_batch
 from torch_scatter import scatter_sum
 
 from stgym.config_schema import PoolingConfig
-from stgym.utils import stacked_blocks_to_block_diagonal
+from stgym.utils import mask_diagonal_sp, stacked_blocks_to_block_diagonal
 
 EPS = 1e-15
 
@@ -97,8 +97,12 @@ def dmon_pool(
         .sqrt()
         .mean()
     )
-
-    return spectral_loss, cluster_loss, ortho_loss
+    # normalize the out_adj
+    out_adj = mask_diagonal_sp(out_adj)
+    d = torch.einsum("ij->i", out_adj).to_dense().sqrt() + 1e-12
+    d_norm = torch.sparse_coo_tensor(diagonal_indices, (1 / d))
+    out_adj_normalized = d_norm @ out_adj @ d_norm
+    return out_adj_normalized, spectral_loss, cluster_loss, ortho_loss
 
 
 class DMoNPooling(torch.nn.Module):
@@ -142,6 +146,7 @@ class DMoNPooling(torch.nn.Module):
             :class:`torch.Tensor`, :class:`torch.Tensor`,
             :class:`torch.Tensor`, :class:`torch.Tensor`)
         """
+
         x = x.unsqueeze(0) if x.dim() == 2 else x
         adj = adj.unsqueeze(0) if adj.dim() == 2 else adj
 
