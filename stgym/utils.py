@@ -3,7 +3,7 @@ import torch
 
 def stacked_blocks_to_block_diagonal(
     A: torch.Tensor, ptr: torch.Tensor
-) -> torch.Tensor:
+) -> torch.sparse.Tensor:
     """
     Convert vertically stacked matrix blocks to a block diagonal matrix.
 
@@ -30,3 +30,10 @@ def stacked_blocks_to_block_diagonal(
     indices = torch.vstack([ind0.flatten(), ind1.flatten()])
     values = A.flatten()
     return torch.sparse_coo_tensor(indices, values)
+
+
+def mask_diagonal_sp(A: torch.sparse.Tensor) -> torch.sparse.Tensor:
+    indices = A.indices()
+    values = A.values()
+    mask = indices[0] != indices[1]
+    return torch.sparse_coo_tensor(indices[:, mask], values[mask], A.size())
