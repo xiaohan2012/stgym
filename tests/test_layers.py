@@ -4,6 +4,7 @@ from stgym.config_schema import (
     LayerConfig,
     MemoryConfig,
     MessagePassingConfig,
+    MultiLayerConfig,
     PoolingConfig,
 )
 from stgym.layers import (
@@ -63,25 +64,31 @@ class TestGeneralLayer(BatchLoaderMixin):
         assert output_batch.x.shape == (self.batch_size, n_clusters, inner_dim)
 
 
-@pytest.mark.skip(reason="to fix!")
+# @pytest.mark.skip(reason="to fix!")
 class TestGeneralMultiLayer(BatchLoaderMixin):
-    @pytest.mark.parametrize("num_layers", [1, 2, 3])
-    def test_simple(self, num_layers):
-        layer_config = LayerConfig(n_layers=num_layers, dim_inner=64)
+    @pytest.mark.parametrize("dim_inner", [[128, 64]])
+    def test_simple(self, dim_inner):
+        n_layers = len(dim_inner)
+        multi_layer_config = MultiLayerConfig(
+            layers=[LayerConfig(dim_inner=dim) for dim in dim_inner]
+        )
         mem_config = MemoryConfig()
 
         model = GeneralMultiLayer(
-            "gcnconv", self.num_features, self.num_classes, layer_config, mem_config
+            "gcnconv",
+            self.num_features,
+            multi_layer_config,
+            mem_config,
         )
 
         layers = list(model.children())
-        assert len(layers) == num_layers
+        assert len(layers) == n_layers
 
         batch = self.load_batch()
 
         output = model(batch)
 
-        assert output.x.shape == (self.num_nodes * self.batch_size, self.num_classes)
+        assert output.x.shape == (self.num_nodes * self.batch_size,)
 
 
 @pytest.mark.skip(reason="to fix!")

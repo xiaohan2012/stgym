@@ -65,6 +65,10 @@ class PostMPConfig(LayerConfig):
 class MultiLayerConfig(BaseModel):
     layers: list[MessagePassingConfig | PostMPConfig | LayerConfig]
 
+    @property
+    def n_layers(self):
+        return len(self.layers)
+
 
 class MemoryConfig(BaseModel):
     inplace: bool = False

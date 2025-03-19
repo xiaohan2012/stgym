@@ -1,3 +1,4 @@
+import pydash as _
 import torch
 import torch.nn.functional as F
 import torch_geometric as pyg
@@ -109,7 +110,7 @@ class GeneralLayer(torch.nn.Module):
 
     def __init__(
         self,
-        name,
+        layer_type: str,
         dim_in: int,
         dim_out: int,
         layer_config: LayerConfig | MessagePassingConfig | PostMPConfig,
@@ -119,7 +120,9 @@ class GeneralLayer(torch.nn.Module):
         super().__init__()
         self.has_l2norm = layer_config.l2norm
 
-        self.layer = get_layer_class(name)(dim_in, dim_out, layer_config, **kwargs)
+        self.layer = get_layer_class(layer_type)(
+            dim_in, dim_out, layer_config, **kwargs
+        )
         layer_wrapper = []
         if layer_config.use_batchnorm:
             layer_wrapper.append(
@@ -175,19 +178,21 @@ class GeneralMultiLayer(torch.nn.Module):
 
     def __init__(
         self,
-        name,
+        layer_type: str,
         dim_in: int,
-        dim_out: int,
-        layer_config: MultiLayerConfig,
+        config: MultiLayerConfig,
         mem_config: MemoryConfig,
         **kwargs,
     ):
         super().__init__()
-        dim_inner = layer_config.dim_inner
-        for i, layer_config in enumerate(layer_config.layers):
-            d_in = dim_in if i == 0 else dim_inner
-            d_out = dim_out if i == layer_config.n_layers - 1 else dim_inner
-            layer = GeneralLayer(name, d_in, d_out, layer_config, mem_config, **kwargs)
+        dim_inner_list = _.map_(config.layers, "dim_inner")
+        for i, layer_config in enumerate(config.layers):
+            d_in = dim_in if i == 0 else dim_inner_list[i - 1]
+            # d_out = dim_out if i == config.n_layers - 1 else dim_inner
+            d_out = dim_inner_list[i]
+            layer = GeneralLayer(
+                layer_type, d_in, d_out, layer_config, mem_config, **kwargs
+            )
             self.add_module(f"Layer_{i}", layer)
 
     def forward(self, batch):
@@ -217,7 +222,7 @@ class MLP(torch.nn.Module):
                 "linear",
                 dim_in=dim_in,
                 dim_out=dim_out,
-                layer_config=layer_config,
+                config=layer_config,
                 mem_config=mem_config,
             )
         )
