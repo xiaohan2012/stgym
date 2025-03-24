@@ -9,21 +9,19 @@ from torch_geometric.utils import to_dense_batch
 from torch_scatter import scatter_sum
 
 from stgym.config_schema import PoolingConfig
-from stgym.utils import mask_diagonal_sp, stacked_blocks_to_block_diagonal
+from stgym.utils import batch2ptr, mask_diagonal_sp, stacked_blocks_to_block_diagonal
 
 EPS = 1e-15
 
 
-def dmon_pool(
-    adj: torch.Tensor, batch: torch.Tensor, ptr: torch.Tensor, s: torch.Tensor
-) -> torch.Tensor:
+def dmon_pool(adj: torch.Tensor, batch: torch.Tensor, s: torch.Tensor) -> torch.Tensor:
     """
     adj: N x N, adjacency matrix
     batch: N, the batch vector
     ptr: B+1  # not needed actually
     s: N x K, the clustering matrix
     """
-
+    ptr = batch2ptr(batch)
     assert adj.ndim == 2
     assert batch.ndim == 1
     assert batch.shape[0] == adj.shape[0], f"{batch.shape[0]} != {adj.shape[0]}"

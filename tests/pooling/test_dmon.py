@@ -1,11 +1,15 @@
 import math
+from os import path as osp
 
 import numpy as np
 import torch
+from torch_geometric.datasets import TUDataset
+from torch_geometric.loader import DataLoader
+from torch_geometric.utils import to_dense_adj, to_dense_batch
 from torch_geometric.utils.sparse import is_sparse
 
 from stgym.config_schema import PoolingConfig
-from stgym.pooling.dmon import DMoNPooling, DMoNPoolingLayer, dmon_pool
+from stgym.pooling.dmon import DMoNPoolingLayer, dmon_pool
 from stgym.utils import stacked_blocks_to_block_diagonal
 
 from ..utils import BatchLoaderMixin
@@ -15,12 +19,6 @@ RTOL = 1e-4
 
 
 def test_dmon_pool():
-    from os import path as osp
-
-    from torch_geometric.datasets import TUDataset
-    from torch_geometric.loader import DataLoader
-    from torch_geometric.utils import to_dense_adj, to_dense_batch
-
     path = osp.join("data", "TU")
     dataset = TUDataset(path, name="MUTAG").shuffle()
 
@@ -46,7 +44,7 @@ def test_dmon_pool():
     )
 
     actual_out_adj, actual_spectral_loss, actual_cluster_loss, actual_ortho_loss = (
-        dmon_pool(batch.adj, batch.batch, batch.ptr, C)
+        dmon_pool(batch.adj, batch.batch, C)
     )
     np.testing.assert_allclose(actual_spectral_loss, expected_spectral_loss, rtol=RTOL)
     np.testing.assert_allclose(actual_ortho_loss, expected_ortho_loss, rtol=RTOL)
