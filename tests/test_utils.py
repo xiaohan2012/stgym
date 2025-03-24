@@ -2,7 +2,12 @@ import numpy as np
 import pytest
 import torch
 
-from stgym.utils import batch2ptr, mask_diagonal_sp, stacked_blocks_to_block_diagonal
+from stgym.utils import (
+    batch2ptr,
+    hsplit_and_vstack,
+    mask_diagonal_sp,
+    stacked_blocks_to_block_diagonal,
+)
 
 RTOL = 1e-10
 
@@ -74,3 +79,11 @@ def test_batch2ptr_with_error():
         ValueError, match=".*The batch contains zero-frequency element.*"
     ):
         batch2ptr(torch.tensor([1, 2, 2, 3, 3, 3]))
+
+
+def test_hsplit_and_vstack():
+    A = torch.tensor([[0, 1, 2, 3, 4, 5], [6, 7, 8, 9, 10, 11]])
+    chunk_size = 2
+    actual = hsplit_and_vstack(A, chunk_size)
+    expected = torch.tensor([[0, 1], [6, 7], [2, 3], [8, 9], [4, 5], [10, 11]])
+    np.testing.assert_allclose(actual, expected)

@@ -46,3 +46,8 @@ def batch2ptr(batch: torch.Tensor) -> torch.Tensor:
             "The batch contains zero-frequency element, consider making this function more robust (refer to the unit tests)"
         )
     return torch.concat([torch.tensor([0]), freq.cumsum(dim=0)])
+
+
+def hsplit_and_vstack(A: torch.Tensor, chunk_size: int) -> torch.Tensor:
+    """horizontally split A into chunks of size `chunk_size` and then vertically stack them"""
+    return torch.vstack(torch.split(A, chunk_size, dim=1))
