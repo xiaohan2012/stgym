@@ -3,6 +3,7 @@ from os import path as osp
 
 import numpy as np
 import torch
+import torch.nn.functional as F
 from torch_geometric.datasets import TUDataset
 from torch_geometric.loader import DataLoader
 from torch_geometric.utils import to_dense_adj, to_dense_batch
@@ -43,11 +44,16 @@ def test_dmon_pool():
         dense_dmon_pool(C_3d, adj_3d, mask)
     )
 
+    x_3d, mask = to_dense_batch(batch.x, batch.batch)
+
+    F.selu(torch.matmul(s.transpose(1, 2), x_3d))
+
     actual_out_adj, actual_spectral_loss, actual_cluster_loss, actual_ortho_loss = (
         dmon_pool(batch.adj, batch.batch, C)
     )
     np.testing.assert_allclose(actual_spectral_loss, expected_spectral_loss, rtol=RTOL)
     np.testing.assert_allclose(actual_ortho_loss, expected_ortho_loss, rtol=RTOL)
+    np.testing.assert_allclose(actual_cluster_loss, expected_cluster_loss, rtol=RTOL)
 
     assert is_sparse(actual_out_adj)
     expected_out_adj_bd = stacked_blocks_to_block_diagonal(
@@ -59,44 +65,53 @@ def test_dmon_pool():
     )
 
 
-class TestDmonPooling:
-    batch_size, num_nodes, channels, num_clusters = (2, 20, 16, 10)
+# class TestDmonPooling:
+# batch_size, num_nodes, channels, num_clusters = (2, 20, 16, 10)
 
-    def create_data(self):
-        x = torch.randn((self.batch_size, self.num_nodes, self.channels))
-        adj = torch.ones((self.batch_size, self.num_nodes, self.num_nodes))
-        mask = torch.randint(0, 2, (self.batch_size, self.num_nodes), dtype=torch.bool)
-        return x, adj, mask
+# def create_data(self):
+#     x = torch.randn((self.batch_size, self.num_nodes, self.channels))
+#     adj = torch.ones((self.batch_size, self.num_nodes, self.num_nodes))
+#     mask = torch.randint(0, 2, (self.batch_size, self.num_nodes), dtype=torch.bool)
+#     return x, adj, mask
 
-    def test(self):
-        x, adj, mask = self.create_data()
+# def test(self):
+#     x, adj, mask = self.create_data()
 
-        pool = DMoNPooling(self.num_clusters)
-        assert str(pool) == "DMoNPooling(-1, num_clusters=10)"
+#     pool = DMoNPooling(self.num_clusters)
+#     assert str(pool) == "DMoNPooling(-1, num_clusters=10)"
 
-        s, x, adj, spectral_loss, ortho_loss, cluster_loss = pool(x, adj, mask)
-        assert s.size() == (self.batch_size, self.num_nodes, self.num_clusters)
-        assert x.size() == (self.batch_size, self.num_clusters, self.channels)
-        assert adj.size() == (self.batch_size, self.num_clusters, self.num_clusters)
-        assert -1 <= spectral_loss <= 0.5
-        assert 0 <= ortho_loss <= math.sqrt(2)
-        assert 0 <= cluster_loss <= math.sqrt(self.num_clusters) - 1
+#     s, x, adj, spectral_loss, ortho_loss, cluster_loss = pool(x, adj, mask)
+#     assert s.size() == (self.batch_size, self.num_nodes, self.num_clusters)
+#     assert x.size() == (self.batch_size, self.num_clusters, self.channels)
+#     assert adj.size() == (self.batch_size, self.num_clusters, self.num_clusters)
+#     assert -1 <= spectral_loss <= 0.5
+#     assert 0 <= ortho_loss <= math.sqrt(2)
+#     assert 0 <= cluster_loss <= math.sqrt(self.num_clusters) - 1
 
 
 class TestWrapper(BatchLoaderMixin):
     def test(self):
-        num_clusters = 10
+        num_clusters = 3
         batch = self.load_batch()
+
         cfg = PoolingConfig(
             type="dmon",
             n_clusters=num_clusters,
         )
         # (self.out_channels, self.in_channels): ([10], 128)
         model = DMoNPoolingLayer(cfg)
-        output_batch = model(batch)
+        output_batch, s, spectral_loss, cluster_loss, ortho_loss = model(batch)
         assert output_batch.x.shape == (
-            self.batch_size,
-            num_clusters,
+            num_clusters * self.batch_size,
             self.num_features,
         )
-        assert output_batch.adj.shape == (self.batch_size, num_clusters, num_clusters)
+        assert output_batch.adj.shape == (
+            num_clusters * self.batch_size,
+            num_clusters * self.batch_size,
+        )
+
+        assert s.size() == (self.batch_size * self.num_nodes, num_clusters)
+
+        assert -1 <= spectral_loss <= 0.5
+        assert 0 <= ortho_loss <= math.sqrt(2)
+        assert 0 <= cluster_loss <= math.sqrt(num_clusters) - 1  # TODO: this fails

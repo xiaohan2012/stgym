@@ -15,10 +15,7 @@ def create_synthetic_data(
     # Generate random labels
     y = torch.randint(0, num_classes, (num_nodes,))
 
-    # Create a Data object
-    adj = torch.zeros((num_nodes, num_nodes))
-    adj[edge_index[0], edge_index[1]] = 1
-    return Data(x=x, edge_index=edge_index, y=y, adj=adj)
+    return Data(x=x, edge_index=edge_index, y=y)
 
 
 def create_data_batch(
@@ -36,6 +33,10 @@ def create_data_batch(
     )
 
     batch = next(iter(dataloader))
+
+    adj = torch.zeros((num_nodes * batch_size, num_nodes * batch_size))
+    adj[batch.edge_index[0], batch.edge_index[1]] = 1
+    batch.adj = adj.to_sparse_coo()
     return batch
 
 
@@ -43,7 +44,7 @@ class BatchLoaderMixin:
     num_nodes = 100
     num_features = 128
     num_classes = 10
-    batch_size = 2
+    batch_size = 3
 
     def load_batch(self):
         return create_data_batch(
