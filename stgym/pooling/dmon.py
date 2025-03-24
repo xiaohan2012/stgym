@@ -34,7 +34,7 @@ def dmon_pool(adj: torch.Tensor, batch: torch.Tensor, s: torch.Tensor) -> torch.
 
     n = ptr[1:] - ptr[:-1]
 
-    # s = torch.softmax(s, dim=-1)
+    s = torch.softmax(s, dim=-1)
 
     K = s.shape[1]  # number of clusters
     B = ptr.shape[0] - 1  # number of blocks
