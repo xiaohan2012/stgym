@@ -37,3 +37,12 @@ def mask_diagonal_sp(A: torch.sparse.Tensor) -> torch.sparse.Tensor:
     values = A.values()
     mask = indices[0] != indices[1]
     return torch.sparse_coo_tensor(indices[:, mask], values[mask], A.size())
+
+
+def batch2ptr(batch: torch.Tensor) -> torch.Tensor:
+    freq = torch.bincount(batch)
+    if (freq == 0).any():
+        raise ValueError(
+            "The batch contains zero-frequency element, consider making this function more robust (refer to the unit tests)"
+        )
+    return torch.concat([torch.tensor([0]), freq.cumsum(dim=0)])

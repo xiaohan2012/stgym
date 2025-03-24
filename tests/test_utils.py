@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import torch
 
-from stgym.utils import mask_diagonal_sp, stacked_blocks_to_block_diagonal
+from stgym.utils import batch2ptr, mask_diagonal_sp, stacked_blocks_to_block_diagonal
 
 RTOL = 1e-10
 
@@ -60,3 +60,17 @@ def test_mask_diagonal_sp():
     assert masked_A.layout == torch.sparse_coo
 
     np.testing.assert_allclose(masked_A.to_dense(), torch.tensor([[0, 2], [3, 0]]))
+
+
+def test_batch2ptr():
+    actual = batch2ptr(torch.tensor([0, 1, 1, 2, 2, 2]))
+    # actual = batch2ptr(torch.tensor([1, 2, 2, 3, 3, 3]))
+    expected = torch.tensor([0, 1, 3, 6])
+    np.testing.assert_allclose(actual, expected)
+
+
+def test_batch2ptr_with_error():
+    with pytest.raises(
+        ValueError, match=".*The batch contains zero-frequency element.*"
+    ):
+        batch2ptr(torch.tensor([1, 2, 2, 3, 3, 3]))
