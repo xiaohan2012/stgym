@@ -43,16 +43,22 @@ def test_dmon_pool():
     s, out_adj, expected_spectral_loss, expected_ortho_loss, expected_cluster_loss = (
         dense_dmon_pool(C_3d, adj_3d, mask)
     )
+    expected_batch = torch.arange(0, B).repeat_interleave(n_clusters)
 
     x_3d, mask = to_dense_batch(batch.x, batch.batch)
 
     F.selu(torch.matmul(s.transpose(1, 2), x_3d))
 
-    actual_out_adj, actual_spectral_loss, actual_cluster_loss, actual_ortho_loss = (
-        dmon_pool(batch.adj, batch.batch, C)
-    )
+    (
+        actual_out_adj,
+        actual_spectral_loss,
+        actual_cluster_loss,
+        actual_ortho_loss,
+        actual_batch,
+    ) = dmon_pool(batch.adj, batch.batch, C)
     np.testing.assert_allclose(actual_spectral_loss, expected_spectral_loss, rtol=RTOL)
     np.testing.assert_allclose(actual_ortho_loss, expected_ortho_loss, rtol=RTOL)
+    np.testing.assert_allclose(actual_batch, expected_batch)
     # np.testing.assert_allclose(actual_cluster_loss, expected_cluster_loss, rtol=RTOL)
 
     assert is_sparse(actual_out_adj)
@@ -88,6 +94,10 @@ class TestWrapper(BatchLoaderMixin):
         )
 
         assert batch.s.size() == (self.batch_size * self.num_nodes, num_clusters)
+        assert batch.batch.size() == (self.batch_size * num_clusters,)
+        np.testing.assert_allclose(
+            batch.ptr, torch.arange(self.batch_size + 1) * num_clusters
+        )
 
         assert -1 <= batch.loss["spectral_loss"] <= 0.5
         assert 0 <= batch.loss["ortho_loss"] <= math.sqrt(2)

@@ -84,7 +84,6 @@ def dmon_pool(adj: torch.Tensor, batch: torch.Tensor, s: torch.Tensor) -> torch.
             index=CC_batch,
         )
     )
-    CC_norm.repeat_interleave(K)
 
     # construct the I_k matrix of shape [KxB, KxB], further divided by sqrt(K)
     CC_normalizer = torch.sparse_coo_tensor(
@@ -107,7 +106,7 @@ def dmon_pool(adj: torch.Tensor, batch: torch.Tensor, s: torch.Tensor) -> torch.
     d = torch.einsum("ij->i", out_adj).to_dense().sqrt() + 1e-12
     d_norm = torch.sparse_coo_tensor(diagonal_indices, (1 / d))
     out_adj_normalized = d_norm @ out_adj @ d_norm
-    return out_adj_normalized, spectral_loss, cluster_loss, ortho_loss
+    return out_adj_normalized, spectral_loss, cluster_loss, ortho_loss, CC_batch
 
 
 class DMoNPoolingLayer(torch.nn.Module):
@@ -125,12 +124,14 @@ class DMoNPoolingLayer(torch.nn.Module):
 
         out_x = hsplit_and_vstack(out_x, chunk_size=batch.x.shape[1])  # (SxB) x D
 
-        out_adj, spectral_loss, cluster_loss, ortho_loss = dmon_pool(
+        out_adj, spectral_loss, cluster_loss, ortho_loss, out_batch = dmon_pool(
             batch.adj, batch.batch, s
         )
 
         batch.x = out_x
         batch.adj = out_adj
+        batch.batch = out_batch
+        batch.ptr = batch2ptr(batch.batch)
         # return batch, s, spectral_loss, cluster_loss, ortho_loss
         batch.s = s
         batch.loss = {
