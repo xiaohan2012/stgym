@@ -1,6 +1,7 @@
 import torch
 import torch.nn.functional as F
 from torch_geometric.nn.dense.linear import Linear
+from torch_geometric.utils import to_edge_index, to_undirected
 from torch_geometric.utils.sparse import is_sparse
 from torch_scatter import scatter_sum
 
@@ -132,11 +133,19 @@ class DMoNPoolingLayer(torch.nn.Module):
         batch.adj = out_adj
         batch.batch = out_batch
         batch.ptr = batch2ptr(batch.batch)
+
+        edge_index, edge_weight = to_undirected(*to_edge_index(out_adj), reduce="mean")
+        batch.edge_index = edge_index
+        batch.edge_weight = edge_weight
         # return batch, s, spectral_loss, cluster_loss, ortho_loss
         batch.s = s
-        batch.loss = {
+        loss_info = {
             "spectral_loss": spectral_loss,
             "cluster_loss": cluster_loss,
             "ortho_loss": ortho_loss,
         }
+        if hasattr(batch, "loss"):
+            batch.loss.append(loss_info)
+        else:
+            batch.loss = [loss_info]
         return batch

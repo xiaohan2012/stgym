@@ -93,12 +93,17 @@ class TestWrapper(BatchLoaderMixin):
             num_clusters * self.batch_size,
         )
 
+        assert batch.edge_index.size() == (
+            2,
+            num_clusters * (num_clusters - 1) * self.batch_size,
+        )
+
         assert batch.s.size() == (self.batch_size * self.num_nodes, num_clusters)
         assert batch.batch.size() == (self.batch_size * num_clusters,)
         np.testing.assert_allclose(
             batch.ptr, torch.arange(self.batch_size + 1) * num_clusters
         )
 
-        assert -1 <= batch.loss["spectral_loss"] <= 0.5
-        assert 0 <= batch.loss["ortho_loss"] <= math.sqrt(2)
-        assert 0 <= batch.loss["cluster_loss"] <= math.sqrt(num_clusters) - 1
+        assert -1 <= batch.loss[0]["spectral_loss"] <= 0.5
+        assert 0 <= batch.loss[0]["ortho_loss"] <= math.sqrt(2)
+        assert 0 <= batch.loss[0]["cluster_loss"] <= math.sqrt(num_clusters) - 1

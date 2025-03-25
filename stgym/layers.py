@@ -207,22 +207,17 @@ class MLP(torch.nn.Module):
     def __init__(
         self,
         dim_in: int,
-        dim_out: int,
-        layer_config: LayerConfig,
+        multi_layer_config: MultiLayerConfig,
         mem_config: MemoryConfig,
         **kwargs,
     ):
         super().__init__()
 
-        layer_config.dim_inner
-
-        layer_config.has_bias = True
         self.model = torch.nn.Sequential(
             GeneralMultiLayer(
                 "linear",
                 dim_in=dim_in,
-                dim_out=dim_out,
-                config=layer_config,
+                config=multi_layer_config,
                 mem_config=mem_config,
             )
         )
