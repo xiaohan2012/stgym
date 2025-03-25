@@ -131,4 +131,11 @@ class DMoNPoolingLayer(torch.nn.Module):
 
         batch.x = out_x
         batch.adj = out_adj
-        return batch, s, spectral_loss, cluster_loss, ortho_loss
+        # return batch, s, spectral_loss, cluster_loss, ortho_loss
+        batch.s = s
+        batch.loss = {
+            "spectral_loss": spectral_loss,
+            "cluster_loss": cluster_loss,
+            "ortho_loss": ortho_loss,
+        }
+        return batch

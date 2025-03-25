@@ -76,7 +76,8 @@ class TestWrapper(BatchLoaderMixin):
         )
         # (self.out_channels, self.in_channels): ([10], 128)
         model = DMoNPoolingLayer(cfg)
-        output_batch, s, spectral_loss, cluster_loss, ortho_loss = model(batch)
+        # output_batch, s, spectral_loss, cluster_loss, ortho_loss = model(batch)
+        output_batch = model(batch)
         assert output_batch.x.shape == (
             num_clusters * self.batch_size,
             self.num_features,
@@ -86,8 +87,8 @@ class TestWrapper(BatchLoaderMixin):
             num_clusters * self.batch_size,
         )
 
-        assert s.size() == (self.batch_size * self.num_nodes, num_clusters)
+        assert batch.s.size() == (self.batch_size * self.num_nodes, num_clusters)
 
-        assert -1 <= spectral_loss <= 0.5
-        assert 0 <= ortho_loss <= math.sqrt(2)
-        assert 0 <= cluster_loss <= math.sqrt(num_clusters) - 1  # TODO: this fails
+        assert -1 <= batch.loss["spectral_loss"] <= 0.5
+        assert 0 <= batch.loss["ortho_loss"] <= math.sqrt(2)
+        assert 0 <= batch.loss["cluster_loss"] <= math.sqrt(num_clusters) - 1
