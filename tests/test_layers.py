@@ -60,8 +60,11 @@ class TestGeneralLayer(BatchLoaderMixin):
         )
 
         output_batch = layer(batch)
-        assert output_batch.adj.shape == (self.batch_size, n_clusters, n_clusters)
-        assert output_batch.x.shape == (self.batch_size, n_clusters, inner_dim)
+        assert output_batch.adj.shape == (
+            self.batch_size * n_clusters,
+            self.batch_size * n_clusters,
+        )
+        assert output_batch.x.shape == (self.batch_size * n_clusters, inner_dim)
 
 
 # @pytest.mark.skip(reason="to fix!")
