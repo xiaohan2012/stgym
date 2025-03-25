@@ -55,6 +55,7 @@ def dmon_pool(adj: torch.Tensor, batch: torch.Tensor, s: torch.Tensor) -> torch.
 
     # the normalizer
     # (d.T x).T (d.T x) / 2m
+    # TODO: consider using torch_sparse.spspmm
     Ca = C_bd.T @ d_bd
     Cb = d_bd.T @ C_bd
     Cd2 = Ca @ Cb
@@ -118,7 +119,7 @@ class DMoNPoolingLayer(torch.nn.Module):
 
     def forward(self, batch):
         s = self.linear(batch.x)
-        s = torch.softmax(s, dim=-1)
+        # s = torch.softmax(s, dim=-1)
         x_bd = stacked_blocks_to_block_diagonal(batch.x, batch.ptr)
         out_x = F.selu(s.T @ x_bd)  # S x (B x D)
 
