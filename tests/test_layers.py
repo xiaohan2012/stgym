@@ -31,12 +31,11 @@ class TestGeneralLayer(BatchLoaderMixin):
         ],
     )
     def test_without_pooling(self, layer_type, expected_layer_class):
-        layer_config = LayerConfig()
+        layer_config = LayerConfig(layer_type=layer_type)
 
         mem_config = MemoryConfig()
         batch = self.load_batch()
         layer = GeneralLayer(
-            layer_type,  # TODO: should be specified in layer_config
             self.num_features,
             self.num_classes,
             layer_config,
@@ -55,13 +54,13 @@ class TestGeneralLayer(BatchLoaderMixin):
             n_clusters=n_clusters,
         )
         inner_dim = 64
-        layer_config = MessagePassingConfig(pooling=pooling_config)
+        layer_config = MessagePassingConfig(
+            layer_type=layer_type, pooling=pooling_config
+        )
 
         mem_config = MemoryConfig()
         batch = self.load_batch()
-        layer = GeneralLayer(
-            layer_type, self.num_features, inner_dim, layer_config, mem_config
-        )
+        layer = GeneralLayer(self.num_features, inner_dim, layer_config, mem_config)
 
         output_batch = layer(batch)
         assert output_batch.adj.shape == (
@@ -76,12 +75,13 @@ class TestGeneralMultiLayer(BatchLoaderMixin):
     def test_simple(self, dim_inner):
         n_layers = len(dim_inner)
         multi_layer_config = MultiLayerConfig(
-            layers=[LayerConfig(dim_inner=dim) for dim in dim_inner]
+            layers=[
+                LayerConfig(layer_type="gcnconv", dim_inner=dim) for dim in dim_inner
+            ]
         )
         mem_config = MemoryConfig()
 
         model = GeneralMultiLayer(
-            "gcnconv",  # TODO: should be specified in the layer config
             self.num_features,
             multi_layer_config,
             mem_config,
@@ -103,7 +103,7 @@ class TestGeneralMultiLayer(BatchLoaderMixin):
         multi_layer_config = MultiLayerConfig(
             layers=[
                 MessagePassingConfig(
-                    mp_type="gcnconv",
+                    layer_type="gcnconv",
                     dim_inner=128,
                     pooling=PoolingConfig(
                         type="dmon",
@@ -111,7 +111,7 @@ class TestGeneralMultiLayer(BatchLoaderMixin):
                     ),
                 ),
                 MessagePassingConfig(
-                    mp_type="gcnconv",
+                    layer_type="gcnconv",
                     dim_inner=final_dim_inner,
                     pooling=PoolingConfig(
                         type="dmon",
@@ -123,7 +123,6 @@ class TestGeneralMultiLayer(BatchLoaderMixin):
         n_layers = len(multi_layer_config.layers)
         mem_config = MemoryConfig()
         model = GeneralMultiLayer(
-            "gcnconv",  # TODO: should be specified in the layer config
             self.num_features,
             multi_layer_config,
             mem_config,
@@ -151,8 +150,8 @@ class TestMLP(BatchLoaderMixin):
     def test_layers_are_linear(self):
         multi_layer_config = MultiLayerConfig(
             layers=[
-                LayerConfig(dim_inner=64),
-                LayerConfig(dim_inner=self.num_classes),
+                LayerConfig(layer_type="linear", dim_inner=64),
+                LayerConfig(layer_type="linear", dim_inner=self.num_classes),
             ]
         )
         mem_config = MemoryConfig()

@@ -13,6 +13,7 @@ ActivationType = Literal["prelu", "relu", "swish"]
 GlobalPoolingType = Literal["mean", "sum", "max"]
 HierarchicalPoolingType = Literal["mincut", "dmon"]  # hierarchical pooling
 StageType = Literal["skipsum", "skipconcat"]
+LayerType = Literal["gcnconv", "ginconv", "sageconv", "linear"]
 
 
 class PoolingConfig(BaseModel):
@@ -21,6 +22,8 @@ class PoolingConfig(BaseModel):
 
 
 class LayerConfig(BaseModel):
+    layer_type: LayerType
+
     dim_inner: PositiveInt = 256
 
     act: Optional[ActivationType] = "prelu"
@@ -45,8 +48,6 @@ class LayerConfig(BaseModel):
 
 
 class MessagePassingConfig(LayerConfig):
-    mp_type: Literal["gcnconv", "generalconv"] = "gcnconv"
-
     normalize_adj: bool = False
 
     pooling: Optional[PoolingConfig] = None

@@ -111,7 +111,6 @@ class GeneralLayer(torch.nn.Module):
 
     def __init__(
         self,
-        layer_type: str,
         dim_in: int,
         dim_out: int,
         layer_config: LayerConfig | MessagePassingConfig | PostMPConfig,
@@ -121,7 +120,7 @@ class GeneralLayer(torch.nn.Module):
         super().__init__()
         self.has_l2norm = layer_config.l2norm
 
-        self.layer = get_layer_class(layer_type)(
+        self.layer = get_layer_class(layer_config.layer_type)(
             dim_in, dim_out, layer_config, **kwargs
         )
         layer_wrapper = []
@@ -179,7 +178,6 @@ class GeneralMultiLayer(torch.nn.Module):
 
     def __init__(
         self,
-        layer_type: str,
         dim_in: int,
         config: MultiLayerConfig,
         mem_config: MemoryConfig,
@@ -191,9 +189,7 @@ class GeneralMultiLayer(torch.nn.Module):
             d_in = dim_in if i == 0 else dim_inner_list[i - 1]
             # d_out = dim_out if i == config.n_layers - 1 else dim_inner
             d_out = dim_inner_list[i]
-            layer = GeneralLayer(
-                layer_type, d_in, d_out, layer_config, mem_config, **kwargs
-            )
+            layer = GeneralLayer(d_in, d_out, layer_config, mem_config, **kwargs)
             self.add_module(f"Layer_{i}", layer)
 
     def forward(self, batch):
@@ -213,15 +209,18 @@ class MLP(torch.nn.Module):
         **kwargs,
     ):
         super().__init__()
-
+        self._check_layer_type(multi_layer_config)
         self.model = torch.nn.Sequential(
             GeneralMultiLayer(
-                "linear",
                 dim_in=dim_in,
                 config=multi_layer_config,
                 mem_config=mem_config,
             )
         )
+
+    def _check_layer_type(self, multi_layer_config: MultiLayerConfig):
+        for l in multi_layer_config.layers:
+            assert l.layer_type == "linear"
 
     def forward(self, batch):
         if isinstance(batch, torch.Tensor):
