@@ -1,4 +1,5 @@
 import torch
+from torch_geometric.data import Data
 
 
 def stacked_blocks_to_block_diagonal(
@@ -51,3 +52,7 @@ def batch2ptr(batch: torch.Tensor) -> torch.Tensor:
 def hsplit_and_vstack(A: torch.Tensor, chunk_size: int) -> torch.Tensor:
     """horizontally split A into chunks of size `chunk_size` and then vertically stack them"""
     return torch.vstack(torch.split(A, chunk_size, dim=1))
+
+
+def get_edge_weight(batch: Data) -> torch.Tensor:
+    return getattr(batch, "edge_weight")

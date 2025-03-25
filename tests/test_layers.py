@@ -93,7 +93,6 @@ class TestGeneralMultiLayer(BatchLoaderMixin):
         batch = self.load_batch()
 
         output = model(batch)
-
         assert output.x.shape == (self.num_nodes * self.batch_size, dim_inner[-1])
 
     def test_with_pooling(self):
@@ -123,7 +122,6 @@ class TestGeneralMultiLayer(BatchLoaderMixin):
         )
         n_layers = len(multi_layer_config.layers)
         mem_config = MemoryConfig()
-
         model = GeneralMultiLayer(
             "gcnconv",  # TODO: should be specified in the layer config
             self.num_features,
@@ -137,7 +135,6 @@ class TestGeneralMultiLayer(BatchLoaderMixin):
         batch = self.load_batch()
 
         output = model(batch)
-
         assert output.x.shape == (final_n_clusters * self.batch_size, final_dim_inner)
         assert output.s.shape == (self.batch_size * 20, final_n_clusters)
         assert output.adj.shape == (

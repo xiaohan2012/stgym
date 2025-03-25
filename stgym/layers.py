@@ -13,6 +13,7 @@ from stgym.config_schema import (
     PostMPConfig,
 )
 from stgym.pooling import get_pooling_class
+from stgym.utils import get_edge_weight
 
 
 def get_layer_class(name):
@@ -68,7 +69,7 @@ class GCNConv(torch.nn.Module):
 
     def forward(self, batch):
         # TODO: why modify the x in place?
-        batch.x = self.model(batch.x, batch.edge_index)
+        batch.x = self.model(batch.x, batch.edge_index, get_edge_weight(batch))
         return batch
 
 
@@ -84,7 +85,7 @@ class SAGEConv(torch.nn.Module):
         )
 
     def forward(self, batch):
-        batch.x = self.model(batch.x, batch.edge_index)
+        batch.x = self.model(batch.x, batch.edge_index, get_edge_weight(batch))
         return batch
 
 
@@ -101,7 +102,7 @@ class GINConv(torch.nn.Module):
         self.model = pyg.nn.GINConv(gin_nn)
 
     def forward(self, batch):
-        batch.x = self.model(batch.x, batch.edge_index)
+        batch.x = self.model(batch.x, batch.edge_index, get_edge_weight(batch))
         return batch
 
 
