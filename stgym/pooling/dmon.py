@@ -7,6 +7,7 @@ from torch_scatter import scatter_sum
 
 from stgym.config_schema import PoolingConfig
 from stgym.utils import (
+    attach_loss_to_batch,
     batch2ptr,
     hsplit_and_vstack,
     mask_diagonal_sp,
@@ -144,8 +145,5 @@ class DMoNPoolingLayer(torch.nn.Module):
             "cluster_loss": cluster_loss,
             "ortho_loss": ortho_loss,
         }
-        if hasattr(batch, "loss"):
-            batch.loss.append(loss_info)
-        else:
-            batch.loss = [loss_info]
+        attach_loss_to_batch(batch, loss_info)
         return batch

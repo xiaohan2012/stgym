@@ -56,3 +56,10 @@ def hsplit_and_vstack(A: torch.Tensor, chunk_size: int) -> torch.Tensor:
 
 def get_edge_weight(batch: Data) -> torch.Tensor:
     return getattr(batch, "edge_weight")
+
+
+def attach_loss_to_batch(batch: Data, loss_dict: dict[str, torch.Tensor]) -> Data:
+    if hasattr(batch, "loss"):
+        batch.loss.append(loss_dict)
+    else:
+        batch.loss = [loss_dict]
