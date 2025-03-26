@@ -63,14 +63,6 @@ class PostMPConfig(LayerConfig):
     pass
 
 
-class MultiLayerConfig(BaseModel):
-    layers: list[MessagePassingConfig | PostMPConfig | LayerConfig]
-
-    @property
-    def n_layers(self):
-        return len(self.layers)
-
-
 class MemoryConfig(BaseModel):
     inplace: bool = False
 
@@ -80,10 +72,19 @@ class InterLayerConfig(BaseModel):
 
 
 class ModelConfig(BaseModel):
-    # mp: MessagePassingConfig
-    # post_mp: PostMPConfig
-    layers: MultiLayerConfig
-    mem: MemoryConfig
-    # inter_layer: InterLayerConfig
+    layers: list[MessagePassingConfig | PostMPConfig | LayerConfig]
+    mem: Optional[MemoryConfig] = MemoryConfig()
 
-    # TOOD: validate the when skipsim is used, the dim_in and dim_inner should be the same
+    @property
+    def n_layers(self):
+        return len(self.layers)
+
+
+# class ModelConfig(BaseModel):
+#     # mp: MessagePassingConfig
+#     # post_mp: PostMPConfig
+#     layers: ModelConfig
+#     mem: MemoryConfig
+#     # inter_layer: InterLayerConfig
+
+# TOOD: validate the when skipsim is used, the dim_in and dim_inner should be the same

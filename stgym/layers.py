@@ -9,7 +9,7 @@ from stgym.config_schema import (
     LayerConfig,
     MemoryConfig,
     MessagePassingConfig,
-    MultiLayerConfig,
+    ModelConfig,
     PostMPConfig,
 )
 from stgym.pooling import get_pooling_class
@@ -179,7 +179,7 @@ class GeneralMultiLayer(torch.nn.Module):
     def __init__(
         self,
         dim_in: int,
-        config: MultiLayerConfig,
+        config: ModelConfig,
         mem_config: MemoryConfig,
         **kwargs,
     ):
@@ -204,7 +204,7 @@ class MLP(torch.nn.Module):
     def __init__(
         self,
         dim_in: int,
-        multi_layer_config: MultiLayerConfig,
+        multi_layer_config: ModelConfig,
         mem_config: MemoryConfig,
         **kwargs,
     ):
@@ -218,7 +218,7 @@ class MLP(torch.nn.Module):
             )
         )
 
-    def _check_layer_type(self, multi_layer_config: MultiLayerConfig):
+    def _check_layer_type(self, multi_layer_config: ModelConfig):
         for l in multi_layer_config.layers:
             assert l.layer_type == "linear"
 
