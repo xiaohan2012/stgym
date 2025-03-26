@@ -1,0 +1,45 @@
+layers:
+
+  - layer_type: gcnconv
+    dim_inner: 128
+    act: "prelu"
+
+    use_batchnorm: true
+    bn_eps: 1e-5
+    bn_momentum: 0.1
+
+    dropout: 0.0
+
+    has_bias: True
+    l2norm: False
+
+    normalize_adj: true
+
+    pooling:
+      type: dmon
+      n_clusters: 20
+
+    readout: null
+
+  - layer_type: gcnconv
+    dim_inner: 64
+    act: "prelu"
+
+    use_batchnorm: true
+    bn_eps: 1e-5
+    bn_momentum: 0.1
+
+    dropout: 0.0
+
+    has_bias: True
+    l2norm: False
+
+    normalize_adj: true
+
+    pooling:
+      type: dmon
+      n_clusters: 10
+
+    readout: null
+mem:
+  inplace: false
