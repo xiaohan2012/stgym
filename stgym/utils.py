@@ -1,4 +1,5 @@
 import torch
+import yaml
 from torch_geometric.data import Data
 
 
@@ -63,3 +64,9 @@ def attach_loss_to_batch(batch: Data, loss_dict: dict[str, torch.Tensor]) -> Dat
         batch.loss.append(loss_dict)
     else:
         batch.loss = [loss_dict]
+
+
+def load_yaml(file_path: str) -> dict:
+    with open(file_path) as file:
+        data = yaml.safe_load(file)
+    return data
