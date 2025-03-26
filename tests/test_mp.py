@@ -1,6 +1,6 @@
 import pytest
 
-from stgym.config_schema import Config
+from stgym.config_schema import ModelConfig
 from stgym.mp import GNNStackStage
 
 from .utils import BatchLoaderMixin
@@ -9,7 +9,7 @@ from .utils import BatchLoaderMixin
 class TestGNNStackStage(BatchLoaderMixin):
     @pytest.mark.parametrize("stage_type", ["skipconcat", "skipconcat", None])
     def test(self, stage_type):
-        config = Config(
+        config = ModelConfig(
             mp={
                 "layer_type": "gcnconv",
                 "n_layers": 2,

@@ -79,10 +79,11 @@ class InterLayerConfig(BaseModel):
     stage_type: Optional[StageType] = "skipconcat"
 
 
-class Config(BaseModel):
-    mp: MessagePassingConfig
-    post_mp: PostMPConfig
+class ModelConfig(BaseModel):
+    # mp: MessagePassingConfig
+    # post_mp: PostMPConfig
+    layers: MultiLayerConfig
     mem: MemoryConfig
-    inter_layer: InterLayerConfig
+    # inter_layer: InterLayerConfig
 
     # TOOD: validate the when skipsim is used, the dim_in and dim_inner should be the same

@@ -1,6 +1,6 @@
 import pytest
 
-from stgym.config_schema import Config
+from stgym.config_schema import ModelConfig
 from stgym.post_mp import GNNGraphHead
 
 from .utils import BatchLoaderMixin
@@ -11,7 +11,7 @@ class Test(BatchLoaderMixin):
     def test(self, graph_pooling):
         # ensure that pooling runs and the output dimenion matchs
         # e.g., 2 graphs should output 2xnum_classes for graph classification
-        config = Config(
+        config = ModelConfig(
             post_mp={
                 "graph_pooling": graph_pooling,
                 "n_layers": 2,

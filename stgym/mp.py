@@ -1,7 +1,7 @@
 import torch
 import torch.nn.functional as F
 
-from stgym.config_schema import Config
+from stgym.config_schema import ModelConfig
 from stgym.layers import GeneralLayer
 
 
@@ -13,7 +13,7 @@ class GNNStackStage(torch.nn.Module):
         dim_out (int): The output dimension.
     """
 
-    def __init__(self, dim_in: int, dim_out: int, config: Config):
+    def __init__(self, dim_in: int, dim_out: int, config: ModelConfig):
         super().__init__()
         self.num_layers = config.mp.n_layers
         self.stage_type = config.inter_layer.stage_type
