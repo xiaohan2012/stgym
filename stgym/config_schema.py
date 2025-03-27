@@ -15,6 +15,7 @@ HierarchicalPoolingType = Literal["mincut", "dmon"]  # hierarchical pooling
 StageType = Literal["skipsum", "skipconcat"]
 LayerType = Literal["gcnconv", "ginconv", "sageconv", "linear"]
 OptimizerType = Literal["sgd", "adam"]
+GlobalPoolingType = Literal["max", "mean", "add"]
 
 
 class PoolingConfig(BaseModel):
@@ -86,3 +87,7 @@ class OptimizerConfig(BaseModel):
     base_lr: float = 0.01
     weight_decay: float = 5e-4
     momentum: float = 0.9
+
+
+class GlobalPoolingConfig(BaseModel):
+    type: GlobalPoolingType = "mean"
