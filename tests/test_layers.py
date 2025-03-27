@@ -4,7 +4,6 @@ from stgym.config_schema import (
     LayerConfig,
     MemoryConfig,
     MessagePassingConfig,
-    ModelConfig,
     PoolingConfig,
 )
 from stgym.layers import (
@@ -74,16 +73,15 @@ class TestGeneralMultiLayer(BatchLoaderMixin):
     @pytest.mark.parametrize("dim_inner", [[128, 64]])
     def test_simple(self, dim_inner):
         n_layers = len(dim_inner)
-        multi_layer_config = ModelConfig(
-            layers=[
-                LayerConfig(layer_type="gcnconv", dim_inner=dim) for dim in dim_inner
-            ]
-        )
+        layer_configs = [
+            MessagePassingConfig(layer_type="gcnconv", dim_inner=dim)
+            for dim in dim_inner
+        ]
         mem_config = MemoryConfig()
 
         model = GeneralMultiLayer(
             self.num_features,
-            multi_layer_config,
+            layer_configs,
             mem_config,
         )
 
@@ -100,31 +98,29 @@ class TestGeneralMultiLayer(BatchLoaderMixin):
         final_n_clusters = 10
         final_dim_inner = 64
         # n_layers = len(dim_inner)
-        multi_layer_config = ModelConfig(
-            layers=[
-                MessagePassingConfig(
-                    layer_type="gcnconv",
-                    dim_inner=128,
-                    pooling=PoolingConfig(
-                        type="dmon",
-                        n_clusters=20,
-                    ),
+        layer_configs = [
+            MessagePassingConfig(
+                layer_type="gcnconv",
+                dim_inner=128,
+                pooling=PoolingConfig(
+                    type="dmon",
+                    n_clusters=20,
                 ),
-                MessagePassingConfig(
-                    layer_type="gcnconv",
-                    dim_inner=final_dim_inner,
-                    pooling=PoolingConfig(
-                        type="dmon",
-                        n_clusters=final_n_clusters,
-                    ),
+            ),
+            MessagePassingConfig(
+                layer_type="gcnconv",
+                dim_inner=final_dim_inner,
+                pooling=PoolingConfig(
+                    type="dmon",
+                    n_clusters=final_n_clusters,
                 ),
-            ]
-        )
-        n_layers = len(multi_layer_config.layers)
+            ),
+        ]
+        n_layers = len(layer_configs)
         mem_config = MemoryConfig()
         model = GeneralMultiLayer(
             self.num_features,
-            multi_layer_config,
+            layer_configs,
             mem_config,
         )
 
@@ -148,15 +144,13 @@ class TestGeneralMultiLayer(BatchLoaderMixin):
 
 class TestMLP(BatchLoaderMixin):
     def test_layers_are_linear(self):
-        model_config = ModelConfig(
-            layers=[
-                LayerConfig(layer_type="linear", dim_inner=64),
-                LayerConfig(layer_type="linear", dim_inner=self.num_classes),
-            ]
-        )
+        layer_configs = [
+            LayerConfig(layer_type="linear", dim_inner=64),
+            LayerConfig(layer_type="linear", dim_inner=self.num_classes),
+        ]
         mem_config = MemoryConfig()
 
-        model = MLP(self.num_features, model_config, mem_config)
+        model = MLP(self.num_features, layer_configs, mem_config)
 
         layers = list(model.model.children())[0].children()
         for layer in layers:

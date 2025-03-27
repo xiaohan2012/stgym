@@ -73,15 +73,6 @@ class InterLayerConfig(BaseModel):
     stage_type: Optional[StageType] = "skipconcat"
 
 
-class ModelConfig(BaseModel):
-    layers: list[MessagePassingConfig | PostMPConfig | LayerConfig]
-    # mem: Optional[MemoryConfig] = MemoryConfig()
-
-    @property
-    def n_layers(self):
-        return len(self.layers)
-
-
 class OptimizerConfig(BaseModel):
     optimizer: OptimizerType = "adam"
     base_lr: float = 0.01
@@ -89,5 +80,12 @@ class OptimizerConfig(BaseModel):
     momentum: float = 0.9
 
 
-class GlobalPoolingConfig(BaseModel):
-    type: GlobalPoolingType = "mean"
+class ModelConfig(BaseModel):
+    mp_layers: list[MessagePassingConfig]
+    global_pooling: GlobalPoolingType = "mean"
+    post_mp_layers: list[PostMPConfig] = None
+    # mem: Optional[MemoryConfig] = MemoryConfig()
+
+    @property
+    def n_layers(self):
+        return len(self.layers)

@@ -9,7 +9,6 @@ from stgym.config_schema import (
     LayerConfig,
     MemoryConfig,
     MessagePassingConfig,
-    ModelConfig,
     PostMPConfig,
 )
 from stgym.pooling import get_pooling_class
@@ -179,13 +178,13 @@ class GeneralMultiLayer(torch.nn.Module):
     def __init__(
         self,
         dim_in: int,
-        config: ModelConfig,
+        layer_configs: list[LayerConfig],
         mem_config: MemoryConfig,
         **kwargs,
     ):
         super().__init__()
-        dim_inner_list = _.map_(config.layers, "dim_inner")
-        for i, layer_config in enumerate(config.layers):
+        dim_inner_list = _.map_(layer_configs, "dim_inner")
+        for i, layer_config in enumerate(layer_configs):
             d_in = dim_in if i == 0 else dim_inner_list[i - 1]
             # d_out = dim_out if i == config.n_layers - 1 else dim_inner
             d_out = dim_inner_list[i]
@@ -204,22 +203,22 @@ class MLP(torch.nn.Module):
     def __init__(
         self,
         dim_in: int,
-        multi_layer_config: ModelConfig,
+        layer_configs: list[LayerConfig],
         mem_config: MemoryConfig,
         **kwargs,
     ):
         super().__init__()
-        self._check_layer_type(multi_layer_config)
+        self._check_layer_type(layer_configs)
         self.model = torch.nn.Sequential(
             GeneralMultiLayer(
                 dim_in=dim_in,
-                config=multi_layer_config,
+                layer_configs=layer_configs,
                 mem_config=mem_config,
             )
         )
 
-    def _check_layer_type(self, multi_layer_config: ModelConfig):
-        for l in multi_layer_config.layers:
+    def _check_layer_type(self, layer_configs: list[LayerConfig]):
+        for l in layer_configs:
             assert l.layer_type == "linear"
 
     def forward(self, batch):
