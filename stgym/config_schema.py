@@ -14,6 +14,7 @@ GlobalPoolingType = Literal["mean", "sum", "max"]
 HierarchicalPoolingType = Literal["mincut", "dmon"]  # hierarchical pooling
 StageType = Literal["skipsum", "skipconcat"]
 LayerType = Literal["gcnconv", "ginconv", "sageconv", "linear"]
+OptimizerType = Literal["sgd", "adam"]
 
 
 class PoolingConfig(BaseModel):
@@ -73,18 +74,15 @@ class InterLayerConfig(BaseModel):
 
 class ModelConfig(BaseModel):
     layers: list[MessagePassingConfig | PostMPConfig | LayerConfig]
-    mem: Optional[MemoryConfig] = MemoryConfig()
+    # mem: Optional[MemoryConfig] = MemoryConfig()
 
     @property
     def n_layers(self):
         return len(self.layers)
 
 
-# class ModelConfig(BaseModel):
-#     # mp: MessagePassingConfig
-#     # post_mp: PostMPConfig
-#     layers: ModelConfig
-#     mem: MemoryConfig
-#     # inter_layer: InterLayerConfig
-
-# TOOD: validate the when skipsim is used, the dim_in and dim_inner should be the same
+class OptimizerConfig(BaseModel):
+    optimizer: OptimizerType = "adam"
+    base_lr: float = 0.01
+    weight_decay: float = 5e-4
+    momentum: float = 0.9
