@@ -203,16 +203,18 @@ class MLP(torch.nn.Module):
     def __init__(
         self,
         dim_in: int,
-        layer_configs: list[LayerConfig],
+        config: list[LayerConfig] | PostMPConfig,
         mem_config: MemoryConfig,
         **kwargs,
     ):
         super().__init__()
-        self._check_layer_type(layer_configs)
+        if isinstance(config, PostMPConfig):
+            config = config.to_layer_configs()
+        self._check_layer_type(config)
         self.model = torch.nn.Sequential(
             GeneralMultiLayer(
                 dim_in=dim_in,
-                layer_configs=layer_configs,
+                layer_configs=config,
                 mem_config=mem_config,
             )
         )

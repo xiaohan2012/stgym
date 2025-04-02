@@ -1,5 +1,6 @@
 from typing import Literal, Optional
 
+import pydash as _
 from pydantic import (
     BaseModel,
     Field,
@@ -8,6 +9,7 @@ from pydantic import (
     PositiveInt,
     model_validator,
 )
+from pydantic.json_schema import SkipJsonSchema
 
 ActivationType = Literal["prelu", "relu", "swish"]
 GlobalPoolingType = Literal["mean", "sum", "max"]
@@ -16,6 +18,7 @@ StageType = Literal["skipsum", "skipconcat"]
 LayerType = Literal["gcnconv", "ginconv", "sageconv", "linear"]
 OptimizerType = Literal["sgd", "adam"]
 GlobalPoolingType = Literal["max", "mean", "add"]
+PostMPLayerType = Literal["mlp", "linear"]
 
 
 class PoolingConfig(BaseModel):
@@ -62,7 +65,22 @@ class MessagePassingConfig(LayerConfig):
 
 
 class PostMPConfig(LayerConfig):
-    pass
+    """configuration for an MLP block, placed after the message-passing layers"""
+
+    # new field
+    dims: list[int] = Field(..., min_length=1)
+
+    # exclude irrelevant fields
+    layer_type: SkipJsonSchema[LayerType] = Field(default="linear", exclude=True)
+    dim_inner: SkipJsonSchema[int] = Field(default=0, exclude=True)
+
+    def to_layer_configs(self):
+        other_params = _.omit(self.model_dump(), "hidden_dims")
+        print(other_params)
+        return [
+            LayerConfig(layer_type="linear", dim_inner=dim, **other_params)
+            for dim in self.dims
+        ]
 
 
 class MemoryConfig(BaseModel):
@@ -86,6 +104,6 @@ class ModelConfig(BaseModel):
     post_mp_layers: list[PostMPConfig] = None
     # mem: Optional[MemoryConfig] = MemoryConfig()
 
-    @property
-    def n_layers(self):
-        return len(self.layers)
+    # @property
+    # def n_mp_layers(self):
+    #     return len(self.mp_layers)

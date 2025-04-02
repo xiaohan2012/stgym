@@ -5,6 +5,7 @@ from stgym.config_schema import (
     MemoryConfig,
     MessagePassingConfig,
     PoolingConfig,
+    PostMPConfig,
 )
 from stgym.layers import (
     MLP,
@@ -143,15 +144,7 @@ class TestGeneralMultiLayer(BatchLoaderMixin):
 
 
 class TestMLP(BatchLoaderMixin):
-    def test_layers_are_linear(self):
-        layer_configs = [
-            LayerConfig(layer_type="linear", dim_inner=64),
-            LayerConfig(layer_type="linear", dim_inner=self.num_classes),
-        ]
-        mem_config = MemoryConfig()
-
-        model = MLP(self.num_features, layer_configs, mem_config)
-
+    def check(self, model):
         layers = list(model.model.children())[0].children()
         for layer in layers:
             assert isinstance(layer.layer, Linear)
@@ -160,3 +153,21 @@ class TestMLP(BatchLoaderMixin):
         output = model(batch)
 
         assert output.x.shape == (self.num_nodes * self.batch_size, self.num_classes)
+
+    def test_layers_are_linear(self):
+        layer_configs = [
+            LayerConfig(layer_type="linear", dim_inner=64),
+            LayerConfig(layer_type="linear", dim_inner=self.num_classes),
+        ]
+        mem_config = MemoryConfig()
+
+        model = MLP(self.num_features, layer_configs, mem_config)
+        self.check(model)
+
+    def test_creation_from_post_mp_config(self):
+        postmp_cfg = PostMPConfig(dims=[20, self.num_classes])
+
+        mem_config = MemoryConfig()
+
+        model = MLP(self.num_features, postmp_cfg, mem_config)
+        self.check(model)
