@@ -1,14 +1,14 @@
 from torch_geometric.nn import global_add_pool, global_max_pool, global_mean_pool
 
-from stgym.config_schema import GlobalPoolingConfig
+from stgym.config_schema import GlobalPoolingType
 
 
-def get_global_pooling_operator(cfg: GlobalPoolingConfig):
-    if cfg.type == "add":
+def get_pooling_operator(type: GlobalPoolingType):
+    if type == "add":
         return global_add_pool
-    elif cfg.type == "mean":
+    elif type == "mean":
         return global_mean_pool
-    elif cfg.type == "max":
+    elif type == "max":
         return global_max_pool
     else:
-        raise ValueError(cfg.type)
+        raise ValueError(type)

@@ -101,7 +101,8 @@ class OptimizerConfig(BaseModel):
 class ModelConfig(BaseModel):
     mp_layers: list[MessagePassingConfig]
     global_pooling: GlobalPoolingType = "mean"
-    post_mp_layers: list[PostMPConfig] = None
+    post_mp_layer: PostMPConfig
+    mem: Optional[MemoryConfig] = MemoryConfig(inplace=False)
     # mem: Optional[MemoryConfig] = MemoryConfig()
 
     # @property
