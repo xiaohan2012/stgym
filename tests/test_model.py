@@ -1,3 +1,5 @@
+from torch import Tensor
+
 from stgym.config_schema import (
     MessagePassingConfig,
     ModelConfig,
@@ -28,4 +30,5 @@ class TestGraphClassifier(BatchLoaderMixin):
         batch = self.load_batch()
         model = GraphClassifier(self.num_features, self.num_classes, cfg)
         output = model(batch)
+        assert isinstance(output, Tensor)
         assert output.shape == (self.batch_size, self.num_classes)
