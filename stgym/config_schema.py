@@ -108,3 +108,16 @@ class ModelConfig(BaseModel):
     # @property
     # def n_mp_layers(self):
     #     return len(self.mp_layers)
+
+
+GraphConstructionApproach = Literal["knn", "radius"]
+
+
+class DataLoaderConfig(BaseModel):
+    dataset_name: str
+
+    graph_const: GraphConstructionApproach = "knn"
+    knn_k: Optional[PositiveInt] = 10
+    radius: Optional[PositiveFloat] = 0.1
+
+    batch_size: Optional[PositiveInt] = 64
