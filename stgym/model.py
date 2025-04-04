@@ -22,6 +22,5 @@ class GraphClassifier(torch.nn.Module):
 
     def forward(self, batch: Data) -> Tensor:
         batch = self.mp_module(batch)
-        print(f"batch.x.shape: {batch.x.shape}" f"batch.x.shape: {batch.x.shape}")
         graph_embeddings = self.global_pooling(batch.x, batch.batch)
         return self.post_mp(graph_embeddings)
