@@ -6,12 +6,12 @@ from stgym.config_schema import (
     PoolingConfig,
     PostMPConfig,
 )
-from stgym.model import GraphClassifier
+from stgym.model import STGraphClassifier
 
 from .utils import BatchLoaderMixin
 
 
-class TestGraphClassifier(BatchLoaderMixin):
+class TestSTGraphClassifier(BatchLoaderMixin):
     def test(self):
         cfg = ModelConfig(
             mp_layers=[
@@ -28,7 +28,7 @@ class TestGraphClassifier(BatchLoaderMixin):
             post_mp_layer=PostMPConfig(dims=[64, 32]),
         )
         batch = self.load_batch()
-        model = GraphClassifier(self.num_features, self.num_classes, cfg)
+        model = STGraphClassifier(self.num_features, self.num_classes, cfg)
         output = model(batch)
         assert isinstance(output, Tensor)
         assert output.shape == (self.batch_size, self.num_classes)

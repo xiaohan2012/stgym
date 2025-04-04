@@ -7,7 +7,7 @@ from stgym.global_pooling import get_pooling_operator
 from stgym.layers import MLP, GeneralMultiLayer
 
 
-class GraphClassifier(torch.nn.Module):
+class STGraphClassifier(torch.nn.Module):
     def __init__(self, dim_in: int, dim_out: int, cfg: ModelConfig):
         super().__init__()
         self.mp_module = GeneralMultiLayer(
