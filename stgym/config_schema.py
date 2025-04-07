@@ -1,14 +1,8 @@
 from typing import Literal, Optional
 
 import pydash as _
-from pydantic import (
-    BaseModel,
-    Field,
-    NonNegativeFloat,
-    PositiveFloat,
-    PositiveInt,
-    model_validator,
-)
+from pydantic import (BaseModel, Field, NonNegativeFloat, PositiveFloat,
+                      PositiveInt, model_validator)
 from pydantic.json_schema import SkipJsonSchema
 
 ActivationType = Literal["prelu", "relu", "swish"]
@@ -113,6 +107,21 @@ class ModelConfig(BaseModel):
 GraphConstructionApproach = Literal["knn", "radius"]
 
 
+class DataSplitConfig(BaseModel):
+    train_ratio: PositiveFloat
+    val_ratio: PositiveFloat
+    test_ratio: PositiveFloat
+
+    @model_validator(mode="after")
+    def ratios_should_sum_to_one(self) -> "LayerConfig":
+        if (
+            abs((self.train_ratio + self.val_ratio + self.test_ratio) - 1.0)
+            >= 1e-5
+        ):
+            raise ValueError("train/val/test ratios do not sum up to 1")
+        return self
+
+
 class DataLoaderConfig(BaseModel):
     dataset_name: str
 
@@ -121,3 +130,7 @@ class DataLoaderConfig(BaseModel):
     radius: Optional[PositiveFloat] = 0.1
 
     batch_size: Optional[PositiveInt] = 64
+
+    split: Optional[DataSplitConfig] = DataSplitConfig(
+        train_ratio=0.7, val_ratio=0.15, test_ratio=0.15
+    )

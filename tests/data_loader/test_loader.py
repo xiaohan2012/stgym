@@ -20,4 +20,4 @@ def test_create_loader(mock_cfg):
     loaders = create_loader(mock_cfg)
     assert len(loaders) == 3
     for loader in loaders:
-        isinstance(DataLoader, loader)
+        assert isinstance(loader, DataLoader)
