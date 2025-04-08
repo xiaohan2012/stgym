@@ -37,6 +37,8 @@ def create_data_batch(
     adj = torch.zeros((num_nodes * batch_size, num_nodes * batch_size))
     adj[batch.edge_index[0], batch.edge_index[1]] = 1
     batch.adj = adj.to_sparse_coo()
+    # graph-level labels
+    batch.y = torch.randint(0, 2, (batch_size,))
     return batch
 
 
