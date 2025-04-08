@@ -1,8 +1,14 @@
 from typing import Literal, Optional
 
 import pydash as _
-from pydantic import (BaseModel, Field, NonNegativeFloat, PositiveFloat,
-                      PositiveInt, model_validator)
+from pydantic import (
+    BaseModel,
+    Field,
+    NonNegativeFloat,
+    PositiveFloat,
+    PositiveInt,
+    model_validator,
+)
 from pydantic.json_schema import SkipJsonSchema
 
 ActivationType = Literal["prelu", "relu", "swish"]
@@ -11,6 +17,7 @@ HierarchicalPoolingType = Literal["mincut", "dmon"]  # hierarchical pooling
 StageType = Literal["skipsum", "skipconcat"]
 LayerType = Literal["gcnconv", "ginconv", "sageconv", "linear"]
 OptimizerType = Literal["sgd", "adam"]
+LRSchedulerType = Literal[None, "cos"]
 GlobalPoolingType = Literal["max", "mean", "add"]
 PostMPLayerType = Literal["mlp", "linear"]
 
@@ -85,6 +92,11 @@ class InterLayerConfig(BaseModel):
     stage_type: Optional[StageType] = "skipconcat"
 
 
+class LRScheduleConfig(BaseModel):
+    type: LRSchedulerType = None
+    max_epoch: PositiveInt = 100
+
+
 class OptimizerConfig(BaseModel):
     optimizer: OptimizerType = "adam"
     base_lr: float = 0.01
@@ -93,10 +105,17 @@ class OptimizerConfig(BaseModel):
 
 
 class ModelConfig(BaseModel):
+    # architecture
     mp_layers: list[MessagePassingConfig]
     global_pooling: GlobalPoolingType = "mean"
     post_mp_layer: PostMPConfig
-    mem: Optional[MemoryConfig] = MemoryConfig(inplace=False)
+
+    # training
+    optim: Optional[OptimizerConfig] = OptimizerConfig()
+    lr_schedule: Optional[LRScheduleConfig] = LRScheduleConfig()
+
+    # misc
+    mem: Optional[MemoryConfig] = MemoryConfig(inplace=False)    
     # mem: Optional[MemoryConfig] = MemoryConfig()
 
     # @property
@@ -114,10 +133,7 @@ class DataSplitConfig(BaseModel):
 
     @model_validator(mode="after")
     def ratios_should_sum_to_one(self) -> "LayerConfig":
-        if (
-            abs((self.train_ratio + self.val_ratio + self.test_ratio) - 1.0)
-            >= 1e-5
-        ):
+        if abs((self.train_ratio + self.val_ratio + self.test_ratio) - 1.0) >= 1e-5:
             raise ValueError("train/val/test ratios do not sum up to 1")
         return self
 
