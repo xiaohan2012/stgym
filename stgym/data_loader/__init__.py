@@ -8,12 +8,15 @@ from torch_geometric.loader import DataLoader
 
 
 def load_dataset(cfg: DataLoaderConfig):
+    """load dataset by name"""
+
     ds_name = cfg.dataset_name.lower()
     if ds_name == "ba2motif":
         return pg_datasets.BA2MotifDataset(root="./data")
 
 
-def create_loader(cfg: DataLoaderConfig):
+def create_loader(cfg: DataLoaderConfig) -> tuple[DataLoader, DataLoader, DataLoader]:
+    """create 3 data loaders corresponding to train/val/test split"""
     ds = load_dataset(cfg)
     train_ds, val_ds, test_ds = random_split(ds, lengths=[0.7, 0.15, 0.15])
     train_loader = DataLoader(train_ds, batch_size=cfg.batch_size, shuffle=True)
