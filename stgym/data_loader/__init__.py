@@ -45,7 +45,7 @@ class STDataModule(LightningDataModule):
         super().__init__(has_val=True, has_test=True)
 
     @property
-    def dim_in(self):
+    def num_features(self):
         return self.ds.data.x.shape[1]
 
     def train_dataloader(self) -> DataLoader:

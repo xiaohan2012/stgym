@@ -31,4 +31,4 @@ def test_tl_module_init(mock_cfg):
     assert isinstance(mod.val_dataloader(), DataLoader)
     assert isinstance(mod.test_dataloader(), DataLoader)
 
-    assert mod.dim_in == 10
+    assert mod.num_features == 10
