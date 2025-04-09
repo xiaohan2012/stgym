@@ -13,16 +13,17 @@ def stacked_blocks_to_block_diagonal(
     """
     assert A.ndim == 2, A.ndim
     assert ptr.ndim == 1, ptr.ndim
+    device = A.device
 
     assert ptr[-1] == A.shape[0], f"{ptr[-1]} != {A.shape[0]}"
     b = ptr.shape[0] - 1
     n, k = A.shape
 
-    ind0 = torch.arange(n).repeat(k, 1).T
-    ind1 = torch.arange(k).repeat(n, 1)
+    ind0 = torch.arange(n).repeat(k, 1).T.to(device)
+    ind1 = torch.arange(k).repeat(n, 1).to(device)
 
     sizes = ptr[1:] - ptr[:-1]
-    ind0_offset = torch.arange(start=0, end=k * b, step=k)
+    ind0_offset = torch.arange(start=0, end=k * b, step=k).to(device)
     ind0_offset_expanded = (
         ind0_offset.repeat_interleave(repeats=sizes, dim=0).repeat(k, 1).T
     )
