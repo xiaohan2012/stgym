@@ -17,10 +17,12 @@ def test_load_dataset(mock_cfg):
 
 
 def test_create_loader(mock_cfg):
-    loaders = create_loader(mock_cfg)
+    dataset = load_dataset(mock_cfg)
+    loaders = create_loader(dataset, mock_cfg)
     assert len(loaders) == 3
     for loader in loaders:
         assert isinstance(loader, DataLoader)
+
 
 
 def test_tl_module_init(mock_cfg):
@@ -28,3 +30,5 @@ def test_tl_module_init(mock_cfg):
     assert isinstance(mod.train_dataloader(), DataLoader)
     assert isinstance(mod.val_dataloader(), DataLoader)
     assert isinstance(mod.test_dataloader(), DataLoader)
+
+    assert mod.dim_in == 10

@@ -12,13 +12,18 @@ def load_dataset(cfg: DataLoaderConfig):
 
     ds_name = cfg.dataset_name.lower()
     if ds_name == "ba2motif":
+        ds = pg_datasets.BA2MotifDataset(root="./data")
+        print("ds.data: {}".format(ds.data))
         return pg_datasets.BA2MotifDataset(root="./data")
 
 
-def create_loader(cfg: DataLoaderConfig) -> tuple[DataLoader, DataLoader, DataLoader]:
+def create_loader(
+    ds, cfg: DataLoaderConfig
+) -> tuple[DataLoader, DataLoader, DataLoader]:
     """create 3 data loaders corresponding to train/val/test split"""
-    ds = load_dataset(cfg)
-    train_ds, val_ds, test_ds = random_split(ds, lengths=[0.7, 0.15, 0.15])
+    train_ds, val_ds, test_ds = random_split(
+        ds, lengths=[cfg.split.train_ratio, cfg.split.val_ratio, cfg.split.test_ratio]
+    )
     train_loader = DataLoader(train_ds, batch_size=cfg.batch_size, shuffle=True)
     val_loader = DataLoader(val_ds, batch_size=cfg.batch_size, shuffle=False)
     test_loader = DataLoader(test_ds, batch_size=cfg.batch_size, shuffle=False)
@@ -35,8 +40,13 @@ class STDataModule(LightningDataModule):
     """
 
     def __init__(self, cfg: DataLoaderConfig):
-        self.loaders = create_loader(cfg)
+        self.ds = load_dataset(cfg)
+        self.loaders = create_loader(self.ds, cfg)
         super().__init__(has_val=True, has_test=True)
+
+    @property
+    def dim_in(self):
+        return self.ds.data.x.shape[1]
 
     def train_dataloader(self) -> DataLoader:
         return self.loaders[0]
