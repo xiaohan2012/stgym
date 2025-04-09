@@ -63,7 +63,7 @@ class TestGeneralLayer(BatchLoaderMixin):
         layer = GeneralLayer(self.num_features, inner_dim, layer_config, mem_config)
 
         output_batch = layer(batch)
-        assert output_batch.adj.shape == (
+        assert output_batch.adj_t.shape == (
             self.batch_size * n_clusters,
             self.batch_size * n_clusters,
         )
@@ -133,7 +133,7 @@ class TestGeneralMultiLayer(BatchLoaderMixin):
         output = model(batch)
         assert output.x.shape == (final_n_clusters * self.batch_size, final_dim_inner)
         assert output.s.shape == (self.batch_size * 20, final_n_clusters)
-        assert output.adj.shape == (
+        assert output.adj_t.shape == (
             self.batch_size * final_n_clusters,
             self.batch_size * final_n_clusters,
         )

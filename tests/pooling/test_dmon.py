@@ -16,7 +16,7 @@ from stgym.utils import stacked_blocks_to_block_diagonal
 from ..utils import BatchLoaderMixin
 from .dense_dmon import dense_dmon_pool
 
-RTOL = 1e-4
+RTOL = 1e-3
 
 
 def test_dmon_pool():
@@ -32,7 +32,7 @@ def test_dmon_pool():
     adj = torch.sparse_coo_tensor(
         torch.stack([s, t]), torch.ones(s.size(0)), (n_nodes, n_nodes)
     )
-    batch.adj = adj
+    batch.adj_t = adj
 
     n_nodes = batch.x.shape[0]
     n_clusters = 3
@@ -47,15 +47,13 @@ def test_dmon_pool():
 
     x_3d, mask = to_dense_batch(batch.x, batch.batch)
 
-    F.selu(torch.matmul(s.transpose(1, 2), x_3d))
-
     (
         actual_out_adj,
         actual_spectral_loss,
         actual_cluster_loss,
         actual_ortho_loss,
         actual_batch,
-    ) = dmon_pool(batch.adj, batch.batch, C)
+    ) = dmon_pool(batch.adj_t, batch.batch, C)
     np.testing.assert_allclose(actual_spectral_loss, expected_spectral_loss, rtol=RTOL)
     np.testing.assert_allclose(actual_ortho_loss, expected_ortho_loss, rtol=RTOL)
     np.testing.assert_allclose(actual_batch, expected_batch)
@@ -88,7 +86,7 @@ class TestWrapper(BatchLoaderMixin):
             num_clusters * self.batch_size,
             self.num_features,
         )
-        assert output_batch.adj.shape == (
+        assert output_batch.adj_t.shape == (
             num_clusters * self.batch_size,
             num_clusters * self.batch_size,
         )

@@ -127,11 +127,11 @@ class DMoNPoolingLayer(torch.nn.Module):
         out_x = hsplit_and_vstack(out_x, chunk_size=batch.x.shape[1])  # (SxB) x D
 
         out_adj, spectral_loss, cluster_loss, ortho_loss, out_batch = dmon_pool(
-            batch.adj, batch.batch, s
+            batch.adj_t, batch.batch, s
         )
 
         batch.x = out_x
-        batch.adj = out_adj
+        batch.adj_t = out_adj
         batch.batch = out_batch
         batch.ptr = batch2ptr(batch.batch)
 
