@@ -220,8 +220,8 @@ class MLP(torch.nn.Module):
         )
 
     def _check_layer_type(self, layer_configs: list[LayerConfig]):
-        for l in layer_configs:
-            assert l.layer_type == "linear"
+        for cfg in layer_configs:
+            assert cfg.layer_type == "linear"
 
     def forward(self, batch):
         if isinstance(batch, torch.Tensor):

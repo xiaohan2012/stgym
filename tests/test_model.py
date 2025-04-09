@@ -7,6 +7,7 @@ from stgym.config_schema import (
     PostMPConfig,
 )
 from stgym.model import STGraphClassifier
+from torch_geometric.data import Data
 
 from .utils import BatchLoaderMixin
 
@@ -29,6 +30,7 @@ class TestSTGraphClassifier(BatchLoaderMixin):
         )
         batch = self.load_batch()
         model = STGraphClassifier(self.num_features, self.num_classes, cfg)
-        output = model(batch)
-        assert isinstance(output, Tensor)
-        assert output.shape == (self.batch_size, self.num_classes)
+        batch, pred = model(batch)
+        assert isinstance(pred, Tensor)
+        assert isinstance(batch, Data)
+        assert pred.shape == (self.batch_size, self.num_classes)

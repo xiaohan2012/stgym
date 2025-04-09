@@ -20,7 +20,9 @@ class STGraphClassifier(torch.nn.Module):
         # TODO: what does it mean for dim equal -1? when to use it?
         self.post_mp = MLP(-1, cfg.post_mp_layer, cfg.mem)
 
-    def forward(self, batch: Data) -> Tensor:
+    def forward(self, batch: Data) -> tuple[Data, Tensor]:
+        """return the batch before global pooling and the predictions by post MP layers"""
         batch = self.mp_module(batch)
         graph_embeddings = self.global_pooling(batch.x, batch.batch)
-        return self.post_mp(graph_embeddings)
+        pred = self.post_mp(graph_embeddings)
+        return batch, pred.squeeze()
