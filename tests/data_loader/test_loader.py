@@ -1,4 +1,5 @@
 import pytest
+import torch
 from torch.utils.data import DataLoader
 from torch_geometric.datasets import BA2MotifDataset
 
@@ -13,7 +14,7 @@ def mock_cfg():
 
 def test_load_dataset(mock_cfg):
     dataset = load_dataset(mock_cfg)
-    isinstance(dataset, BA2MotifDataset)
+    assert isinstance(dataset, BA2MotifDataset)
 
 
 def test_create_loader(mock_cfg):
@@ -22,6 +23,9 @@ def test_create_loader(mock_cfg):
     assert len(loaders) == 3
     for loader in loaders:
         assert isinstance(loader, DataLoader)
+        batch = next(iter(loader))
+        assert isinstance(batch.adj_t, torch.Tensor)
+        assert batch.adj_t.layout == torch.sparse_coo
 
 
 

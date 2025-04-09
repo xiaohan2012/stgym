@@ -1,4 +1,6 @@
 import torch_geometric.datasets as pg_datasets
+import torch
+import torch_geometric.transforms as T
 from torch.utils.data import DataLoader
 from torch_geometric.data.lightning.datamodule import LightningDataModule
 
@@ -11,10 +13,21 @@ def load_dataset(cfg: DataLoaderConfig):
     """load dataset by name"""
 
     ds_name = cfg.dataset_name.lower()
+    transform = T.compose.Compose(
+        [
+            # T.KNNGraph(k=72),
+            T.ToSparseTensor(
+                remove_edge_index=False, layout=torch.sparse_coo
+            ),  # keep edge_index
+            # AssignSparseCSC(),  # add csc matrix
+            # AssignSparseCSR(),  # add csr matrix
+        ]
+    )
+
     if ds_name == "ba2motif":
-        ds = pg_datasets.BA2MotifDataset(root="./data")
-        print("ds.data: {}".format(ds.data))
-        return pg_datasets.BA2MotifDataset(root="./data")
+        # ds = pg_datasets.BA2MotifDataset(root="./data", transform=transform)
+        # print("ds.data: {}".format(ds.data))
+        return pg_datasets.BA2MotifDataset(root="./data", transform=transform)
 
 
 def create_loader(
