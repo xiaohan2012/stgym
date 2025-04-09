@@ -1,4 +1,4 @@
-from stgym.config_schema import LayerConfig, PostMPConfig
+from stgym.config_schema import LayerConfig, PostMPConfig, TrainConfig
 
 
 class TestPostMPConfig:
@@ -13,3 +13,7 @@ class TestPostMPConfig:
             assert layer_config.layer_type == "linear"
             assert layer_config.dropout == dropout
             assert layer_config.act == act
+
+def test_train_config():
+    cfg =TrainConfig(max_epoch=1000)
+    assert cfg.lr_schedule.max_epoch == 1000

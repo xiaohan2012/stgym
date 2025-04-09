@@ -1,4 +1,5 @@
 from typing import Literal, Optional
+from typing_extensions import Self
 
 import pydash as _
 from pydantic import (
@@ -20,6 +21,7 @@ OptimizerType = Literal["sgd", "adam"]
 LRSchedulerType = Literal[None, "cos"]
 GlobalPoolingType = Literal["max", "mean", "add"]
 PostMPLayerType = Literal["mlp", "linear"]
+GraphConstructionApproach = Literal["knn", "radius"]
 
 
 class PoolingConfig(BaseModel):
@@ -110,20 +112,8 @@ class ModelConfig(BaseModel):
     global_pooling: GlobalPoolingType = "mean"
     post_mp_layer: PostMPConfig
 
-    # training
-    optim: Optional[OptimizerConfig] = OptimizerConfig()
-    lr_schedule: Optional[LRScheduleConfig] = LRScheduleConfig()
-
     # misc
-    mem: Optional[MemoryConfig] = MemoryConfig(inplace=False)    
-    # mem: Optional[MemoryConfig] = MemoryConfig()
-
-    # @property
-    # def n_mp_layers(self):
-    #     return len(self.mp_layers)
-
-
-GraphConstructionApproach = Literal["knn", "radius"]
+    mem: Optional[MemoryConfig] = MemoryConfig(inplace=False)
 
 
 class DataSplitConfig(BaseModel):
@@ -150,3 +140,19 @@ class DataLoaderConfig(BaseModel):
     split: Optional[DataSplitConfig] = DataSplitConfig(
         train_ratio=0.7, val_ratio=0.15, test_ratio=0.15
     )
+
+
+class TrainConfig(BaseModel):
+    optim: Optional[OptimizerConfig] = OptimizerConfig()
+    lr_schedule: Optional[LRScheduleConfig] = LRScheduleConfig()
+    max_epoch: PositiveInt
+
+    @model_validator(mode="after")
+    def override_scheduler_properties(self) -> Self:
+        self.lr_schedule.max_epoch = self.max_epoch
+        return self
+
+class ExperimentConfig(BaseModel):
+    data: DataLoaderConfig
+    model: ModelConfig
+    train: TrainConfig
