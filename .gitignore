@@ -172,3 +172,5 @@ outputs/
 .virtual_documents/
 
 *.pem
+
+lightning_logs/
