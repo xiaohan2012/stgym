@@ -61,6 +61,9 @@ def test_dmon_pool():
         actual_ortho_loss.detach().numpy(), expected_ortho_loss, rtol=RTOL
     )
     np.testing.assert_allclose(actual_batch, expected_batch)
+
+    # not checking clustering loss due to a bug in the current implementation
+    # more info: https://github.com/pyg-team/pytorch_geometric/issues/10148
     # np.testing.assert_allclose(actual_cluster_loss, expected_cluster_loss, rtol=RTOL)
 
     assert is_sparse(actual_out_adj)
@@ -90,13 +93,7 @@ class TestAutoGrad(BatchLoaderMixin):
             output_batch,
         ) = dmon_pool(batch.adj_t, batch.batch, C)
 
-        # print("spectral_loss: {}".format(spectral_loss))
-        # print("cluster_loss: {}".format(cluster_loss))
-        # print("ortho_loss: {}".format(ortho_loss))
         loss = spectral_loss + cluster_loss + ortho_loss
-        # loss = spectral_loss  # works
-        # loss = cluster_loss  # RuntimeError: expand is unsupported for Sparse tensors
-        # loss = ortho_loss  # RuntimeError: expand is unsupported for Sparse tensors
 
         loss.backward()
 
