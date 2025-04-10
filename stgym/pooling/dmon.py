@@ -49,11 +49,11 @@ def dmon_pool(adj: torch.Tensor, batch: torch.Tensor, s: torch.Tensor) -> torch.
 
     m_inv = torch.repeat_interleave(1 / m2, K)
     diagonal_indices = torch.stack([torch.arange(K * B), torch.arange(K * B)])
-    m_inv_sp = torch.sparse_coo_tensor(diagonal_indices, m_inv)
+    m_inv_sp = torch.sparse_coo_tensor(diagonal_indices, m_inv, requires_grad=False)
 
     # block diagonal matrices of C and d
-    C_bd = stacked_blocks_to_block_diagonal(s, ptr)  # [N, K x B]
-    d_bd = stacked_blocks_to_block_diagonal(d.unsqueeze(0).T, ptr)
+    C_bd = stacked_blocks_to_block_diagonal(s, ptr, requires_grad=True)  # [N, K x B]
+    d_bd = stacked_blocks_to_block_diagonal(d.unsqueeze(0).T, ptr, requires_grad=False)
 
     # the normalizer
     # (d.T x).T (d.T x) / 2m
@@ -70,15 +70,24 @@ def dmon_pool(adj: torch.Tensor, batch: torch.Tensor, s: torch.Tensor) -> torch.
     # take the mean over the batch
     spectral_loss = -torch.trace((m_inv_sp @ (out_adj - normalizer)).to_dense()) / B
 
+    # -----------------------------
     # cluster loss (collapse regularization)
     sqrt_K = torch.sqrt(torch.tensor(K))
 
-    cluster_size = C_bd.sum(axis=0).to_dense().reshape((B, K))  # B x K
+    # cluster_size = C_bd.sum(axis=0).to_dense().reshape((B, K))  # B x K
+    # Han: converting C_bd to dense to temporarily address RuntimeError: expand is unsupported for Sparse tensors
+    cluster_size = C_bd.to_dense().sum(axis=0).to_dense().reshape((B, K))  # B x K
 
     cluster_loss = (cluster_size.pow(2).sum(axis=1).sqrt() / n * sqrt_K - 1).mean()
+    # -----------------------------
 
     # orthogonality loss
-    CC = C_bd.T @ C_bd  # [KxB, KxB]
+    # CC = torch.sparse.mm(C_bd.T, C_bd)  # [KxB, KxB]
+    # CC = C_bd.T @ C_bd  # [KxB, KxB]
+    # Han: converting CC to dense to temporarly address RuntimeError: expand is unsupported for Sparse tensors
+    CC = (C_bd.T @ C_bd).to_dense()  # [KxB, KxB]
+
+    # normalization matrix
     CC_batch = torch.arange(0, B).repeat_interleave(K)
     CC_norm = torch.sqrt(
         scatter_sum(
@@ -86,11 +95,11 @@ def dmon_pool(adj: torch.Tensor, batch: torch.Tensor, s: torch.Tensor) -> torch.
             index=CC_batch,
         )
     )
-
-    # construct the I_k matrix of shape [KxB, KxB], further divided by sqrt(K)
     CC_normalizer = torch.sparse_coo_tensor(
-        diagonal_indices, 1 / CC_norm.repeat_interleave(K)
+        diagonal_indices, 1 / CC_norm.repeat_interleave(K), requires_grad=True
     )
+
+    # construct the I_k matrix of shape [KxB, KxB], further divided by sqrt(K)    
     I_div_k = torch.sparse_coo_tensor(
         diagonal_indices, torch.Tensor(1 / sqrt_K).repeat(K * B)
     )
@@ -106,7 +115,7 @@ def dmon_pool(adj: torch.Tensor, batch: torch.Tensor, s: torch.Tensor) -> torch.
     # normalize the out_adj
     out_adj = mask_diagonal_sp(out_adj)
     d = torch.einsum("ij->i", out_adj).to_dense().sqrt() + 1e-12
-    d_norm = torch.sparse_coo_tensor(diagonal_indices, (1 / d))
+    d_norm = torch.sparse_coo_tensor(diagonal_indices, (1 / d), requires_grad=False)
     out_adj_normalized = d_norm @ out_adj @ d_norm
     return out_adj_normalized, spectral_loss, cluster_loss, ortho_loss, CC_batch
 

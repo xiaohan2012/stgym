@@ -54,8 +54,12 @@ def test_dmon_pool():
         actual_ortho_loss,
         actual_batch,
     ) = dmon_pool(batch.adj_t, batch.batch, C)
-    np.testing.assert_allclose(actual_spectral_loss, expected_spectral_loss, rtol=RTOL)
-    np.testing.assert_allclose(actual_ortho_loss, expected_ortho_loss, rtol=RTOL)
+    np.testing.assert_allclose(
+        actual_spectral_loss.detach().numpy(), expected_spectral_loss, rtol=RTOL
+    )
+    np.testing.assert_allclose(
+        actual_ortho_loss.detach().numpy(), expected_ortho_loss, rtol=RTOL
+    )
     np.testing.assert_allclose(actual_batch, expected_batch)
     # np.testing.assert_allclose(actual_cluster_loss, expected_cluster_loss, rtol=RTOL)
 
@@ -65,8 +69,36 @@ def test_dmon_pool():
     ).to_dense()
 
     np.testing.assert_allclose(
-        actual_out_adj.to_dense(), expected_out_adj_bd, rtol=RTOL
+        actual_out_adj.to_dense().detach().numpy(), expected_out_adj_bd, rtol=RTOL
     )
+
+
+class TestAutoGrad(BatchLoaderMixin):
+    def test(self):
+        torch.autograd.set_detect_anomaly(True)
+        num_clusters = 2
+        batch = self.load_batch()
+
+        n_nodes = batch.x.shape[0]
+        C = torch.rand(n_nodes, num_clusters, requires_grad=True)
+
+        (
+            out_adj,
+            spectral_loss,
+            cluster_loss,
+            ortho_loss,
+            output_batch,
+        ) = dmon_pool(batch.adj_t, batch.batch, C)
+
+        # print("spectral_loss: {}".format(spectral_loss))
+        # print("cluster_loss: {}".format(cluster_loss))
+        # print("ortho_loss: {}".format(ortho_loss))
+        loss = spectral_loss + cluster_loss + ortho_loss
+        # loss = spectral_loss  # works
+        # loss = cluster_loss  # RuntimeError: expand is unsupported for Sparse tensors
+        # loss = ortho_loss  # RuntimeError: expand is unsupported for Sparse tensors
+
+        loss.backward()
 
 
 class TestWrapper(BatchLoaderMixin):
