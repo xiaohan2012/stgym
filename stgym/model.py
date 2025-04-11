@@ -23,6 +23,10 @@ class STGraphClassifier(torch.nn.Module):
     def forward(self, batch: Data) -> tuple[Data, Tensor]:
         """return the batch before global pooling and the predictions by post MP layers"""
         batch = self.mp_module(batch)
+        if hasattr(batch, "loss"):
+            other_loss = batch.loss
+        else:
+            other_loss = []
         graph_embeddings = self.global_pooling(batch.x, batch.batch)
         pred = self.post_mp(graph_embeddings)
-        return batch, pred.squeeze()
+        return batch, pred.squeeze(), other_loss

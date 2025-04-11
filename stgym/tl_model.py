@@ -24,7 +24,7 @@ class STGymModule(pl.LightningModule):
         super().__init__()
         self.train_cfg = train_cfg
         self.model = STGraphClassifier(dim_in, dim_out, model_cfg)
-
+        print(self.model)
     def forward(self, *args, **kwargs):
         return self.model(*args, **kwargs)
 
@@ -39,15 +39,17 @@ class STGymModule(pl.LightningModule):
     def _shared_step(self, batch: Data, split: str) -> Dict:
         batch.split = split
 
-        batch, pred_logits = self(batch)
+        batch, pred_logits, layer_losses = self(batch)
         true = batch.y
         print("pred: {}".format(pred_logits))
         print("true: {}".format(true))
         loss, pred_score = compute_classification_loss(pred_logits, true)
-        print("loss: {}".format(loss))
+
+        # TODO: may attach different weights to the loss terms
+        pooling_loss = sum(layer_losses[-1].values())
         step_end_time = time.time()
         return dict(
-            loss=loss,
+            loss=loss + pooling_loss,
             true=true,
             pred_score=pred_score.detach(),
             step_end_time=step_end_time,

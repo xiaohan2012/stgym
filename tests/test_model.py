@@ -30,7 +30,10 @@ class TestSTGraphClassifier(BatchLoaderMixin):
         )
         batch = self.load_batch()
         model = STGraphClassifier(self.num_features, self.num_classes, cfg)
-        batch, pred = model(batch)
+        batch, pred, other_loss = model(batch)
         assert isinstance(pred, Tensor)
         assert isinstance(batch, Data)
         assert pred.shape == (self.batch_size, self.num_classes)
+        assert len(other_loss) == 2
+        for loss in other_loss:
+            isinstance(loss, dict)

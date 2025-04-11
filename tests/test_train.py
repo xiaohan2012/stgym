@@ -22,10 +22,11 @@ def model_cfg():
                 layer_type="gcnconv",
                 pooling=PoolingConfig(type="dmon", n_clusters=8),
             ),
-            MessagePassingConfig(
-                layer_type="gcnconv",
-                pooling=PoolingConfig(type="dmon", n_clusters=4),
-            ),
+            # training works under one mp+pooling layer only, not more than that
+            # MessagePassingConfig(
+            #     layer_type="gcnconv",
+            #     pooling=PoolingConfig(type="dmon", n_clusters=4),
+            # ),
         ],
         global_pooling="mean",
         post_mp_layer=PostMPConfig(dims=[16, 8]),
