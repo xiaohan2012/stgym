@@ -17,12 +17,13 @@ from stgym.tl_model import STGymModule
 @pytest.fixture
 def model_cfg():
     return ModelConfig(
+        # message passing layers
         mp_layers=[
             MessagePassingConfig(
                 layer_type="gcnconv",
                 pooling=PoolingConfig(type="dmon", n_clusters=8),
             ),
-            # training works under one mp+pooling layer only, not more than that
+            # # training works under one mp+pooling layer only, not more than that
             # MessagePassingConfig(
             #     layer_type="gcnconv",
             #     pooling=PoolingConfig(type="dmon", n_clusters=4),
@@ -42,7 +43,7 @@ def train_cfg():
 
 @pytest.fixture
 def data_cfg():
-    return DataLoaderConfig(dataset_name="ba2motif")
+    return DataLoaderConfig(dataset_name="brca-test", batch_size=8)
 
 
 def test_train(data_cfg, model_cfg, train_cfg):
@@ -53,6 +54,5 @@ def test_train(data_cfg, model_cfg, train_cfg):
         model_cfg=model_cfg,
         train_cfg=train_cfg,
     )
-    print(model_module.model)
 
     train(model_module, data_module, train_cfg)

@@ -15,19 +15,29 @@ def load_dataset(cfg: DataLoaderConfig):
     ds_name = cfg.dataset_name.lower()
     transform = T.compose.Compose(
         [
-            # T.KNNGraph(k=72),
+            T.KNNGraph(k=32),
             T.ToSparseTensor(
                 remove_edge_index=False, layout=torch.sparse_coo
             ),  # keep edge_index
-            # AssignSparseCSC(),  # add csc matrix
-            # AssignSparseCSR(),  # add csr matrix
         ]
     )
 
-    if ds_name == "ba2motif":
-        # ds = pg_datasets.BA2MotifDataset(root="./data", transform=transform)
-        # print("ds.data: {}".format(ds.data))
-        return pg_datasets.BA2MotifDataset(root="./data", transform=transform)
+    data_dir = f"./data/{ds_name}"
+    if ds_name == "brca":
+        from stgym.data_loader.brca import BRCADataset
+
+        return BRCADataset(root=data_dir, transform=transform)
+    elif ds_name == "brca-test":
+        from stgym.data_loader.brca import BRCADataset
+        ds = BRCADataset(
+            root='./tests/data/brca-test',
+            transform=transform,
+            # keep only small graphs
+            pre_filter=lambda g: g.num_nodes <= 500,
+        )
+        return ds
+    else:
+        raise NotImplementedError(ds_name)
 
 
 def create_loader(
@@ -37,9 +47,15 @@ def create_loader(
     train_ds, val_ds, test_ds = random_split(
         ds, lengths=[cfg.split.train_ratio, cfg.split.val_ratio, cfg.split.test_ratio]
     )
+    print("len(ds): {}".format(len(ds)))
+    print("len(train_ds): {}".format(len(train_ds)))
+    print("len(val_ds): {}".format(len(val_ds)))
+    print("len(test_ds): {}".format(len(test_ds)))
     train_loader = DataLoader(train_ds, batch_size=cfg.batch_size, shuffle=True)
+    # val/test data is in one batch
     val_loader = DataLoader(val_ds, batch_size=cfg.batch_size, shuffle=False)
     test_loader = DataLoader(test_ds, batch_size=cfg.batch_size, shuffle=False)
+
     return train_loader, val_loader, test_loader
 
 

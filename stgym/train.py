@@ -1,6 +1,9 @@
 from typing import Optional
+
 import pytorch_lightning as pl
-from stgym.config_schema import ExperimentConfig, TrainConfig
+import torch
+
+from stgym.config_schema import TrainConfig
 from stgym.data_loader import STDataModule
 from stgym.tl_model import STGymModule
 
@@ -38,9 +41,8 @@ def train(
         # default_root_dir=cfg.out_dir,
         max_epochs=cfg.max_epoch,
         # accelerator=cfg.accelerator,
-        # devices='auto' if not torch.cuda.is_available() else cfg.devices,
-        # devices='cpu'
-        accelerator='cpu'
+        # devices="auto" if not torch.cuda.is_available() else cfg.devices,
+        accelerator="cpu"  # 'mps' not supporting some sparse operations
     )
 
     trainer.fit(model, datamodule=datamodule)
