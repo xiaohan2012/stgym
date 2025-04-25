@@ -43,12 +43,13 @@ def mask_diagonal_sp(A: torch.sparse.Tensor) -> torch.sparse.Tensor:
 
 
 def batch2ptr(batch: torch.Tensor) -> torch.Tensor:
+    device = batch.device
     freq = torch.bincount(batch)
     if (freq == 0).any():
         raise ValueError(
             "The batch contains zero-frequency element, consider making this function more robust (refer to the unit tests)"
         )
-    return torch.concat([torch.tensor([0]), freq.cumsum(dim=0)])
+    return torch.concat([torch.tensor([0]).to(device), freq.cumsum(dim=0)])
 
 
 def hsplit_and_vstack(A: torch.Tensor, chunk_size: int) -> torch.Tensor:
