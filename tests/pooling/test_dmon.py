@@ -80,10 +80,11 @@ class TestAutoGrad(BatchLoaderMixin):
     def test(self):
         torch.autograd.set_detect_anomaly(True)
         num_clusters = 2
+
         batch = self.load_batch()
 
         n_nodes = batch.x.shape[0]
-        C = torch.rand(n_nodes, num_clusters, requires_grad=True)
+        C = torch.rand(n_nodes, num_clusters, requires_grad=True).to(batch.adj_t.device)
 
         (
             out_adj,

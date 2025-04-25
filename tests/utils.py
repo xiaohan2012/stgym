@@ -23,6 +23,7 @@ def create_data_batch(
     num_features: int = 128,
     num_classes: int = 10,
     batch_size: int = 5,
+    device: str = "cpu",
 ):
     dataloader = DataLoader(
         [
@@ -39,7 +40,7 @@ def create_data_batch(
     batch.adj_t = adj.to_sparse_coo()
     # graph-level labels
     batch.y = torch.randint(0, 2, (batch_size,))
-    return batch
+    return batch.to(device)
 
 
 class BatchLoaderMixin:
@@ -47,6 +48,7 @@ class BatchLoaderMixin:
     num_features = 128
     num_classes = 10
     batch_size = 3
+    device = "cpu" if not torch.cuda.is_available() else "cuda"
 
     def load_batch(self):
         return create_data_batch(
@@ -54,4 +56,5 @@ class BatchLoaderMixin:
             num_features=self.num_features,
             num_classes=self.num_classes,
             batch_size=self.batch_size,
+            device=self.device,
         )
