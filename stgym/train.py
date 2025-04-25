@@ -41,8 +41,9 @@ def train(
         # default_root_dir=cfg.out_dir,
         max_epochs=cfg.max_epoch,
         # accelerator=cfg.accelerator,
-        # devices="auto" if not torch.cuda.is_available() else cfg.devices,
-        accelerator="cpu"  # 'mps' not supporting some sparse operations
+        devices=1,
+        # 'mps' not supporting some sparse operations, therefore shouldn't be used
+        accelerator="cpu" if not torch.cuda.is_available() else 'gpu'
     )
 
     trainer.fit(model, datamodule=datamodule)

@@ -152,6 +152,7 @@ class TrainConfig(BaseModel):
         self.lr_schedule.max_epoch = self.max_epoch
         return self
 
+
 class ExperimentConfig(BaseModel):
     data: DataLoaderConfig
     model: ModelConfig
