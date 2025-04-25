@@ -109,7 +109,7 @@ class TestWrapper(BatchLoaderMixin):
             n_clusters=num_clusters,
         )
         # (self.out_channels, self.in_channels): ([10], 128)
-        model = DMoNPoolingLayer(cfg)
+        model = DMoNPoolingLayer(cfg).to(batch.device)
         # output_batch, s, spectral_loss, cluster_loss, ortho_loss = model(batch)
         output_batch = model(batch)
         assert output_batch.x.shape == (
