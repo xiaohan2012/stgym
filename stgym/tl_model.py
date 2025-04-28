@@ -1,15 +1,15 @@
 import time
-import numpy as np
-import pytorch_lightning as pl
 from typing import Any, Dict, Tuple
-from torch_geometric.data import Data
+
+import pytorch_lightning as pl
 import torch
+from sklearn.metrics import roc_auc_score
+from torch_geometric.data import Data
 
 from stgym.config_schema import ModelConfig, TrainConfig
+from stgym.loss import compute_classification_loss
 from stgym.model import STGraphClassifier
 from stgym.optimizer import create_optimizer_from_cfg, create_scheduler
-from stgym.loss import compute_classification_loss
-from sklearn.metrics import roc_auc_score
 from stgym.utils import flatten_dict
 
 # from torch_geometric.graphgym.loss import compute_loss

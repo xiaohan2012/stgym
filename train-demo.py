@@ -36,7 +36,7 @@ model_cfg = ModelConfig(
 
 
 train_cfg = TrainConfig(
-    optim=OptimizerConfig(), lr_schedule=LRScheduleConfig(type=None), max_epoch=1
+    optim=OptimizerConfig(), lr_schedule=LRScheduleConfig(type=None), max_epoch=10
 )
 
 
