@@ -13,6 +13,7 @@ from stgym.tl_model import STGymModule
 mlf_logger = MLFlowLogger(
     experiment_name="lightning_logs", tracking_uri="http://127.0.0.1:8080"
 )
+EARLY_STOPPING_METRIC = "val_pr_auc"
 
 
 def train(
@@ -33,7 +34,7 @@ def train(
     """
     # warnings.filterwarnings('ignore', '.*use `CSVLogger` as the default.*')
 
-    callbacks = [EarlyStopping(monitor="val_loss", mode="min")]
+    callbacks = [EarlyStopping(monitor=EARLY_STOPPING_METRIC, mode="min")]
     # if logger:
     #     callbacks.append(LoggerCallback())
     # if cfg.train.enable_ckpt:
