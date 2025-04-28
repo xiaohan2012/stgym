@@ -7,6 +7,7 @@ from stgym.utils import (
     hsplit_and_vstack,
     mask_diagonal_sp,
     stacked_blocks_to_block_diagonal,
+    flatten_dict,
 )
 
 RTOL = 1e-10
@@ -87,3 +88,18 @@ def test_hsplit_and_vstack():
     actual = hsplit_and_vstack(A, chunk_size)
     expected = torch.tensor([[0, 1], [6, 7], [2, 3], [8, 9], [4, 5], [10, 11]])
     np.testing.assert_allclose(actual, expected)
+
+
+@pytest.mark.parametrize(
+    "input, output",
+    [
+        ({"a": {"b": "c"}}, {"a/b": "c"}),
+        ({"a": {"b": "c"}, "d": "e"}, {"a/b": "c", "d": "e"}),
+        ({"a": "bc"}, {"a": "bc"}),
+        ({"a": [{"b": "c"}, {"b": "c"}]}, {"a/0/b": "c", "a/1/b": "c"}),
+        ({"a": [{"b": "c"}, {"d": "e"}]}, {"a/0/b": "c", "a/1/d": "e"}),
+        ({"a": [0, 1, 2]}, {"a": [0, 1, 2]}),
+    ],
+)
+def test_flatten_dict(input, output):
+    assert output == flatten_dict(input)

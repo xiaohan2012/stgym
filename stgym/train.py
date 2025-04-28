@@ -1,12 +1,14 @@
 from typing import Optional
 
 import pytorch_lightning as pl
+from lightning.pytorch.loggers import MLFlowLogger
 import torch
 
 from stgym.config_schema import TrainConfig
 from stgym.data_loader import STDataModule
 from stgym.tl_model import STGymModule
 
+mlf_logger = MLFlowLogger(experiment_name="lightning_logs", tracking_uri="http://127.0.0.1:8080")
 
 def train(
     model: STGymModule,
@@ -43,7 +45,8 @@ def train(
         # accelerator=cfg.accelerator,
         devices=1,
         # 'mps' not supporting some sparse operations, therefore shouldn't be used
-        accelerator="cpu" if not torch.cuda.is_available() else 'gpu'
+        accelerator="cpu" if not torch.cuda.is_available() else 'gpu',
+        logger=mlf_logger
     )
 
     trainer.fit(model, datamodule=datamodule)

@@ -72,3 +72,25 @@ def load_yaml(file_path: str) -> dict:
     with open(file_path) as file:
         data = yaml.safe_load(file)
     return data
+
+
+def flatten_dict(nested_dict, separator="/"):
+    flat_dict = {}
+
+    def aux(data, parent_key):
+        for k, v in data.items():
+            key = parent_key + separator + str(k) if str(parent_key) else k
+            if isinstance(v, dict):
+                aux(v, key)
+            elif isinstance(v, list) and isinstance(
+                v[0], dict
+            ):  # recurse only if all elements are dict
+                padded_v = dict(enumerate(v))
+                for idx in range(len(padded_v)):
+                    padded_key = key + separator + str(idx)
+                    aux(padded_v[idx], padded_key)
+            else:
+                flat_dict[key] = v
+
+    aux(nested_dict, "")
+    return flat_dict

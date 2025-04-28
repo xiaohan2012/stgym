@@ -10,6 +10,7 @@ from stgym.model import STGraphClassifier
 from stgym.optimizer import create_optimizer_from_cfg, create_scheduler
 from stgym.loss import compute_classification_loss
 from sklearn.metrics import roc_auc_score
+from stgym.utils import flatten_dict
 
 # from torch_geometric.graphgym.loss import compute_loss
 # from torch_geometric.graphgym.models.gnn import GNN
@@ -24,11 +25,21 @@ torch.autograd.set_detect_anomaly(True)
 class STGymModule(pl.LightningModule):
     def __init__(self, dim_in, dim_out, model_cfg: ModelConfig, train_cfg: TrainConfig):
         super().__init__()
+        self.my_hparams = model_cfg.model_dump() | train_cfg.model_dump()
         self.train_cfg = train_cfg
         self.model = STGraphClassifier(dim_in, dim_out, model_cfg)
 
         self.validation_step_outputs = []
         self.test_step_outputs = []
+
+        # self.save_hyperparameters()  # do not use this, as it records the pydantic models directly
+
+    def on_fit_start(self):
+        # Perform any setup actions here
+        hprams_flattened = flatten_dict(
+            self.my_hparams, separator='/'
+        )
+        self.logger.log_hyperparams(hprams_flattened)
 
     def forward(self, *args, **kwargs):
         return self.model(*args, **kwargs)
