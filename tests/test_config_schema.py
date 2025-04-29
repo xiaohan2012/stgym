@@ -14,6 +14,7 @@ class TestPostMPConfig:
             assert layer_config.dropout == dropout
             assert layer_config.act == act
 
+
 def test_train_config():
-    cfg =TrainConfig(max_epoch=1000)
+    cfg = TrainConfig(max_epoch=1000)
     assert cfg.lr_schedule.max_epoch == 1000
