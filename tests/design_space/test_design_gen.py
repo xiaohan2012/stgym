@@ -34,7 +34,7 @@ class TestSampleAcrossDimensions:
             act=["prelu", "relu"],
             use_batchnorm=True,
             pooling=dict(type="dmon", n_clusters=[10, 20]),
-            post_mp_dims=['64,32', '32, 16'],
+            post_mp_dims=["64,32", "32, 16"],
         )
         design = sample_across_dimensions(space)
         assert design["num_mp_layers"] == 1
@@ -46,7 +46,8 @@ class TestSampleAcrossDimensions:
 
         assert design["global_pooling"] == "mean"
 
-        assert design["post_mp_dims"] in ['64,32', '32, 16']
+        assert design["post_mp_dims"] in ["64,32", "32, 16"]
+
 
 @pytest.mark.parametrize("k", [1, 2, 3])
 def test_generate_design(k, mock_design_space):
@@ -66,4 +67,10 @@ def test_model_config_validity(mock_design_space):
     assert config.post_mp_layer.dims in ([64, 32], [32, 16])
     assert config.mp_layers[0].use_batchnorm is True
     assert config.post_mp_layer.use_batchnorm is True
-    
+
+
+def test_train_config_validity(mock_design_space):
+    config = generate_train_config(mock_design_space.train, k=1)[0]
+    assert isinstance(config, TrainConfig)
+    assert config.optim.optimizer == 'adam'
+    assert config.max_epoch in (10, 100)

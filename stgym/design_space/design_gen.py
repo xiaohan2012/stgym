@@ -35,7 +35,6 @@ def generate_model_config(space: ModelSpace, k: int = 1) -> list[ModelConfig]:
         mp_layers = [
             MessagePassingConfig(
                 **values
-                # **_.omit(values, ["num_mp_layers", "normalize_adj", "global_pooling"])
             )
             for j in range(values["num_mp_layers"])
         ]
@@ -55,7 +54,11 @@ def generate_model_config(space: ModelSpace, k: int = 1) -> list[ModelConfig]:
 
 
 def generate_train_config(space: TrainSpace, k: int = 1) -> list[TrainConfig]:
-    pass
+    ret = []
+    for i in range(k):
+        values = sample_across_dimensions(space)
+        ret.append(TrainConfig(**values))
+    return ret
 
 
 def generate_task_config(space: TaskSpace, k: int = 1):
