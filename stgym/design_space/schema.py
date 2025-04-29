@@ -15,7 +15,7 @@ class ModelSpace(BaseModel):
         type: HierarchicalPoolingType | list[HierarchicalPoolingType]
         n_clusters: PositiveInt | list[PositiveInt]
 
-    num_layers: PositiveInt | list[PositiveInt]
+    num_mp_layers: PositiveInt | list[PositiveInt]
     global_pooling: GlobalPoolingType | list[GlobalPoolingType]
     normalize_adj: bool | list[bool]
     layer_type: LayerType | list[LayerType]
@@ -23,6 +23,10 @@ class ModelSpace(BaseModel):
     act: ActivationType | list[ActivationType]
     use_batchnorm: bool | list[bool]
     pooling: PoolingSpace
+
+    # temporary hack, which stores a tuple of ints as a comma-separated string
+    # because yaml does not distinguish tuple from list
+    post_mp_dims: str | list[str]  
 
 
 class TrainSpace(BaseModel):

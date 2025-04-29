@@ -1,14 +1,17 @@
 model:
-  num_layers: 1
+  num_mp_layers: 1
   global_pooling: ['mean', 'max']
   normalize_adj: [false, true]
   layer_type: ["gcnconv", "ginconv"]
   dim_inner: [64, 128]
   act: ['prelu', 'relu']
-  use_batchnorm: [true, false]
+  use_batchnorm: true
   pooling:
     type: dmon
     n_clusters: [10, 20]
+  post_mp_dims:
+    - '64,32'
+    - '32, 16'
 train:
   optim:
     optimizer: adam
