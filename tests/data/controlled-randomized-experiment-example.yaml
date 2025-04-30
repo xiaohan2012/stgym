@@ -2,3 +2,4 @@ design_space_source: design-space-example.yaml
 sample_size: 8
 design_dimension: 'model.use_batchnorm'
 design_choices: [true, false]
+random_seed: 123

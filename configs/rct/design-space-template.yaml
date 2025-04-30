@@ -1,0 +1,28 @@
+model:
+  num_mp_layers: 1
+  global_pooling: ['mean', 'max']
+  normalize_adj: [false, true]
+  layer_type: ["gcnconv", "ginconv"]
+  dim_inner: [64, 128]
+  act: ['prelu', 'relu']
+  use_batchnorm: true
+  pooling:
+    type: dmon
+    n_clusters: [10, 20]
+  post_mp_dims:
+    - '64,32'
+    - '32, 16'
+train:
+  optim:
+    optimizer: adam
+    base_lr: 0.01
+  lr_schedule:
+    type: null
+  max_epoch: [10, 100]
+task:
+  dataset_name: ['brca', 'animal']
+data_loader:
+  graph_const: ['knn', 'radius']
+  knn_k: 20
+  radius: 1
+  batch_size: 32

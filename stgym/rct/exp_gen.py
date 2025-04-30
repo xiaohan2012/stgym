@@ -19,6 +19,7 @@ class RCTConfig(BaseModel):
     design_dimension: str
     design_choices: list[any]
     config_file: Optional[Path] = None
+    random_seed: Optional[int] = 42
 
     @model_validator(mode="after")
     def expand_soruce_to_abs_path(self) -> Self:
@@ -41,6 +42,7 @@ def generate_experiment_configs(cfg: RCTConfig) -> list[ExperimentConfig]:
                 generate_experiment(
                     _.set_(design_space_template, cfg.design_dimension, choice),
                     k=cfg.sample_size,
+                    seed=cfg.random_seed,
                 )
                 for choice in cfg.design_choices
             ]
