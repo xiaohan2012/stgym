@@ -1,13 +1,14 @@
-import pydash as _
 from pathlib import Path
 from typing import Optional
 
-from pydantic import BaseModel, PositiveInt, model_validator, ConfigDict
+import pydash as _
+from pydantic import BaseModel, ConfigDict, PositiveInt, model_validator
 from typing_extensions import Self
+
 from stgym.config_schema import ExperimentConfig
-from stgym.utils import load_yaml
-from stgym.design_space.schema import DesignSpace
 from stgym.design_space.design_gen import generate_experiment
+from stgym.design_space.schema import DesignSpace
+from stgym.utils import load_yaml
 
 
 class RCTConfig(BaseModel):

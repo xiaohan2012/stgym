@@ -1,5 +1,6 @@
-import pytest
 import pydash as _
+import pytest
+
 from stgym.rct.exp_gen import RCTConfig, generate_experiments
 from stgym.utils import load_yaml
 
