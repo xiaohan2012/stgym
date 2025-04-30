@@ -81,7 +81,6 @@ class PostMPConfig(LayerConfig):
 
     def to_layer_configs(self):
         other_params = _.omit(self.model_dump(), "hidden_dims")
-        print(other_params)
         return [
             LayerConfig(layer_type="linear", dim_inner=dim, **other_params)
             for dim in self.dims

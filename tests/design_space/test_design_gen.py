@@ -86,3 +86,15 @@ def test_data_loader_config_validity(mock_design_space):
     config = generate_data_loader_config(mock_design_space.data_loader, k=1)[0]
     assert isinstance(config, DataLoaderConfig)
     assert config.graph_const in ["knn", "radius"]
+
+
+@pytest.mark.parametrize("seed", [42, 123])
+def test_consistency_under_fixed_random_seed(mock_design_space, seed):
+    exp1 = generate_experiment(mock_design_space, k=1, seed=seed)
+    exp2 = generate_experiment(mock_design_space, k=1, seed=seed)
+    assert exp1 == exp2
+
+
+def test_experiments_and_truly_randomized(mock_design_space):
+    exp1, exp2 = generate_experiment(mock_design_space, k=2, seed=42)
+    assert exp1 != exp2
