@@ -22,6 +22,8 @@ LRSchedulerType = Literal[None, "cos"]
 GlobalPoolingType = Literal["max", "mean", "add"]
 PostMPLayerType = Literal["mlp", "linear"]
 GraphConstructionApproach = Literal["knn", "radius"]
+TaskType = Literal["node-classification", "graph-classification", "node-clustering"]
+EvalMetric = Literal["pr-auc", "roc-auc", "accuracy", "nmi"]
 
 
 class PoolingConfig(BaseModel):
@@ -129,8 +131,6 @@ class DataSplitConfig(BaseModel):
 
 
 class DataLoaderConfig(BaseModel):
-    dataset_name: str
-
     graph_const: GraphConstructionApproach = "knn"
     knn_k: Optional[PositiveInt] = 10
     radius: Optional[PositiveFloat] = 0.1
@@ -153,7 +153,15 @@ class TrainConfig(BaseModel):
         return self
 
 
+class TaskConfig(BaseModel):
+    dataset_name: str
+    type: TaskType
+    eval_metrics: list[EvalMetric] = ["pr_auc"]
+
+
 class ExperimentConfig(BaseModel):
-    data: DataLoaderConfig
+    task: TaskConfig    
+    data_loader: DataLoaderConfig
     model: ModelConfig
     train: TrainConfig
+

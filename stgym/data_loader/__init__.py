@@ -4,18 +4,22 @@ import torch_geometric.transforms as T
 from torch.utils.data import DataLoader
 from torch_geometric.data.lightning.datamodule import LightningDataModule
 
-from stgym.config_schema import DataLoaderConfig
+from stgym.config_schema import DataLoaderConfig, TaskConfig
 from torch.utils.data import random_split
 from torch_geometric.loader import DataLoader
 
 
-def load_dataset(cfg: DataLoaderConfig):
+def load_dataset(task_cfg: TaskConfig, dl_cfg: DataLoaderConfig):
     """load dataset by name"""
 
-    ds_name = cfg.dataset_name.lower()
+    ds_name = task_cfg.dataset_name.lower()
     transform = T.compose.Compose(
         [
-            T.KNNGraph(k=32),
+            (
+                T.KNNGraph(k=dl_cfg.knn_k)
+                if dl_cfg.graph_const == "knn"
+                else T.RadiusGraph(dl_cfg.radius)
+            ),
             T.ToSparseTensor(
                 remove_edge_index=False, layout=torch.sparse_coo
             ),  # keep edge_index
@@ -29,8 +33,9 @@ def load_dataset(cfg: DataLoaderConfig):
         return BRCADataset(root=data_dir, transform=transform)
     elif ds_name == "brca-test":
         from stgym.data_loader.brca import BRCADataset
+
         ds = BRCADataset(
-            root='./tests/data/brca-test',
+            root="./tests/data/brca-test",
             transform=transform,
             # keep only small graphs
             pre_filter=lambda g: g.num_nodes <= 500,
@@ -68,9 +73,9 @@ class STDataModule(LightningDataModule):
     :meth:`val_dataloader`, and :meth:`test_dataloader` methods, respectively.
     """
 
-    def __init__(self, cfg: DataLoaderConfig):
-        self.ds = load_dataset(cfg)
-        self.loaders = create_loader(self.ds, cfg)
+    def __init__(self, task_cfg: TaskConfig, dl_cfg: DataLoaderConfig):
+        self.ds = load_dataset(task_cfg, dl_cfg)
+        self.loaders = create_loader(self.ds, dl_cfg)
         super().__init__(has_val=True, has_test=True)
 
     @property
