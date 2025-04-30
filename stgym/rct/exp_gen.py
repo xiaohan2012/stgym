@@ -30,7 +30,7 @@ class RCTConfig(BaseModel):
         return self
 
 
-def generate_experiments(cfg: RCTConfig, k: int) -> list[ExperimentConfig]:
+def generate_experiments(cfg: RCTConfig) -> list[ExperimentConfig]:
     design_space_template = DesignSpace.model_validate(
         load_yaml(cfg.design_space_source)
     )
@@ -39,7 +39,8 @@ def generate_experiments(cfg: RCTConfig, k: int) -> list[ExperimentConfig]:
         return _.flatten(
             [
                 generate_experiment(
-                    _.set_(design_space_template, cfg.design_dimension, choice), k=k
+                    _.set_(design_space_template, cfg.design_dimension, choice),
+                    k=cfg.sample_size,
                 )
                 for choice in cfg.design_choices
             ]

@@ -15,7 +15,8 @@ def test_basic(cfg):
 
 @pytest.mark.parametrize("k", [1, 2, 3])
 def test_generation(cfg, k):
-    exp_cfgs = generate_experiments(cfg, k=k)
+    cfg.sample_size = k
+    exp_cfgs = generate_experiments(cfg)
 
     assert len(exp_cfgs) == k * len(cfg.design_choices)
     exp_cfg_dicts = _.map_(exp_cfgs, lambda x: x.model_dump())
@@ -28,4 +29,4 @@ def test_generation(cfg, k):
 def test_invalid_design_dimension(cfg):
     cfg.design_dimension = "non-exisitent-choice"
     with pytest.raises(ValueError, match="Non-exisitent design dimension: .*"):
-        exp_cfgs = generate_experiments(cfg, k=1)
+        generate_experiments(cfg)
