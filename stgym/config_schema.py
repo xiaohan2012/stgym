@@ -1,5 +1,4 @@
 from typing import Literal, Optional
-from typing_extensions import Self
 
 import pydash as _
 from pydantic import (
@@ -11,6 +10,7 @@ from pydantic import (
     model_validator,
 )
 from pydantic.json_schema import SkipJsonSchema
+from typing_extensions import Self
 
 ActivationType = Literal["prelu", "relu", "swish"]
 GlobalPoolingType = Literal["mean", "sum", "max"]

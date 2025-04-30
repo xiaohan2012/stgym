@@ -1,4 +1,5 @@
 from torch import Tensor
+from torch_geometric.data import Data
 
 from stgym.config_schema import (
     MessagePassingConfig,
@@ -7,7 +8,6 @@ from stgym.config_schema import (
     PostMPConfig,
 )
 from stgym.model import STGraphClassifier
-from torch_geometric.data import Data
 
 from .utils import BatchLoaderMixin
 

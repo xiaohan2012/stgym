@@ -36,9 +36,7 @@ class STGymModule(pl.LightningModule):
 
     def on_fit_start(self):
         # Perform any setup actions here
-        hprams_flattened = flatten_dict(
-            self.my_hparams, separator='/'
-        )
+        hprams_flattened = flatten_dict(self.my_hparams, separator="/")
         self.logger.log_hyperparams(hprams_flattened)
 
     def forward(self, *args, **kwargs):

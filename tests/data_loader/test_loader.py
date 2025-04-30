@@ -1,10 +1,10 @@
 import pytest
 import torch
 from torch.utils.data import DataLoader
-from stgym.data_loader.brca import BRCADataset
 
 from stgym.config_schema import DataLoaderConfig, TaskConfig
-from stgym.data_loader import create_loader, load_dataset, STDataModule
+from stgym.data_loader import STDataModule, create_loader, load_dataset
+from stgym.data_loader.brca import BRCADataset
 
 
 @pytest.fixture

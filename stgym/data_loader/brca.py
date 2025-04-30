@@ -1,8 +1,9 @@
 from pathlib import Path
-import torch
+
 import pandas as pd
-from torch_geometric.data import Data
+import torch
 from torch_geometric.data import InMemoryDataset  # , download_url
+from torch_geometric.data import Data
 
 ID_COL = "cellID"
 GROUP_COLS = [

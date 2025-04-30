@@ -1,12 +1,10 @@
-import torch_geometric.datasets as pg_datasets
 import torch
 import torch_geometric.transforms as T
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, random_split
 from torch_geometric.data.lightning.datamodule import LightningDataModule
+from torch_geometric.loader import DataLoader
 
 from stgym.config_schema import DataLoaderConfig, TaskConfig
-from torch.utils.data import random_split
-from torch_geometric.loader import DataLoader
 
 
 def load_dataset(task_cfg: TaskConfig, dl_cfg: DataLoaderConfig):
@@ -52,10 +50,10 @@ def create_loader(
     train_ds, val_ds, test_ds = random_split(
         ds, lengths=[cfg.split.train_ratio, cfg.split.val_ratio, cfg.split.test_ratio]
     )
-    print("len(ds): {}".format(len(ds)))
-    print("len(train_ds): {}".format(len(train_ds)))
-    print("len(val_ds): {}".format(len(val_ds)))
-    print("len(test_ds): {}".format(len(test_ds)))
+    print(f"len(ds): {len(ds)}")
+    print(f"len(train_ds): {len(train_ds)}")
+    print(f"len(val_ds): {len(val_ds)}")
+    print(f"len(test_ds): {len(test_ds)}")
     train_loader = DataLoader(train_ds, batch_size=cfg.batch_size, shuffle=True)
     # val/test data is in one batch
     val_loader = DataLoader(val_ds, batch_size=cfg.batch_size, shuffle=False)

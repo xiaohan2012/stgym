@@ -24,4 +24,4 @@ task:
 data_loader:
   graph_const: ['knn', 'radius']
   knn_k: 20
-  batch_size: 32   
+  batch_size: 32

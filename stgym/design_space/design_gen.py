@@ -2,21 +2,22 @@ import random
 
 import pydash as _
 from pydantic import BaseModel
+
 from stgym.config_schema import (
+    DataLoaderConfig,
+    ExperimentConfig,
     MessagePassingConfig,
     ModelConfig,
     PostMPConfig,
-    TrainConfig,
     TaskConfig,
-    DataLoaderConfig,
-    ExperimentConfig
+    TrainConfig,
 )
 from stgym.design_space.schema import (
+    DataLoaderSpace,
     DesignSpace,
     ModelSpace,
     TaskSpace,
     TrainSpace,
-    DataLoaderSpace,
 )
 
 
@@ -54,7 +55,7 @@ def generate_model_config(space: ModelSpace, k: int = 1) -> list[ModelConfig]:
         post_mp_dims = _.map_(
             values["post_mp_dims"].split(","), lambda s: int(s.strip())
         )
-        print("post_mp_dims: {}".format(post_mp_dims))
+        print(f"post_mp_dims: {post_mp_dims}")
         ret.append(
             ModelConfig(
                 global_pooling=values["global_pooling"],

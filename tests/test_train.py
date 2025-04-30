@@ -1,18 +1,19 @@
 import pytest
-from stgym.train import train
+
 from stgym.config_schema import (
+    DataLoaderConfig,
+    LRScheduleConfig,
     MessagePassingConfig,
     ModelConfig,
+    OptimizerConfig,
     PoolingConfig,
     PostMPConfig,
-    TrainConfig,
-    OptimizerConfig,
-    LRScheduleConfig,
-    DataLoaderConfig,
     TaskConfig,
+    TrainConfig,
 )
 from stgym.data_loader import STDataModule
 from stgym.tl_model import STGymModule
+from stgym.train import train
 
 
 @pytest.fixture

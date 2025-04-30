@@ -3,9 +3,9 @@ from typing import Iterator
 import pydash as _
 from torch.nn import Parameter
 from torch.optim import SGD, Adam, Optimizer
-from torch.optim.lr_scheduler import CosineAnnealingLR, MultiStepLR, StepLR
+from torch.optim.lr_scheduler import StepLR
 
-from stgym.config_schema import OptimizerConfig, LRScheduleConfig
+from stgym.config_schema import LRScheduleConfig, OptimizerConfig
 
 
 def create_optimizer(cfg: OptimizerConfig, params: Iterator[Parameter]):

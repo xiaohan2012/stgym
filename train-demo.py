@@ -1,20 +1,18 @@
 #!/usr/bin/env python
-# coding: utf-8
 
-from stgym.train import train
 from stgym.config_schema import (
+    DataLoaderConfig,
+    LRScheduleConfig,
     MessagePassingConfig,
     ModelConfig,
+    OptimizerConfig,
     PoolingConfig,
     PostMPConfig,
     TrainConfig,
-    OptimizerConfig,
-    LRScheduleConfig,
-    DataLoaderConfig,
 )
 from stgym.data_loader import STDataModule
 from stgym.tl_model import STGymModule
-
+from stgym.train import train
 
 model_cfg = ModelConfig(
     # message passing layers
@@ -36,7 +34,9 @@ model_cfg = ModelConfig(
 
 
 train_cfg = TrainConfig(
-    optim=OptimizerConfig(base_lr=0.1), lr_schedule=LRScheduleConfig(type=None), max_epoch=10
+    optim=OptimizerConfig(base_lr=0.1),
+    lr_schedule=LRScheduleConfig(type=None),
+    max_epoch=10,
 )
 
 

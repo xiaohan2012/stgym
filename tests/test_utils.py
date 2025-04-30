@@ -4,10 +4,10 @@ import torch
 
 from stgym.utils import (
     batch2ptr,
+    flatten_dict,
     hsplit_and_vstack,
     mask_diagonal_sp,
     stacked_blocks_to_block_diagonal,
-    flatten_dict,
 )
 
 RTOL = 1e-10

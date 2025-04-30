@@ -3,7 +3,6 @@ from os import path as osp
 
 import numpy as np
 import torch
-import torch.nn.functional as F
 from torch_geometric.datasets import TUDataset
 from torch_geometric.loader import DataLoader
 from torch_geometric.utils import to_dense_adj, to_dense_batch

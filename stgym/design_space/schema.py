@@ -1,12 +1,13 @@
-from pydantic import BaseModel, PositiveInt, PositiveFloat
+from pydantic import BaseModel, PositiveFloat, PositiveInt
+
 from stgym.config_schema import (
-    GlobalPoolingType,
-    LayerType,
     ActivationType,
-    HierarchicalPoolingType,
-    OptimizerType,
-    LRSchedulerType,
+    GlobalPoolingType,
     GraphConstructionApproach,
+    HierarchicalPoolingType,
+    LayerType,
+    LRSchedulerType,
+    OptimizerType,
 )
 
 

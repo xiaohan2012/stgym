@@ -2,9 +2,8 @@ from typing import Optional
 
 import pytorch_lightning as pl
 import torch
-from pytorch_lightning.loggers import MLFlowLogger
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
-
+from pytorch_lightning.loggers import MLFlowLogger
 
 from stgym.config_schema import TrainConfig
 from stgym.data_loader import STDataModule

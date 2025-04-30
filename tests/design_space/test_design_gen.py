@@ -1,22 +1,22 @@
 import pytest
-from stgym.design_space.schema import DesignSpace, ModelSpace, TaskSpace, TrainSpace
+
+from stgym.config_schema import (
+    DataLoaderConfig,
+    ExperimentConfig,
+    ModelConfig,
+    TaskConfig,
+    TrainConfig,
+)
 from stgym.design_space.design_gen import (
-    sample_across_dimensions,
+    generate_data_loader_config,
     generate_experiment,
     generate_model_config,
-    generate_train_config,
     generate_task_config,
-    generate_data_loader_config,
+    generate_train_config,
+    sample_across_dimensions,
 )
+from stgym.design_space.schema import DesignSpace, ModelSpace
 from stgym.utils import load_yaml
-from stgym.config_schema import (
-    ModelConfig,
-    TrainConfig,
-    DataLoaderConfig,
-    TaskConfig,
-    MessagePassingConfig,
-    ExperimentConfig,
-)
 
 
 @pytest.fixture

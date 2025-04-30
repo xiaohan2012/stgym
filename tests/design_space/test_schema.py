@@ -1,11 +1,11 @@
-from stgym.utils import load_yaml
 from stgym.design_space.schema import (
-    ModelSpace,
-    TrainSpace,
-    TaskSpace,
     DataLoaderSpace,
     DesignSpace,
+    ModelSpace,
+    TaskSpace,
+    TrainSpace,
 )
+from stgym.utils import load_yaml
 
 
 def test_basic():
