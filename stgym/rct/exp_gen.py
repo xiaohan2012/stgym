@@ -30,7 +30,7 @@ class RCTConfig(BaseModel):
         return self
 
 
-def generate_experiments(cfg: RCTConfig) -> list[ExperimentConfig]:
+def generate_experiment_configs(cfg: RCTConfig) -> list[ExperimentConfig]:
     design_space_template = DesignSpace.model_validate(
         load_yaml(cfg.design_space_source)
     )

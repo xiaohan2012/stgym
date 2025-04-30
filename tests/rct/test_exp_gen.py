@@ -1,7 +1,7 @@
 import pydash as _
 import pytest
 
-from stgym.rct.exp_gen import generate_experiments, load_config
+from stgym.rct.exp_gen import generate_experiment_configs, load_config
 
 
 @pytest.fixture
@@ -16,7 +16,7 @@ def test_basic(cfg):
 @pytest.mark.parametrize("k", [1, 2, 3])
 def test_generation(cfg, k):
     cfg.sample_size = k
-    exp_cfgs = generate_experiments(cfg)
+    exp_cfgs = generate_experiment_configs(cfg)
 
     assert len(exp_cfgs) == k * len(cfg.design_choices)
     exp_cfg_dicts = _.map_(exp_cfgs, lambda x: x.model_dump())
@@ -29,4 +29,4 @@ def test_generation(cfg, k):
 def test_invalid_design_dimension(cfg):
     cfg.design_dimension = "non-exisitent-choice"
     with pytest.raises(ValueError, match="Non-exisitent design dimension: .*"):
-        generate_experiments(cfg)
+        generate_experiment_configs(cfg)
