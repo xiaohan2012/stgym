@@ -9,6 +9,7 @@ from stgym.config_schema import (
     OptimizerConfig,
     LRScheduleConfig,
     DataLoaderConfig,
+    TaskConfig,
 )
 from stgym.data_loader import STDataModule
 from stgym.tl_model import STGymModule
@@ -37,17 +38,25 @@ def model_cfg():
 @pytest.fixture
 def train_cfg():
     return TrainConfig(
-        optim=OptimizerConfig(), lr_schedule=LRScheduleConfig(type=None), max_epoch=10
+        optim=OptimizerConfig(),
+        lr_schedule=LRScheduleConfig(type=None),
+        max_epoch=10,
+        early_stopping={"metric": "val_pr_auc", "mode": "min"},
     )
 
 
 @pytest.fixture
-def data_cfg():
-    return DataLoaderConfig(dataset_name="brca-test", batch_size=8)
+def dl_cfg():
+    return DataLoaderConfig(batch_size=8)
 
 
-def test_train(data_cfg, model_cfg, train_cfg):
-    data_module = STDataModule(data_cfg)
+@pytest.fixture
+def task_cfg():
+    return TaskConfig(dataset_name="brca-test", type="graph-classification")
+
+
+def test_train(task_cfg, dl_cfg, model_cfg, train_cfg):
+    data_module = STDataModule(task_cfg, dl_cfg)
     model_module = STGymModule(
         dim_in=data_module.num_features,
         dim_out=1,  # 1 for binary classification

@@ -118,19 +118,18 @@ class ModelConfig(BaseModel):
     mem: Optional[MemoryConfig] = MemoryConfig(inplace=False)
 
 
-class DataSplitConfig(BaseModel):
-    train_ratio: PositiveFloat
-    val_ratio: PositiveFloat
-    test_ratio: PositiveFloat
-
-    @model_validator(mode="after")
-    def ratios_should_sum_to_one(self) -> "LayerConfig":
-        if abs((self.train_ratio + self.val_ratio + self.test_ratio) - 1.0) >= 1e-5:
-            raise ValueError("train/val/test ratios do not sum up to 1")
-        return self
-
-
 class DataLoaderConfig(BaseModel):
+    class DataSplitConfig(BaseModel):
+        train_ratio: PositiveFloat
+        val_ratio: PositiveFloat
+        test_ratio: PositiveFloat
+
+        @model_validator(mode="after")
+        def ratios_should_sum_to_one(self) -> "LayerConfig":
+            if abs((self.train_ratio + self.val_ratio + self.test_ratio) - 1.0) >= 1e-5:
+                raise ValueError("train/val/test ratios do not sum up to 1")
+            return self
+
     graph_const: GraphConstructionApproach = "knn"
     knn_k: Optional[PositiveInt] = 10
     radius: Optional[PositiveFloat] = 0.1
@@ -143,9 +142,15 @@ class DataLoaderConfig(BaseModel):
 
 
 class TrainConfig(BaseModel):
+    class EarlyStoppingConfig(BaseModel):
+        metric: str
+        mode: str = "min"
+
     optim: Optional[OptimizerConfig] = OptimizerConfig()
     lr_schedule: Optional[LRScheduleConfig] = LRScheduleConfig()
     max_epoch: PositiveInt
+
+    early_stopping: Optional[EarlyStoppingConfig] = None
 
     @model_validator(mode="after")
     def override_scheduler_properties(self) -> Self:
@@ -160,8 +165,7 @@ class TaskConfig(BaseModel):
 
 
 class ExperimentConfig(BaseModel):
-    task: TaskConfig    
+    task: TaskConfig
     data_loader: DataLoaderConfig
     model: ModelConfig
     train: TrainConfig
-
