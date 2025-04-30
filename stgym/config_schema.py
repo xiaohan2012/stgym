@@ -160,6 +160,7 @@ class TrainConfig(BaseModel):
 
 class TaskConfig(BaseModel):
     dataset_name: str
+    type: TaskType
     eval_metrics: list[EvalMetric] = ["pr_auc"]
 
 
