@@ -1,0 +1,46 @@
+import pydash as _
+from pathlib import Path
+from typing import Optional
+
+from pydantic import BaseModel, PositiveInt, model_validator, ConfigDict
+from typing_extensions import Self
+from stgym.config_schema import ExperimentConfig
+from stgym.utils import load_yaml
+from stgym.design_space.schema import DesignSpace
+from stgym.design_space.design_gen import generate_experiment
+
+
+class RCTConfig(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    design_space_source: Path
+    sample_size: PositiveInt
+    design_dimension: str
+    design_choices: list[any]
+    config_file: Optional[Path] = None
+
+    @model_validator(mode="after")
+    def expand_soruce_to_abs_path(self) -> Self:
+        if not self.design_space_source.is_absolute():
+            # infer the absoluate path if it is relative
+            self.design_space_source = (
+                self.config_file.parent / self.design_space_source
+            ).absolute()
+        return self
+
+
+def generate_experiments(cfg: RCTConfig, k: int) -> list[ExperimentConfig]:
+    design_space_template = DesignSpace.model_validate(
+        load_yaml(cfg.design_space_source)
+    )
+    if _.has(cfg.model_dump(), cfg.design_dimension):
+        return _.flatten(
+            [
+                generate_experiment(
+                    _.set_(design_space_template, cfg.design_dimension, choice), k=k
+                )
+                for choice in cfg.design_choices
+            ]
+        )
+    else:
+        raise ValueError(f"Non-exisitent design dimension: '{cfg.design_dimension}'")

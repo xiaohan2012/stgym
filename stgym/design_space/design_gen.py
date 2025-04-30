@@ -55,7 +55,6 @@ def generate_model_config(space: ModelSpace, k: int = 1) -> list[ModelConfig]:
         post_mp_dims = _.map_(
             values["post_mp_dims"].split(","), lambda s: int(s.strip())
         )
-        print(f"post_mp_dims: {post_mp_dims}")
         ret.append(
             ModelConfig(
                 global_pooling=values["global_pooling"],
