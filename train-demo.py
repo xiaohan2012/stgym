@@ -8,6 +8,7 @@ from stgym.config_schema import (
     OptimizerConfig,
     PoolingConfig,
     PostMPConfig,
+    TaskConfig,
     TrainConfig,
 )
 from stgym.data_loader import STDataModule
@@ -36,14 +37,15 @@ model_cfg = ModelConfig(
 train_cfg = TrainConfig(
     optim=OptimizerConfig(base_lr=0.1),
     lr_schedule=LRScheduleConfig(type=None),
-    max_epoch=10,
+    max_epoch=2,
 )
 
 
-data_cfg = DataLoaderConfig(dataset_name="brca", batch_size=8)
+task_cfg = TaskConfig(dataset_name="brca", type="graph-classification")
+dl_cfg = DataLoaderConfig(batch_size=8)
 
 
-data_module = STDataModule(data_cfg)
+data_module = STDataModule(task_cfg, dl_cfg)
 model_module = STGymModule(
     dim_in=data_module.num_features,
     dim_out=1,  # 1 for binary classification

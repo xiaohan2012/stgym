@@ -50,10 +50,6 @@ def create_loader(
     train_ds, val_ds, test_ds = random_split(
         ds, lengths=[cfg.split.train_ratio, cfg.split.val_ratio, cfg.split.test_ratio]
     )
-    print(f"len(ds): {len(ds)}")
-    print(f"len(train_ds): {len(train_ds)}")
-    print(f"len(val_ds): {len(val_ds)}")
-    print(f"len(test_ds): {len(test_ds)}")
     train_loader = DataLoader(train_ds, batch_size=cfg.batch_size, shuffle=True)
     # val/test data is in one batch
     val_loader = DataLoader(val_ds, batch_size=cfg.batch_size, shuffle=False)

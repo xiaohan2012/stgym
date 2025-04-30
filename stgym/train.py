@@ -9,10 +9,6 @@ from stgym.config_schema import TrainConfig
 from stgym.data_loader import STDataModule
 from stgym.tl_model import STGymModule
 
-mlf_logger = MLFlowLogger(
-    experiment_name="lightning_logs", tracking_uri="http://127.0.0.1:8080"
-)
-
 
 def train(
     model: STGymModule,
@@ -31,6 +27,10 @@ def train(
         trainer_config (dict, optional): Additional trainer configuration.
     """
     # warnings.filterwarnings('ignore', '.*use `CSVLogger` as the default.*')
+    mlf_logger = MLFlowLogger(
+        experiment_name="lightning_logs", tracking_uri="http://127.0.0.1:8080"
+    )
+
     callbacks = []
     if cfg.early_stopping:
         callbacks.append(
