@@ -1,16 +1,12 @@
 import pydash as _
 import pytest
 
-from stgym.rct.exp_gen import RCTConfig, generate_experiments
-from stgym.utils import load_yaml
+from stgym.rct.exp_gen import generate_experiments, load_config
 
 
 @pytest.fixture
 def cfg():
-    config_file = "./tests/data/controlled-randomized-experiment-example.yaml"
-    data = load_yaml(config_file)
-
-    return RCTConfig.model_validate(data | {"config_file": config_file})
+    return load_config("./tests/data/controlled-randomized-experiment-example.yaml")
 
 
 def test_basic(cfg):

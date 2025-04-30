@@ -34,7 +34,8 @@ def generate_experiments(cfg: RCTConfig, k: int) -> list[ExperimentConfig]:
     design_space_template = DesignSpace.model_validate(
         load_yaml(cfg.design_space_source)
     )
-    if _.has(cfg.model_dump(), cfg.design_dimension):
+
+    if _.has(design_space_template.model_dump(), cfg.design_dimension):
         return _.flatten(
             [
                 generate_experiment(
@@ -45,3 +46,9 @@ def generate_experiments(cfg: RCTConfig, k: int) -> list[ExperimentConfig]:
         )
     else:
         raise ValueError(f"Non-exisitent design dimension: '{cfg.design_dimension}'")
+
+
+def load_config(config_file):
+    data = load_yaml(config_file)
+
+    return RCTConfig.model_validate(data | {"config_file": config_file})
