@@ -52,7 +52,7 @@ def dl_cfg():
 
 @pytest.fixture
 def task_cfg():
-    return TaskConfig(dataset_name="brca-test", type="graph-classification")
+    return TaskConfig(dataset_name="brca-test")
 
 
 def test_train(task_cfg, dl_cfg, model_cfg, train_cfg):
