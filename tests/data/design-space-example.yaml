@@ -21,7 +21,7 @@ train:
   max_epoch: [10, 100]
 task:
   dataset_name: ['brca', 'animal']
-  graph_const: knn
+data_loader:
+  graph_const: ['knn', 'radius']
   knn_k: 20
-  batch_size: 32
-  
+  batch_size: 32   

@@ -7,12 +7,28 @@ from stgym.config_schema import (
     ModelConfig,
     PostMPConfig,
     TrainConfig,
+    TaskConfig,
+    DataLoaderConfig,
+    ExperimentConfig
 )
-from stgym.design_space.schema import DesignSpace, ModelSpace, TaskSpace, TrainSpace
+from stgym.design_space.schema import (
+    DesignSpace,
+    ModelSpace,
+    TaskSpace,
+    TrainSpace,
+    DataLoaderSpace,
+)
 
 
-def generate_design(space: DesignSpace):
-    pass
+def generate_experiment(space: DesignSpace, k: int = 1) -> list[ExperimentConfig]:
+    model_designs = generate_model_config(space.model, k)
+    train_designs = generate_train_config(space.train, k)
+    task_designs = generate_task_config(space.task, k)
+    dl_designs = generate_data_loader_config(space.data_loader, k)
+    return [
+        ExperimentConfig(model=m, train=tr, task=ta, data_loader=dl)
+        for m, tr, ta, dl in zip(model_designs, train_designs, task_designs, dl_designs)
+    ]
 
 
 def sample_across_dimensions(space: ModelSpace | TrainSpace | TaskSpace):
@@ -33,10 +49,7 @@ def generate_model_config(space: ModelSpace, k: int = 1) -> list[ModelConfig]:
     for i in range(k):
         values = sample_across_dimensions(space)
         mp_layers = [
-            MessagePassingConfig(
-                **values
-            )
-            for j in range(values["num_mp_layers"])
+            MessagePassingConfig(**values) for j in range(values["num_mp_layers"])
         ]
         post_mp_dims = _.map_(
             values["post_mp_dims"].split(","), lambda s: int(s.strip())
@@ -61,5 +74,20 @@ def generate_train_config(space: TrainSpace, k: int = 1) -> list[TrainConfig]:
     return ret
 
 
-def generate_task_config(space: TaskSpace, k: int = 1):
-    pass
+def generate_task_config(space: TaskSpace, k: int = 1) -> list[TaskConfig]:
+    ret = []
+    for i in range(k):
+        values = sample_across_dimensions(space)
+        # TODO: populate task-specific evaluation metrics
+        ret.append(TaskConfig(**values, type="graph-classification"))
+    return ret
+
+
+def generate_data_loader_config(
+    space: DataLoaderSpace, k: int = 1
+) -> list[DataLoaderConfig]:
+    ret = []
+    for i in range(k):
+        values = sample_across_dimensions(space)
+        ret.append(DataLoaderConfig(**values))
+    return ret

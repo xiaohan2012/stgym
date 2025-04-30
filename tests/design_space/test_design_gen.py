@@ -2,17 +2,20 @@ import pytest
 from stgym.design_space.schema import DesignSpace, ModelSpace, TaskSpace, TrainSpace
 from stgym.design_space.design_gen import (
     sample_across_dimensions,
-    generate_design,
+    generate_experiment,
     generate_model_config,
     generate_train_config,
     generate_task_config,
+    generate_data_loader_config,
 )
 from stgym.utils import load_yaml
 from stgym.config_schema import (
     ModelConfig,
     TrainConfig,
     DataLoaderConfig,
+    TaskConfig,
     MessagePassingConfig,
+    ExperimentConfig,
 )
 
 
@@ -52,13 +55,10 @@ class TestSampleAcrossDimensions:
 @pytest.mark.parametrize("k", [1, 2, 3])
 def test_generate_design(k, mock_design_space):
 
-    designs = generate_design(mock_design_space, k=k)
-    assert len(designs) == k
-
-
-def test_design_validity(mock_design_space):
-    design = generate_design(mock_design_space, k=1)[0]
-    pass
+    experiments = generate_experiment(mock_design_space, k=k)
+    assert len(experiments) == k
+    for exp in experiments:
+        assert isinstance(exp, ExperimentConfig)
 
 
 def test_model_config_validity(mock_design_space):
@@ -72,5 +72,17 @@ def test_model_config_validity(mock_design_space):
 def test_train_config_validity(mock_design_space):
     config = generate_train_config(mock_design_space.train, k=1)[0]
     assert isinstance(config, TrainConfig)
-    assert config.optim.optimizer == 'adam'
+    assert config.optim.optimizer == "adam"
     assert config.max_epoch in (10, 100)
+
+
+def test_task_config_validity(mock_design_space):
+    config = generate_task_config(mock_design_space.task, k=1)[0]
+    assert isinstance(config, TaskConfig)
+    assert config.dataset_name in ["brca", "animal"]
+
+
+def test_data_loader_config_validity(mock_design_space):
+    config = generate_data_loader_config(mock_design_space.data_loader, k=1)[0]
+    assert isinstance(config, DataLoaderConfig)
+    assert config.graph_const in ["knn", "radius"]

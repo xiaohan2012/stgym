@@ -26,7 +26,7 @@ class ModelSpace(BaseModel):
 
     # temporary hack, which stores a tuple of ints as a comma-separated string
     # because yaml does not distinguish tuple from list
-    post_mp_dims: str | list[str]  
+    post_mp_dims: str | list[str]
 
 
 class TrainSpace(BaseModel):
@@ -42,14 +42,18 @@ class TrainSpace(BaseModel):
     max_epoch: PositiveInt | list[PositiveInt]
 
 
-class TaskSpace(BaseModel):
-    dataset_name: str | list[str]
+class DataLoaderSpace(BaseModel):
     graph_const: GraphConstructionApproach | list[GraphConstructionApproach]
     knn_k: PositiveInt | list[PositiveInt]
     batch_size: PositiveInt | list[PositiveInt]
+
+
+class TaskSpace(BaseModel):
+    dataset_name: str | list[str]
 
 
 class DesignSpace(BaseModel):
     model: ModelSpace
     train: TrainSpace
     task: TaskSpace
+    data_loader: DataLoaderSpace

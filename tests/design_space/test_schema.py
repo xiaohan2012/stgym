@@ -1,5 +1,11 @@
 from stgym.utils import load_yaml
-from stgym.design_space.schema import ModelSpace, TrainSpace, TaskSpace, DesignSpace
+from stgym.design_space.schema import (
+    ModelSpace,
+    TrainSpace,
+    TaskSpace,
+    DataLoaderSpace,
+    DesignSpace,
+)
 
 
 def test_basic():
@@ -8,5 +14,6 @@ def test_basic():
     ModelSpace.model_validate(data["model"])
     TrainSpace.model_validate(data["train"])
     TaskSpace.model_validate(data["task"])
+    DataLoaderSpace.model_validate(data["data_loader"])
 
     DesignSpace.model_validate(data)
