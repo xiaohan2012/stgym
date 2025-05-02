@@ -16,9 +16,16 @@ def run_exp(cfg: ExperimentConfig):
         model_cfg=cfg.model,
         train_cfg=cfg.train,
     )
-    train(
-        model_module, data_module, cfg.train, trainer_config={"log_every_n_steps": 10}
-    )
+    try:
+        train(
+            model_module,
+            data_module,
+            cfg.train,
+            trainer_config={"log_every_n_steps": 10},
+        )
+    except ValueError:
+        print(cfg)
+        return False
     return True
 
 
