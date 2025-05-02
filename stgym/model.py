@@ -22,6 +22,10 @@ class STGraphClassifier(torch.nn.Module):
 
     def forward(self, batch: Data) -> tuple[Data, Tensor]:
         """return the batch before global pooling and the predictions by post MP layers"""
+        if batch.edge_index.shape[1] == 0:
+            raise ValueError(
+                "There are no edges in the graph batch. If you're constructing the graph using radius, it is possible that the radius value is too small. Consider increasing it."
+            )
         batch = self.mp_module(batch)
         if hasattr(batch, "loss"):
             other_loss = batch.loss
