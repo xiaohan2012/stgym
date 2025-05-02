@@ -7,7 +7,7 @@ from stgym.tl_model import STGymModule
 from stgym.train import train
 
 
-@ray.remote(num_cpus=2)
+@ray.remote(num_cpus=1, num_gpus=0.1)
 def run_exp(cfg: ExperimentConfig):
     data_module = STDataModule(cfg.task, cfg.data_loader)
     model_module = STGymModule(

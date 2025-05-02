@@ -9,6 +9,9 @@ from stgym.config_schema import TrainConfig
 from stgym.data_loader import STDataModule
 from stgym.tl_model import STGymModule
 
+EXPERIMENT_NAME = "lightning_logs"
+TRACKING_URI = "http://127.0.0.1:8080"
+
 
 def train(
     model: STGymModule,
@@ -28,7 +31,7 @@ def train(
     """
     # warnings.filterwarnings('ignore', '.*use `CSVLogger` as the default.*')
     mlf_logger = MLFlowLogger(
-        experiment_name="lightning_logs", tracking_uri="http://127.0.0.1:8080"
+        experiment_name=EXPERIMENT_NAME, tracking_uri=TRACKING_URI
     )
 
     callbacks = []
@@ -51,8 +54,7 @@ def train(
         callbacks=callbacks,
         # default_root_dir=cfg.out_dir,
         max_epochs=cfg.max_epoch,
-        # accelerator=cfg.accelerator,
-        devices=1,
+        devices="auto",
         # 'mps' not supporting some sparse operations, therefore shouldn't be used
         accelerator="cpu" if not torch.cuda.is_available() else "gpu",
         logger=mlf_logger
