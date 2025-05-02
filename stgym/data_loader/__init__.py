@@ -1,14 +1,21 @@
 import torch
 import torch_geometric.transforms as T
+from logzero import logger
 from torch.utils.data import DataLoader, random_split
 from torch_geometric.data.lightning.datamodule import LightningDataModule
 from torch_geometric.loader import DataLoader
 
 from stgym.config_schema import DataLoaderConfig, TaskConfig
+from stgym.data_loader.ds_info import get_info
 
 
 def load_dataset(task_cfg: TaskConfig, dl_cfg: DataLoaderConfig):
     """load dataset by name"""
+
+    if dl_cfg.graph_const == "radius":
+        radius = dl_cfg.radius_ratio * get_info(task_cfg.dataset_name)["max_span"]
+        logger.debug("Using radius graph construction")
+        logger.debug(f"Setting radius to {radius}")
 
     ds_name = task_cfg.dataset_name.lower()
     transform = T.compose.Compose(
@@ -16,7 +23,7 @@ def load_dataset(task_cfg: TaskConfig, dl_cfg: DataLoaderConfig):
             (
                 T.KNNGraph(k=dl_cfg.knn_k)
                 if dl_cfg.graph_const == "knn"
-                else T.RadiusGraph(dl_cfg.radius)
+                else T.RadiusGraph(r=radius)
             ),
             T.ToSparseTensor(
                 remove_edge_index=False, layout=torch.sparse_coo

@@ -131,7 +131,7 @@ class DataLoaderConfig(BaseModel):
 
     graph_const: GraphConstructionApproach = "knn"
     knn_k: Optional[PositiveInt] = 10
-    radius: Optional[PositiveFloat] = 0.1
+    radius_ratio: Optional[PositiveFloat] = 0.1
 
     batch_size: Optional[PositiveInt] = 64
 

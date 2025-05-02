@@ -1,5 +1,6 @@
 import torch
-from torch_geometric.data import Data
+from logzero import logger
+from torch_geometric.data import Data, InMemoryDataset
 from torch_geometric.loader import DataLoader
 
 
@@ -58,3 +59,15 @@ class BatchLoaderMixin:
             batch_size=self.batch_size,
             device=self.device,
         )
+
+
+def get_maximum_coord_span(ds: InMemoryDataset) -> float:
+    """get the maximum cooridnate span from datums in a dataset"""
+    span_list = []
+    for dt in ds:
+        xy_min, _ = ds[0].pos.min(axis=0)
+        xy_max, _ = ds[0].pos.max(axis=0)
+        span_list.append((xy_max - xy_min).max().numpy())
+    logger.debug(f"min span: {min(span_list)}")
+    logger.debug(f"max span: {max(span_list)}")
+    return float(max(span_list))
