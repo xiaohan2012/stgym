@@ -6,6 +6,7 @@ from pydantic import (
     Field,
     HttpUrl,
     NonNegativeFloat,
+    NonNegativeInt,
     PositiveFloat,
     PositiveInt,
     model_validator,
@@ -27,6 +28,15 @@ PostMPLayerType = Literal["mlp", "linear"]
 GraphConstructionApproach = Literal["knn", "radius"]
 TaskType = Literal["node-classification", "graph-classification", "node-clustering"]
 EvalMetric = Literal["pr-auc", "roc-auc", "accuracy", "nmi"]
+
+
+class YamlLoaderMixin:
+
+    @classmethod
+    def from_yaml(cls, yaml_file):
+        data = load_yaml(yaml_file)
+
+        return cls.model_validate(data)
 
 
 class PoolingConfig(BaseModel):
@@ -173,20 +183,14 @@ class ExperimentConfig(BaseModel):
     train: TrainConfig
 
 
-class MLFlowConfig(BaseModel):
+class MLFlowConfig(BaseModel, YamlLoaderMixin):
     track: Optional[bool] = True
     tracking_uri: Optional[HttpUrl] = "http://127.0.0.1:8080"
     experiment_name: Optional[str] = Field(default="test", min_length=1)
 
-    @classmethod
-    def from_yaml(cls, yaml_file):
-        data = load_yaml(yaml_file)
 
-        return cls.model_validate(data)
-
-
-class ResourceConfig(BaseModel):
+class ResourceConfig(BaseModel, YamlLoaderMixin):
     num_cpus: Optional[PositiveInt] = None
-    num_gpus: Optional[PositiveInt] = None
-    num_cpus_per_trial: Optional[PositiveInt] = 1
-    num_gpus_per_trial: Optional[PositiveInt] = 0.25
+    num_gpus: Optional[NonNegativeInt] = None
+    num_cpus_per_trial: Optional[PositiveFloat] = 1.0
+    num_gpus_per_trial: Optional[NonNegativeFloat] = 0.25
