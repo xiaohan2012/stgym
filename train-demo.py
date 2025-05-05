@@ -45,7 +45,7 @@ train_cfg = TrainConfig(
 task_cfg = TaskConfig(dataset_name="brca", type="graph-classification")
 dl_cfg = DataLoaderConfig(batch_size=8)
 mlflow_cfg = MLFlowConfig(
-    track=False, tracking_uri="http://127.0.0.1:8080", experiment_name="train-demo"
+    track=True, tracking_uri="http://127.0.0.1:8080", experiment_name="train-demo"
 )
 
 data_module = STDataModule(task_cfg, dl_cfg)
