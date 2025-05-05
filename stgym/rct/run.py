@@ -5,10 +5,9 @@ from stgym.data_loader import STDataModule
 from stgym.rct.exp_gen import generate_experiment_configs, load_rct_config
 from stgym.tl_model import STGymModule
 from stgym.train import train
+from stgym.utils import RayProgressBar
 
 
-# @ray.remote(num_cpus=1, num_gpus=0.1)
-# @ray.remote(num_cpus=1)
 def run_exp(exp_cfg: ExperimentConfig, mlflow_cfg: MLFlowConfig):
     data_module = STDataModule(exp_cfg.task, exp_cfg.data_loader)
     model_module = STGymModule(
@@ -22,7 +21,13 @@ def run_exp(exp_cfg: ExperimentConfig, mlflow_cfg: MLFlowConfig):
         data_module,
         exp_cfg.train,
         mlflow_cfg,
-        tl_train_config={"log_every_n_steps": 10},
+        tl_train_config={
+            "log_every_n_steps": 10,
+            # simplify the logging
+            "enable_progress_bar": False,
+            "enable_model_summary": False,
+            "enable_checkpointing": False,
+        },
     )
 
     return True
@@ -46,6 +51,9 @@ def main():
         num_gpus=resource_cfg.num_gpus_per_trial,
     )
     promises = [ray_run_exp.remote(exp_cfg, mlflow_cfg) for exp_cfg in exp_cfgs]
+
+    RayProgressBar.show(promises)
+
     results = ray.get(promises)
     print(f"results: {results}")
     ray.shutdown()

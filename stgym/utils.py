@@ -1,6 +1,8 @@
+import ray
 import torch
 import yaml
 from torch_geometric.data import Data
+from tqdm import tqdm
 
 
 def stacked_blocks_to_block_diagonal(
@@ -94,3 +96,21 @@ def flatten_dict(nested_dict, separator="/"):
 
     aux(nested_dict, "")
     return flat_dict
+
+
+class RayProgressBar:
+    @staticmethod
+    def num_jobs_done_iter(obj_ids):
+        while obj_ids:
+            done, obj_ids = ray.wait(obj_ids)
+            yield ray.get(done[0])
+
+    @staticmethod
+    def show(obj_ids):
+        seq = RayProgressBar.num_jobs_done_iter(obj_ids)
+        for x in tqdm(seq, total=len(obj_ids)):
+            pass
+
+    @staticmethod
+    def check():
+        assert ray.is_initialized()
