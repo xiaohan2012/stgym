@@ -5,7 +5,7 @@ import torch
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import MLFlowLogger
 
-from stgym.config_schema import TrainConfig
+from stgym.config_schema import MLFlowConfig, TrainConfig
 from stgym.data_loader import STDataModule
 from stgym.tl_model import STGymModule
 
@@ -16,9 +16,10 @@ TRACKING_URI = "http://127.0.0.1:8080"
 def train(
     model: STGymModule,
     datamodule: STDataModule,
-    cfg: TrainConfig,
+    train_cfg: TrainConfig,
+    mlflow_config: MLFlowConfig,
     logger: bool = True,
-    trainer_config: Optional[dict[str, any]] = None,
+    tl_train_config: Optional[dict[str, any]] = None,
 ):
     r"""Trains a GraphGym model using PyTorch Lightning.
 
@@ -27,18 +28,24 @@ def train(
         datamodule (GraphGymDataModule): The GraphGym data module.
         logger (bool, optional): Whether to enable logging during training.
             (default: :obj:`True`)
-        trainer_config (dict, optional): Additional trainer configuration.
+        tl_train_config (dict, optional): Additional configuration to tl.Trainer
     """
     # warnings.filterwarnings('ignore', '.*use `CSVLogger` as the default.*')
-    mlf_logger = MLFlowLogger(
-        experiment_name=EXPERIMENT_NAME, tracking_uri=TRACKING_URI
+    logger = (
+        MLFlowLogger(
+            experiment_name=mlflow_config.experiment_name,
+            tracking_uri=str(mlflow_config.tracking_uri),
+        )
+        if mlflow_config.track
+        else None
     )
 
     callbacks = []
-    if cfg.early_stopping:
+    if train_cfg.early_stopping:
         callbacks.append(
             EarlyStopping(
-                monitor=cfg.early_stopping.metric, mode=cfg.early_stopping.mode
+                monitor=train_cfg.early_stopping.metric,
+                mode=train_cfg.early_stopping.mode,
             )
         )
     # if logger:
@@ -47,17 +54,17 @@ def train(
     #     ckpt_cbk = pl.callbacks.ModelCheckpoint(dirpath=get_ckpt_dir())
     #     callbacks.append(ckpt_cbk)
 
-    trainer_config = trainer_config or {}
+    trainer_config = tl_train_config or {}
     trainer = pl.Trainer(
         **trainer_config,
         # enable_checkpointing=cfg.train.enable_ckpt,
         callbacks=callbacks,
         # default_root_dir=cfg.out_dir,
-        max_epochs=cfg.max_epoch,
+        max_epochs=train_cfg.max_epoch,
         devices="auto",
         # 'mps' not supporting some sparse operations, therefore shouldn't be used
         accelerator="cpu" if not torch.cuda.is_available() else "gpu",
-        logger=mlf_logger
+        logger=logger
     )
 
     trainer.fit(model, datamodule=datamodule)

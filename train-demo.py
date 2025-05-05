@@ -4,6 +4,7 @@ from stgym.config_schema import (
     DataLoaderConfig,
     LRScheduleConfig,
     MessagePassingConfig,
+    MLFlowConfig,
     ModelConfig,
     OptimizerConfig,
     PoolingConfig,
@@ -43,7 +44,9 @@ train_cfg = TrainConfig(
 
 task_cfg = TaskConfig(dataset_name="brca", type="graph-classification")
 dl_cfg = DataLoaderConfig(batch_size=8)
-
+mlflow_cfg = MLFlowConfig(
+    track=False, tracking_uri="http://127.0.0.1:8080", experiment_name="train-demo"
+)
 
 data_module = STDataModule(task_cfg, dl_cfg)
 model_module = STGymModule(
@@ -55,4 +58,10 @@ model_module = STGymModule(
 print(model_module.model)
 
 
-train(model_module, data_module, train_cfg, trainer_config={"log_every_n_steps": 10})
+train(
+    model_module,
+    data_module,
+    train_cfg,
+    mlflow_cfg,
+    tl_train_config={"log_every_n_steps": 10},
+)

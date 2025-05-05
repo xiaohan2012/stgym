@@ -4,6 +4,7 @@ import pydash as _
 from pydantic import (
     BaseModel,
     Field,
+    HttpUrl,
     NonNegativeFloat,
     PositiveFloat,
     PositiveInt,
@@ -168,3 +169,16 @@ class ExperimentConfig(BaseModel):
     data_loader: DataLoaderConfig
     model: ModelConfig
     train: TrainConfig
+
+
+class MLFlowConfig(BaseModel):
+    track: Optional[bool] = True
+    tracking_uri: Optional[HttpUrl] = "http://127.0.0.1:8080"
+    experiment_name: Optional[str] = Field(default="test", min_length=1)
+
+
+class ResourceConfig(BaseModel):
+    num_cpus: Optional[PositiveInt] = None
+    num_gpus: Optional[PositiveInt] = None
+    num_cpus_per_trial: Optional[PositiveInt] = 1
+    num_gpus_per_trial: Optional[PositiveInt] = 0.25
