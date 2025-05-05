@@ -1,5 +1,6 @@
+experiment_name: 'rct-batch-norm'
 design_space_source: ./design-space-template-test.yaml
-sample_size: 5
+sample_size: 1
 design_dimension: 'model.use_batchnorm'
 design_choices: [true, false]
 random_seed: 42

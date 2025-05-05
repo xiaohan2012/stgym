@@ -5,7 +5,7 @@ import pydash as _
 from pydantic import BaseModel, ConfigDict, PositiveInt, model_validator
 from typing_extensions import Self
 
-from stgym.config_schema import ExperimentConfig
+from stgym.config_schema import ExperimentConfig, MLFlowConfig
 from stgym.design_space.design_gen import generate_experiment
 from stgym.design_space.schema import DesignSpace
 from stgym.utils import load_yaml
@@ -14,12 +14,15 @@ from stgym.utils import load_yaml
 class RCTConfig(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
+    experiment_name: str
     design_space_source: Path
     sample_size: PositiveInt
     design_dimension: str
     design_choices: list[any]
     config_file: Optional[Path] = None
     random_seed: Optional[int] = 42
+
+    mlflow: Optional[MLFlowConfig] = None
 
     @model_validator(mode="after")
     def expand_soruce_to_abs_path(self) -> Self:
@@ -51,7 +54,7 @@ def generate_experiment_configs(cfg: RCTConfig) -> list[ExperimentConfig]:
         raise ValueError(f"Non-exisitent design dimension: '{cfg.design_dimension}'")
 
 
-def load_config(config_file):
+def load_rct_config(config_file):
     data = load_yaml(config_file)
 
     return RCTConfig.model_validate(data | {"config_file": config_file})

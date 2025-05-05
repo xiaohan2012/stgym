@@ -13,6 +13,8 @@ from pydantic import (
 from pydantic.json_schema import SkipJsonSchema
 from typing_extensions import Self
 
+from stgym.utils import load_yaml
+
 ActivationType = Literal["prelu", "relu", "swish"]
 GlobalPoolingType = Literal["mean", "sum", "max"]
 HierarchicalPoolingType = Literal["mincut", "dmon"]  # hierarchical pooling
@@ -175,6 +177,12 @@ class MLFlowConfig(BaseModel):
     track: Optional[bool] = True
     tracking_uri: Optional[HttpUrl] = "http://127.0.0.1:8080"
     experiment_name: Optional[str] = Field(default="test", min_length=1)
+
+    @classmethod
+    def from_yaml(cls, yaml_file):
+        data = load_yaml(yaml_file)
+
+        return cls.model_validate(data)
 
 
 class ResourceConfig(BaseModel):

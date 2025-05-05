@@ -1,12 +1,12 @@
 import pydash as _
 import pytest
 
-from stgym.rct.exp_gen import generate_experiment_configs, load_config
+from stgym.rct.exp_gen import generate_experiment_configs, load_rct_config
 
 
 @pytest.fixture
 def cfg():
-    return load_config("./tests/data/controlled-randomized-experiment-example.yaml")
+    return load_rct_config("./tests/data/controlled-randomized-experiment-example.yaml")
 
 
 def test_basic(cfg):
