@@ -1,5 +1,6 @@
 import random
 
+import numpy as np
 import pydash as _
 from pydantic import BaseModel
 
@@ -19,6 +20,7 @@ from stgym.design_space.schema import (
     TaskSpace,
     TrainSpace,
 )
+from stgym.utils import rand_ints
 
 
 def generate_experiment(
@@ -35,15 +37,16 @@ def generate_experiment(
 
 
 def sample_across_dimensions(
-    space: ModelSpace | TrainSpace | TaskSpace, seed: int = None
+    space: ModelSpace | TrainSpace | TaskSpace, seed: int | np.int_ = None
 ):
+    random.seed(int(seed) if seed is not None else None)
     ret = {}
     for dimension in space.__fields__:
         val = getattr(space, dimension)
         if isinstance(val, list):
             ret[dimension] = random.choice(val)
         elif isinstance(val, BaseModel):
-            ret[dimension] = sample_across_dimensions(val)
+            ret[dimension] = sample_across_dimensions(val, seed=seed)
         else:
             ret[dimension] = val
     return ret
@@ -52,10 +55,10 @@ def sample_across_dimensions(
 def generate_model_config(
     space: ModelSpace, k: int = 1, seed: int = None
 ) -> list[ModelConfig]:
-    random.seed(seed)
+    seeds = rand_ints(k, seed=seed)
     ret = []
     for i in range(k):
-        values = sample_across_dimensions(space, seed)
+        values = sample_across_dimensions(space, seed=seeds[i])
         mp_layers = [
             MessagePassingConfig(**values) for j in range(values["num_mp_layers"])
         ]
@@ -77,8 +80,9 @@ def generate_train_config(
     space: TrainSpace, k: int = 1, seed: int = None
 ) -> list[TrainConfig]:
     ret = []
+    seeds = rand_ints(k, seed=seed)
     for i in range(k):
-        values = sample_across_dimensions(space, seed)
+        values = sample_across_dimensions(space, seed=seeds[i])
         ret.append(TrainConfig(**values))
     return ret
 
@@ -87,8 +91,9 @@ def generate_task_config(
     space: TaskSpace, k: int = 1, seed: int = None
 ) -> list[TaskConfig]:
     ret = []
+    seeds = rand_ints(k, seed=seed)
     for i in range(k):
-        values = sample_across_dimensions(space, seed)
+        values = sample_across_dimensions(space, seed=seeds[i])
         # TODO: populate task-specific evaluation metrics
         ret.append(TaskConfig(**values, type="graph-classification"))
     return ret
@@ -98,7 +103,8 @@ def generate_data_loader_config(
     space: DataLoaderSpace, k: int = 1, seed: int = None
 ) -> list[DataLoaderConfig]:
     ret = []
+    seeds = rand_ints(k, seed=seed)
     for i in range(k):
-        values = sample_across_dimensions(space, seed)
+        values = sample_across_dimensions(space, seed=seeds[i])
         ret.append(DataLoaderConfig(**values))
     return ret

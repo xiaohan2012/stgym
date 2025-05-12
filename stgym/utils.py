@@ -1,3 +1,4 @@
+import numpy as np
 import ray
 import torch
 import yaml
@@ -114,3 +115,8 @@ class RayProgressBar:
     @staticmethod
     def check():
         assert ray.is_initialized()
+
+
+def rand_ints(size, min=0, max=100000, seed: int = None) -> np.ndarray:
+    np.random.seed(seed)
+    return np.random.randint(min, max, size)

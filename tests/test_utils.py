@@ -7,6 +7,7 @@ from stgym.utils import (
     flatten_dict,
     hsplit_and_vstack,
     mask_diagonal_sp,
+    rand_ints,
     stacked_blocks_to_block_diagonal,
 )
 
@@ -103,3 +104,9 @@ def test_hsplit_and_vstack():
 )
 def test_flatten_dict(input, output):
     assert output == flatten_dict(input)
+
+
+def test_random_ints():
+    assert rand_ints(10).shape == (10,)
+    np.testing.assert_allclose(rand_ints(10, seed=42), rand_ints(10, seed=42))
+    assert not np.allclose(rand_ints(10, seed=42), rand_ints(10, seed=24))

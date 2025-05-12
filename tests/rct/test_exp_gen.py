@@ -1,11 +1,13 @@
 import pydash as _
 import pytest
 
-from stgym.rct.exp_gen import generate_experiment_configs, load_rct_config
+from stgym.rct.exp_gen import RCTConfig, generate_experiment_configs, load_rct_config
+
+from ..utils import RANDOM_SEEDS
 
 
 @pytest.fixture
-def cfg():
+def cfg() -> RCTConfig:
     return load_rct_config("./tests/data/controlled-randomized-experiment-example.yaml")
 
 
@@ -24,6 +26,25 @@ def test_generation(cfg, k):
     assert _.sort(
         _.map_(exp_cfg_dicts, lambda x: _.get(x, "model.mp_layers.0.use_batchnorm"))
     ) == ([False] * k + [True] * k)
+
+
+@pytest.mark.parametrize("seed", RANDOM_SEEDS)
+def test_config_equivalence(cfg, seed):
+    """ensure that there are a 'pair' of identical experiments except on the design dimension to modify"""
+
+    cfg.sample_size = 1
+    cfg.random_seed = seed
+    exp_cfgs = generate_experiment_configs(cfg)
+    exp_cfgs[0].model.mp_layers[0].use_batchnorm = (
+        exp_cfgs[1].model.mp_layers[0].use_batchnorm
+    )
+    exp_cfgs[0].model.mp_layers[0].has_bias = exp_cfgs[1].model.mp_layers[0].has_bias
+    exp_cfgs[0].model.post_mp_layer.use_batchnorm = exp_cfgs[
+        1
+    ].model.post_mp_layer.use_batchnorm
+    exp_cfgs[0].model.post_mp_layer.has_bias = exp_cfgs[1].model.post_mp_layer.has_bias
+
+    assert exp_cfgs[0].model_dump() == exp_cfgs[1].model_dump()
 
 
 def test_invalid_design_dimension(cfg):

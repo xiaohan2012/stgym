@@ -71,3 +71,6 @@ def get_maximum_coord_span(ds: InMemoryDataset) -> float:
     logger.debug(f"min span: {min(span_list)}")
     logger.debug(f"max span: {max(span_list)}")
     return float(max(span_list))
+
+
+RANDOM_SEEDS = [42, 123, 9999, 341324]

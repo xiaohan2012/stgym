@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Optional
 
 import pydash as _
-from pydantic import BaseModel, ConfigDict, PositiveInt, model_validator
+from pydantic import BaseModel, ConfigDict, NonNegativeInt, PositiveInt, model_validator
 from typing_extensions import Self
 
 from stgym.config_schema import ExperimentConfig, MLFlowConfig
@@ -20,7 +20,7 @@ class RCTConfig(BaseModel):
     design_dimension: str
     design_choices: list[any]
     config_file: Optional[Path] = None
-    random_seed: Optional[int] = 42
+    random_seed: NonNegativeInt = 42
 
     mlflow: Optional[MLFlowConfig] = None
 
