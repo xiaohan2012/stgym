@@ -1,9 +1,14 @@
 import torch
+import torch.nn.functional as F
 from torch import Tensor
+from torch_geometric.nn.dense.linear import Linear
+from torch_geometric.utils import to_edge_index, to_undirected
 from torch_geometric.utils.sparse import is_sparse
 from torch_scatter import scatter_sum
 
+from stgym.config_schema import PoolingConfig
 from stgym.utils import (
+    attach_loss_to_batch,
     batch2ptr,
     hsplit_and_vstack,
     mask_diagonal_sp,
@@ -31,29 +36,29 @@ def mincut_pool(
     assert s.ndim == 2
 
     n = ptr[1:] - ptr[:-1]
-    print(f"n: {n}")
+    # print(f"n: {n}")
 
     s = torch.softmax(s / temp if temp != 1.0 else s, dim=-1)
 
     K = s.shape[1]  # number of clusters
     B = ptr.shape[0] - 1  # number of blocks
-    print(f"B: {B}")
-    print(f"K: {K}")
+    # print(f"B: {B}")
+    # print(f"K: {K}")
     d = adj.sum(axis=0).to_dense()  # degree vector
-    print(f"d.shape: {d.shape}")
+    # print(f"d.shape: {d.shape}")
     diagonal_indices = torch.stack(
         [torch.arange(K * B).to(device), torch.arange(K * B).to(device)]
     )
 
     # block diagonal matrices of C and d
     C_bd = stacked_blocks_to_block_diagonal(s, ptr, requires_grad=True)  # [N, K x B]
-    print(f"C_bd.shape: {C_bd.shape}")
+    # print(f"C_bd.shape: {C_bd.shape}")
     d_diag = torch.sparse_coo_tensor(
         torch.stack([torch.arange(n.sum()), torch.arange(n.sum())]).to(device),
         d,
         requires_grad=True,
     )
-    print(f"d_diag.shape: {d_diag.shape}")
+    # print(f"d_diag.shape: {d_diag.shape}")
 
     # mincut loss
     mincut_normalizer = C_bd.T @ d_diag @ C_bd
@@ -105,3 +110,39 @@ def mincut_pool(
     x_bd = stacked_blocks_to_block_diagonal(x, ptr)
     out_x = hsplit_and_vstack(s.T @ x_bd, chunk_size=x.shape[1])  # (BxK) x D
     return out_x, out_adj_normalized, mincut_loss, ortho_loss, CC_batch
+
+
+class MincutPoolingLayer(torch.nn.Module):
+    def __init__(self, cfg: PoolingConfig, **kwargs):
+        super().__init__()
+        # one linear layer mapping the input features to clustering space
+        self.K = cfg.n_clusters
+        self.linear = Linear(-1, self.K)
+
+    def forward(self, batch):
+        s = self.linear(batch.x)
+        s = torch.softmax(s, dim=-1)
+        # out_x = F.selu(s.T @ x_bd)  # S x (B x D)
+
+        # out_x = hsplit_and_vstack(out_x, chunk_size=batch.x.shape[1])  # (SxB) x D
+
+        (out_x, out_adj, mincut_loss, ortho_loss, out_batch) = mincut_pool(
+            batch.x, batch.adj_t, batch.batch, s
+        )
+
+        batch.x = F.selu(out_x)  # apply selu activation function
+        batch.adj_t = out_adj
+        batch.batch = out_batch
+        batch.ptr = batch2ptr(batch.batch)
+
+        edge_index, edge_weight = to_undirected(*to_edge_index(out_adj), reduce="mean")
+        batch.edge_index = edge_index
+        batch.edge_weight = edge_weight
+        # return batch, s, spectral_loss, cluster_loss, ortho_loss
+        batch.s = s
+        loss_info = {
+            "mincut_loss": mincut_loss,
+            "ortho_loss": ortho_loss,
+        }
+        attach_loss_to_batch(batch, loss_info)
+        return batch

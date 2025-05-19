@@ -1,3 +1,4 @@
+import math
 from os import path as osp
 
 import numpy as np
@@ -8,6 +9,8 @@ from torch_geometric.nn.dense.mincut_pool import dense_mincut_pool
 from torch_geometric.utils import to_dense_adj, to_dense_batch
 from torch_geometric.utils.sparse import is_sparse
 
+from stgym.config_schema import PoolingConfig
+from stgym.pooling.mincut import MincutPoolingLayer
 from stgym.pooling.mincut import mincut_pool as sparse_mincut_pool
 from stgym.utils import stacked_blocks_to_block_diagonal
 
@@ -99,3 +102,43 @@ class TestAutoGrad(BatchLoaderMixin):
         loss = mincut_loss + ortho_loss
 
         loss.backward()
+
+
+class TestWrapper(BatchLoaderMixin):
+    def test(self):
+        num_clusters = 3
+        batch = self.load_batch()
+
+        cfg = PoolingConfig(
+            type="mincut",
+            n_clusters=num_clusters,
+        )
+        # (self.out_channels, self.in_channels): ([10], 128)
+        model = MincutPoolingLayer(cfg).to(batch.adj_t.device)
+        # output_batch, s, spectral_loss, cluster_loss, ortho_loss = model(batch)
+        output_batch = model(batch)
+        assert output_batch.x.shape == (
+            num_clusters * self.batch_size,
+            self.num_features,
+        )
+        assert output_batch.adj_t.shape == (
+            num_clusters * self.batch_size,
+            num_clusters * self.batch_size,
+        )
+
+        assert batch.edge_index.size() == (
+            2,
+            num_clusters * (num_clusters - 1) * self.batch_size,
+        )
+
+        assert batch.s.size() == (self.batch_size * self.num_nodes, num_clusters)
+        # print("batch.s.sum(axis=1).shape: {}".format(batch.s.sum(axis=1).shape))
+        # print("torch.ones(num_clusters * self.batch_size).shape: {}".format(torch.ones(num_clusters * self.batch_size).shape))
+        # assert torch.isclose(batch.s.sum(axis=1), torch.ones(num_clusters * self.batch_size)).all()
+        assert batch.batch.size() == (self.batch_size * num_clusters,)
+        np.testing.assert_allclose(
+            batch.ptr, torch.arange(self.batch_size + 1) * num_clusters
+        )
+
+        assert -1 <= batch.loss[0]["mincut_loss"] <= 0
+        assert 0 <= batch.loss[0]["ortho_loss"] <= math.sqrt(2)
