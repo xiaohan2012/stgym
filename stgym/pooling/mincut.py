@@ -3,7 +3,12 @@ from torch import Tensor
 from torch_geometric.utils.sparse import is_sparse
 from torch_scatter import scatter_sum
 
-from stgym.utils import batch2ptr, stacked_blocks_to_block_diagonal
+from stgym.utils import (
+    batch2ptr,
+    hsplit_and_vstack,
+    mask_diagonal_sp,
+    stacked_blocks_to_block_diagonal,
+)
 
 
 def mincut_pool(
@@ -90,7 +95,13 @@ def mincut_pool(
         .mean()
     )
 
+    # normalize the output adjacency matrix
     out_adj = C_bd.T @ adj @ C_bd
+    out_adj = mask_diagonal_sp(out_adj)
+    d = torch.einsum("ij->i", out_adj).to_dense().sqrt() + 1e-12
+    d_norm = torch.sparse_coo_tensor(diagonal_indices, (1 / d), requires_grad=False)
+    out_adj_normalized = d_norm @ out_adj @ d_norm
+
     x_bd = stacked_blocks_to_block_diagonal(x, ptr)
-    out_x = s.T @ x_bd
-    return out_x, out_adj, mincut_loss, ortho_loss, CC_batch
+    out_x = hsplit_and_vstack(s.T @ x_bd, chunk_size=x.shape[1])  # (BxK) x D
+    return out_x, out_adj_normalized, mincut_loss, ortho_loss, CC_batch

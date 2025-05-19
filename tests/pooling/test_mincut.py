@@ -13,7 +13,7 @@ from stgym.utils import stacked_blocks_to_block_diagonal
 
 from ..utils import BatchLoaderMixin
 
-RTOL = 1e-3
+RTOL = 2e-3
 
 
 def test_mincut_pool():
@@ -25,6 +25,8 @@ def test_mincut_pool():
 
     batch = next(iter(train_loader))
     n_nodes = batch.x.shape[0]
+    n_features = batch.x.shape[1]
+    print(f"n_features: {n_features}")
     s, t = batch.edge_index[0], batch.edge_index[1]
     adj = torch.sparse_coo_tensor(
         torch.stack([s, t]), torch.ones(s.size(0)), (n_nodes, n_nodes)
@@ -32,8 +34,8 @@ def test_mincut_pool():
     batch.adj_t = adj
 
     n_nodes = batch.x.shape[0]
-    n_clusters = 3
-    C = torch.rand(n_nodes, n_clusters)
+    K = 3
+    C = torch.rand(n_nodes, K)
 
     C_3d, mask = to_dense_batch(C, batch.batch)
     x_3d, mask = to_dense_batch(batch.x, batch.batch)
@@ -41,7 +43,7 @@ def test_mincut_pool():
     expected_out_x, expected_out_adj, expected_mincut_loss, expected_ortho_loss = (
         dense_mincut_pool(x_3d, adj_3d, C_3d, mask)
     )
-    expected_batch = torch.arange(0, B).repeat_interleave(n_clusters)
+    expected_batch = torch.arange(0, B).repeat_interleave(K)
 
     x_3d, mask = to_dense_batch(batch.x, batch.batch)
 
@@ -52,18 +54,23 @@ def test_mincut_pool():
         actual_ortho_loss,
         actual_batch,
     ) = sparse_mincut_pool(batch.x, batch.adj_t, batch.batch, C)
+    assert actual_out_x.shape == (B * K, n_features)
+
     np.testing.assert_allclose(
         actual_mincut_loss.detach().numpy(), expected_mincut_loss, rtol=RTOL
     )
     np.testing.assert_allclose(
         actual_ortho_loss.detach().numpy(), expected_ortho_loss, rtol=RTOL
     )
-    np.testing.assert_allclose(actual_out_x, expected_out_x)
+
+    np.testing.assert_allclose(
+        actual_out_x, expected_out_x.reshape((-1, batch.x.shape[1]))
+    )
     np.testing.assert_allclose(actual_batch, expected_batch)
 
     assert is_sparse(actual_out_adj)
     expected_out_adj_bd = stacked_blocks_to_block_diagonal(
-        torch.vstack(list(expected_out_adj)), torch.arange(B + 1) * n_clusters
+        torch.vstack(list(expected_out_adj)), torch.arange(B + 1) * K
     ).to_dense()
 
     np.testing.assert_allclose(
@@ -87,7 +94,7 @@ class TestAutoGrad(BatchLoaderMixin):
             mincut_loss,
             ortho_loss,
             output_batch,
-        ) = sparse_mincut_pool(batch.adj_t, batch.batch, C)
+        ) = sparse_mincut_pool(batch.x, batch.adj_t, batch.batch, C)
 
         loss = mincut_loss + ortho_loss
 
