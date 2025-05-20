@@ -24,7 +24,8 @@ def model_cfg():
         mp_layers=[
             MessagePassingConfig(
                 layer_type="gcnconv",
-                pooling=PoolingConfig(type="dmon", n_clusters=8),
+                # pooling=PoolingConfig(type="dmon", n_clusters=8),
+                pooling=PoolingConfig(type="mincut", n_clusters=8),
             ),
             # # training works under one mp+pooling layer only, not more than that
             # MessagePassingConfig(

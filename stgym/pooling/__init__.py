@@ -1,5 +1,6 @@
 # from torch_geometric.nn.dense import DMoNPooling
 from .dmon import DMoNPoolingLayer  # noqa
+from .mincut import MincutPoolingLayer  # noqa
 
 # def get_pooling_function(name):
 #     if name == "mincut":
@@ -19,5 +20,7 @@ from .dmon import DMoNPoolingLayer  # noqa
 def get_pooling_class(name):
     if name == "dmon":
         return DMoNPoolingLayer
+    elif name == "mincut":
+        return MincutPoolingLayer
     else:
         raise NotImplementedError(name)
