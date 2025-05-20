@@ -53,13 +53,18 @@ class BRCADataset(InMemoryDataset):
         data_list = []
         for name, sample_df in groups:
             pos = torch.Tensor(sample_df[POS_COLS].values)
-            y = torch.tensor(
-                (sample_df[LABEL_COL] == POSITIVE_LABEL).astype(int).unique()[0]
+            # TODO: should be bool or int
+            y = torch.Tensor((sample_df[LABEL_COL] == POSITIVE_LABEL).any()).type(
+                torch.int
             )
 
             x = torch.Tensor(
-                sample_df.drop(columns=[ID_COL] + GROUP_COLS + POS_COLS).values
+                sample_df.drop(
+                    columns=[ID_COL] + GROUP_COLS + POS_COLS + [LABEL_COL]
+                ).values
             )
+
+            assert x.shape[0] == pos.shape[0]
 
             data_list.append(Data(x=x, y=y, pos=pos))
         return data_list
