@@ -1,3 +1,7 @@
+import os
+import shutil
+from pathlib import Path
+
 import numpy as np
 import ray
 import torch
@@ -120,3 +124,8 @@ class RayProgressBar:
 def rand_ints(size, min=0, max=100000, seed: int = None) -> np.ndarray:
     np.random.seed(seed)
     return np.random.randint(min, max, size)
+
+
+def rm_dir_if_exists(dirname: str | Path):
+    if os.path.exists(dirname):
+        shutil.rmtree(dirname)
