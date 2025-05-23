@@ -2,13 +2,13 @@ import torch
 from torch import Tensor
 from torch_geometric.data import Data
 
-from stgym.config_schema import ClusteringModelConfig, ModelConfig
+from stgym.config_schema import ClusteringModelConfig, GraphClassifierModelConfig
 from stgym.global_pooling import get_pooling_operator
 from stgym.layers import MLP, GeneralMultiLayer
 
 
 class STGraphClassifier(torch.nn.Module):
-    def __init__(self, dim_in: int, dim_out: int, cfg: ModelConfig):
+    def __init__(self, dim_in: int, dim_out: int, cfg: GraphClassifierModelConfig):
         super().__init__()
         self.mp_module = GeneralMultiLayer(
             dim_in=dim_in, layer_configs=cfg.mp_layers, mem_config=cfg.mem

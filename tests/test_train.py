@@ -2,10 +2,10 @@ import pytest
 
 from stgym.config_schema import (
     DataLoaderConfig,
+    GraphClassifierModelConfig,
     LRScheduleConfig,
     MessagePassingConfig,
     MLFlowConfig,
-    ModelConfig,
     OptimizerConfig,
     PoolingConfig,
     PostMPConfig,
@@ -19,7 +19,7 @@ from stgym.train import train
 
 @pytest.fixture
 def graph_clf_model_cfg():
-    return ModelConfig(
+    return GraphClassifierModelConfig(
         # message passing layers
         mp_layers=[
             MessagePassingConfig(
@@ -40,7 +40,7 @@ def graph_clf_model_cfg():
 
 @pytest.fixture
 def node_cls_model_cfg():
-    return ModelConfig(
+    return GraphClassifierModelConfig(
         # message passing layers
         mp_layers=[
             MessagePassingConfig(

@@ -7,7 +7,7 @@ import torch
 from sklearn.metrics import roc_auc_score
 from torch_geometric.data import Data
 
-from stgym.config_schema import ModelConfig, TaskConfig, TrainConfig
+from stgym.config_schema import GraphClassifierModelConfig, TaskConfig, TrainConfig
 from stgym.loss import compute_classification_loss
 from stgym.model import STGraphClassifier
 from stgym.optimizer import create_optimizer_from_cfg, create_scheduler
@@ -35,7 +35,7 @@ class STGymModule(pl.LightningModule):
         self,
         dim_in,
         dim_out,
-        model_cfg: ModelConfig,
+        model_cfg: GraphClassifierModelConfig,
         train_cfg: TrainConfig,
         task_cfg: TaskConfig,
     ):

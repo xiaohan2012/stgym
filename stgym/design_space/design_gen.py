@@ -7,8 +7,8 @@ from pydantic import BaseModel
 from stgym.config_schema import (
     DataLoaderConfig,
     ExperimentConfig,
+    GraphClassifierModelConfig,
     MessagePassingConfig,
-    ModelConfig,
     PostMPConfig,
     TaskConfig,
     TrainConfig,
@@ -54,7 +54,7 @@ def sample_across_dimensions(
 
 def generate_model_config(
     space: ModelSpace, k: int = 1, seed: int = None
-) -> list[ModelConfig]:
+) -> list[GraphClassifierModelConfig]:
     seeds = rand_ints(k, seed=seed)
     ret = []
     for i in range(k):
@@ -66,7 +66,7 @@ def generate_model_config(
             values["post_mp_dims"].split(","), lambda s: int(s.strip())
         )
         ret.append(
-            ModelConfig(
+            GraphClassifierModelConfig(
                 global_pooling=values["global_pooling"],
                 normalize_adj=values["normalize_adj"],
                 mp_layers=mp_layers,

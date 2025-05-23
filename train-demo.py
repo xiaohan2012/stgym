@@ -2,10 +2,10 @@
 
 from stgym.config_schema import (
     DataLoaderConfig,
+    GraphClassifierModelConfig,
     LRScheduleConfig,
     MessagePassingConfig,
     MLFlowConfig,
-    ModelConfig,
     OptimizerConfig,
     PoolingConfig,
     PostMPConfig,
@@ -16,7 +16,7 @@ from stgym.data_loader import STDataModule
 from stgym.tl_model import STGymModule
 from stgym.train import train
 
-model_cfg = ModelConfig(
+model_cfg = GraphClassifierModelConfig(
     # message passing layers
     mp_layers=[
         MessagePassingConfig(

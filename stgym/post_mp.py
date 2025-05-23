@@ -1,6 +1,6 @@
 import torch
 
-from stgym.config_schema import ModelConfig
+from stgym.config_schema import GraphClassifierModelConfig
 from stgym.layers import MLP
 from stgym.pooling import get_pooling_function
 
@@ -15,7 +15,7 @@ class GNNGraphHead(torch.nn.Module):
         dim_out (int): The output feature dimension.
     """
 
-    def __init__(self, dim_in: int, dim_out: int, config: ModelConfig):
+    def __init__(self, dim_in: int, dim_out: int, config: GraphClassifierModelConfig):
         super().__init__()
         self.layer_post_mp = MLP(dim_in, dim_out, config.post_mp, config.mem)
         self.graph_pooling_type = config.post_mp.graph_pooling

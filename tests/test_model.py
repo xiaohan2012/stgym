@@ -4,8 +4,8 @@ from torch_geometric.data import Data
 
 from stgym.config_schema import (
     ClusteringModelConfig,
+    GraphClassifierModelConfig,
     MessagePassingConfig,
-    ModelConfig,
     PoolingConfig,
     PostMPConfig,
 )
@@ -16,7 +16,7 @@ from .utils import BatchLoaderMixin
 
 class TestSTGraphClassifier(BatchLoaderMixin):
     def test(self):
-        cfg = ModelConfig(
+        cfg = GraphClassifierModelConfig(
             mp_layers=[
                 MessagePassingConfig(
                     layer_type="gcnconv",

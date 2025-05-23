@@ -120,7 +120,7 @@ class OptimizerConfig(BaseModel):
     momentum: float = 0.9
 
 
-class ModelConfig(BaseModel):
+class GraphClassifierModelConfig(BaseModel):
     # architecture
     mp_layers: list[MessagePassingConfig]
     global_pooling: GlobalPoolingType = "mean"
@@ -187,7 +187,7 @@ class TaskConfig(BaseModel):
 class ExperimentConfig(BaseModel):
     task: TaskConfig
     data_loader: DataLoaderConfig
-    model: ModelConfig
+    model: GraphClassifierModelConfig
     train: TrainConfig
 
 

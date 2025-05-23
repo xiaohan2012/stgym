@@ -3,7 +3,7 @@ import pytest
 from stgym.config_schema import (
     DataLoaderConfig,
     ExperimentConfig,
-    ModelConfig,
+    GraphClassifierModelConfig,
     TaskConfig,
     TrainConfig,
 )
@@ -90,7 +90,7 @@ class TestGenerateDesign:
 
 def test_model_config_validity(mock_design_space):
     config = generate_model_config(mock_design_space.model, k=1)[0]
-    assert isinstance(config, ModelConfig)
+    assert isinstance(config, GraphClassifierModelConfig)
     assert config.post_mp_layer.dims in ([64, 32], [32, 16])
     assert config.mp_layers[0].use_batchnorm is True
     assert config.post_mp_layer.use_batchnorm is True
