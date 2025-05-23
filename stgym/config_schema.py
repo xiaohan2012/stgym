@@ -130,6 +130,14 @@ class ModelConfig(BaseModel):
     mem: Optional[MemoryConfig] = MemoryConfig(inplace=False)
 
 
+class ClusteringModelConfig(BaseModel):
+    # architecture
+    mp_layers: list[MessagePassingConfig]
+
+    # misc
+    mem: Optional[MemoryConfig] = MemoryConfig(inplace=False)
+
+
 class DataLoaderConfig(BaseModel):
     class DataSplitConfig(BaseModel):
         train_ratio: PositiveFloat

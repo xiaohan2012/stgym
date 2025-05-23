@@ -154,7 +154,7 @@ class DMoNPoolingLayer(torch.nn.Module):
         batch.edge_index = edge_index
         batch.edge_weight = edge_weight
         # return batch, s, spectral_loss, cluster_loss, ortho_loss
-        batch.s = s
+        batch.s = s  # the clustering vector
         loss_info = {
             "spectral_loss": spectral_loss,
             "cluster_loss": cluster_loss,

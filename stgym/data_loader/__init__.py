@@ -46,6 +46,16 @@ def load_dataset(task_cfg: TaskConfig, dl_cfg: DataLoaderConfig):
             pre_filter=lambda g: g.num_nodes <= 500,
         )
         return ds
+    elif ds_name == "human-crc-test":
+        from stgym.data_loader.human_crc import HumanCRCDataset
+
+        ds = HumanCRCDataset(
+            root="./tests/data/human-crc-test",
+            transform=transform,
+            # keep only small graphs
+            pre_filter=lambda g: g.num_nodes <= 500,
+        )
+        return ds
     else:
         raise NotImplementedError(ds_name)
 

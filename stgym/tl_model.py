@@ -1,4 +1,5 @@
 import time
+from dataclasses import dataclass
 from typing import Any, Dict, Tuple
 
 import pytorch_lightning as pl
@@ -6,7 +7,7 @@ import torch
 from sklearn.metrics import roc_auc_score
 from torch_geometric.data import Data
 
-from stgym.config_schema import ModelConfig, TrainConfig
+from stgym.config_schema import ModelConfig, TaskConfig, TrainConfig
 from stgym.loss import compute_classification_loss
 from stgym.model import STGraphClassifier
 from stgym.optimizer import create_optimizer_from_cfg, create_scheduler
@@ -22,11 +23,26 @@ from stgym.utils import flatten_dict
 torch.autograd.set_detect_anomaly(True)
 
 
+@dataclass
+class Split:
+    train = "train"
+    val = "validation"
+    test = "test"
+
+
 class STGymModule(pl.LightningModule):
-    def __init__(self, dim_in, dim_out, model_cfg: ModelConfig, train_cfg: TrainConfig):
+    def __init__(
+        self,
+        dim_in,
+        dim_out,
+        model_cfg: ModelConfig,
+        train_cfg: TrainConfig,
+        task_cfg: TaskConfig,
+    ):
         super().__init__()
         self.my_hparams = model_cfg.model_dump() | train_cfg.model_dump()
         self.train_cfg = train_cfg
+        self.task_cfg = task_cfg
         self.model = STGraphClassifier(dim_in, dim_out, model_cfg)
 
         self.validation_step_outputs = []
@@ -53,40 +69,58 @@ class STGymModule(pl.LightningModule):
     def _shared_step(self, batch: Data, split: str) -> Dict:
         batch.split = split
 
-        batch, pred_logits, layer_losses = self(batch)
-        true = batch.y
+        if self.task_cfg.type == "graph-classification":
+            batch, pred_logits, layer_losses = self(batch)
+            true = batch.y
 
-        # the corner case of batch size = 1
-        if pred_logits.ndim == 0:
-            pred_logits = pred_logits.unsqueeze(-1)
+            # the corner case of batch size = 1
+            if pred_logits.ndim == 0:
+                pred_logits = pred_logits.unsqueeze(-1)
 
-        # print("pred: {}".format(pred_logits))
-        # print("true: {}".format(true))
-        loss, pred_score = compute_classification_loss(pred_logits, true)
+            loss, pred_score = compute_classification_loss(pred_logits, true)
 
-        # TODO: may attach different weights to the loss terms
-        pooling_loss = sum(layer_losses[-1].values())
-        step_end_time = time.time()
-        return dict(
-            loss=loss + pooling_loss,
-            true=true,
-            pred_score=pred_score.detach(),
-            step_end_time=step_end_time,
-        )
+            # TODO: may attach different weights to the loss terms
+            pooling_loss = sum(layer_losses[-1].values())
+            step_end_time = time.time()
+            return dict(
+                loss=loss + pooling_loss,
+                true=true,
+                pred_score=pred_score.detach(),
+                step_end_time=step_end_time,
+            )
+        elif self.task_cfg.type == "node-clustering":
+            batch, pred, layer_losses = self(batch)
+            clustering_related_loss = sum(layer_losses[-1].values())
+            if split == Split.train:
+                return dict(
+                    loss=clustering_related_loss,
+                    step_end_time=step_end_time,
+                )
+            else:
+                true = batch.y
+                batch, pred, layer_losses = self(batch)
+                nmi = ...  # TODO: do evaluation
+                ari = ...
+                return dict(
+                    nmi=nmi,
+                    ari=ari,
+                    loss=clustering_related_loss,
+                    step_end_time=step_end_time,
+                )
 
     def training_step(self, batch: Data, *args, **kwargs):
-        output = self._shared_step(batch, split="train")
+        output = self._shared_step(batch, split=Split.train)
         self.log("train_loss", output["loss"], prog_bar=True)
         return output
 
     def validation_step(self, batch: Data, *args, **kwargs):
-        output = self._shared_step(batch, split="val")
+        output = self._shared_step(batch, split=Split.val)
         self.validation_step_outputs.append(output)
         self.log("val_loss", output["loss"], prog_bar=True)
         return output
 
     def test_step(self, batch: Data, *args, **kwargs):
-        output = self._shared_step(batch, split="test")
+        output = self._shared_step(batch, split=Split.test)
         self.test_step_outputs.append(output)
         return output
 

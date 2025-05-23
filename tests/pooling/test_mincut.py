@@ -131,7 +131,10 @@ class TestWrapper(BatchLoaderMixin):
             num_clusters * (num_clusters - 1) * self.batch_size,
         )
 
-        assert batch.s.size() == (self.batch_size * self.num_nodes, num_clusters)
+        assert batch.s.size() == (
+            self.batch_size * self.num_nodes_per_graph,
+            num_clusters,
+        )
         # print("batch.s.sum(axis=1).shape: {}".format(batch.s.sum(axis=1).shape))
         # print("torch.ones(num_clusters * self.batch_size).shape: {}".format(torch.ones(num_clusters * self.batch_size).shape))
         # assert torch.isclose(batch.s.sum(axis=1), torch.ones(num_clusters * self.batch_size)).all()

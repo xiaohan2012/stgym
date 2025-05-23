@@ -44,7 +44,10 @@ class TestGeneralLayer(BatchLoaderMixin):
         assert isinstance(layer.layer, expected_layer_class)
 
         output = layer(batch)
-        assert output.x.shape == (self.num_nodes * self.batch_size, self.num_classes)
+        assert output.x.shape == (
+            self.num_nodes_per_graph * self.batch_size,
+            self.num_classes,
+        )
 
     def test_with_pooling(self):
         layer_type = "sageconv"
@@ -92,7 +95,10 @@ class TestGeneralMultiLayer(BatchLoaderMixin):
         batch = self.load_batch()
 
         output = model(batch)
-        assert output.x.shape == (self.num_nodes * self.batch_size, dim_inner[-1])
+        assert output.x.shape == (
+            self.num_nodes_per_graph * self.batch_size,
+            dim_inner[-1],
+        )
 
     def test_with_pooling(self):
         # dim_inner = [128, 64]
@@ -152,7 +158,10 @@ class TestMLP(BatchLoaderMixin):
         batch = self.load_batch()
         output = model(batch)
 
-        assert output.x.shape == (self.num_nodes * self.batch_size, self.num_classes)
+        assert output.x.shape == (
+            self.num_nodes_per_graph * self.batch_size,
+            self.num_classes,
+        )
 
     def test_layers_are_linear(self):
         layer_configs = [

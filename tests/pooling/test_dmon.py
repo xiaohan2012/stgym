@@ -125,7 +125,10 @@ class TestWrapper(BatchLoaderMixin):
             num_clusters * (num_clusters - 1) * self.batch_size,
         )
 
-        assert batch.s.size() == (self.batch_size * self.num_nodes, num_clusters)
+        assert batch.s.size() == (
+            self.batch_size * self.num_nodes_per_graph,
+            num_clusters,
+        )
         assert batch.batch.size() == (self.batch_size * num_clusters,)
         np.testing.assert_allclose(
             batch.ptr, torch.arange(self.batch_size + 1) * num_clusters

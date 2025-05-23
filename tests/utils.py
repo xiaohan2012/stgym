@@ -20,7 +20,7 @@ def create_synthetic_data(
 
 
 def create_data_batch(
-    num_nodes: int = 100,
+    num_nodes_per_graph: int = 100,
     num_features: int = 128,
     num_classes: int = 10,
     batch_size: int = 5,
@@ -28,7 +28,7 @@ def create_data_batch(
 ):
     dataloader = DataLoader(
         [
-            create_synthetic_data(num_nodes, num_features, num_classes)
+            create_synthetic_data(num_nodes_per_graph, num_features, num_classes)
             for _ in range(batch_size)
         ],
         batch_size=batch_size,
@@ -36,7 +36,9 @@ def create_data_batch(
 
     batch = next(iter(dataloader))
 
-    adj = torch.zeros((num_nodes * batch_size, num_nodes * batch_size))
+    adj = torch.zeros(
+        (num_nodes_per_graph * batch_size, num_nodes_per_graph * batch_size)
+    )
     adj[batch.edge_index[0], batch.edge_index[1]] = 1
     batch.adj_t = adj.to_sparse_coo()
     # graph-level labels
@@ -45,7 +47,7 @@ def create_data_batch(
 
 
 class BatchLoaderMixin:
-    num_nodes = 100
+    num_nodes_per_graph = 100
     num_features = 128
     num_classes = 10
     batch_size = 3
@@ -53,7 +55,7 @@ class BatchLoaderMixin:
 
     def load_batch(self):
         return create_data_batch(
-            num_nodes=self.num_nodes,
+            num_nodes_per_graph=self.num_nodes_per_graph,
             num_features=self.num_features,
             num_classes=self.num_classes,
             batch_size=self.batch_size,
