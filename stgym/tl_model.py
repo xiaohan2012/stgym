@@ -2,14 +2,20 @@ import time
 from dataclasses import dataclass
 from typing import Any, Dict, Tuple
 
+import numpy as np
 import pytorch_lightning as pl
 import torch
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import normalized_mutual_info_score, roc_auc_score
 from torch_geometric.data import Data
 
-from stgym.config_schema import GraphClassifierModelConfig, TaskConfig, TrainConfig
+from stgym.config_schema import (
+    ClusteringModelConfig,
+    GraphClassifierModelConfig,
+    TaskConfig,
+    TrainConfig,
+)
 from stgym.loss import compute_classification_loss
-from stgym.model import STGraphClassifier
+from stgym.model import STClusteringModel, STGraphClassifier
 from stgym.optimizer import create_optimizer_from_cfg, create_scheduler
 from stgym.utils import flatten_dict
 
@@ -34,18 +40,22 @@ class STGymModule(pl.LightningModule):
     def __init__(
         self,
         dim_in,
-        dim_out,
-        model_cfg: GraphClassifierModelConfig,
+        model_cfg: GraphClassifierModelConfig | ClusteringModelConfig,
         train_cfg: TrainConfig,
         task_cfg: TaskConfig,
+        dim_out: int = None,
     ):
         super().__init__()
         self.my_hparams = model_cfg.model_dump() | train_cfg.model_dump()
         self.train_cfg = train_cfg
         self.task_cfg = task_cfg
-        self.model = STGraphClassifier(dim_in, dim_out, model_cfg)
-
-        self.validation_step_outputs = []
+        if task_cfg.type == "graph-classification":
+            self.model = STGraphClassifier(dim_in, dim_out, model_cfg)
+        elif task_cfg.type == "node-clustering":
+            self.model = STClusteringModel(dim_in, model_cfg)
+        else:
+            raise ValueError(f"Unsupported task type: {task_cfg.type}")
+        self.val_step_outputs = []
         self.test_step_outputs = []
 
         # self.save_hyperparameters()  # do not use this, as it records the pydantic models directly
@@ -89,8 +99,11 @@ class STGymModule(pl.LightningModule):
                 step_end_time=step_end_time,
             )
         elif self.task_cfg.type == "node-clustering":
+            ptr = batch.ptr  # used for determining instance boundaries
+            print(f"ptr: {ptr}")
             batch, pred, layer_losses = self(batch)
             clustering_related_loss = sum(layer_losses[-1].values())
+            step_end_time = time.time()
             if split == Split.train:
                 return dict(
                     loss=clustering_related_loss,
@@ -98,13 +111,11 @@ class STGymModule(pl.LightningModule):
                 )
             else:
                 true = batch.y
-                batch, pred, layer_losses = self(batch)
-                nmi = ...  # TODO: do evaluation
-                ari = ...
                 return dict(
-                    nmi=nmi,
-                    ari=ari,
+                    ptr=ptr.detach(),
                     loss=clustering_related_loss,
+                    true=true,
+                    pred_score=pred.detach(),
                     step_end_time=step_end_time,
                 )
 
@@ -115,7 +126,7 @@ class STGymModule(pl.LightningModule):
 
     def validation_step(self, batch: Data, *args, **kwargs):
         output = self._shared_step(batch, split=Split.val)
-        self.validation_step_outputs.append(output)
+        self.val_step_outputs.append(output)
         self.log("val_loss", output["loss"], prog_bar=True)
         return output
 
@@ -127,7 +138,7 @@ class STGymModule(pl.LightningModule):
     def _extract_pred_and_test_from_step_outputs(self, split: str):
         """extract the prediction and ground truth accumulated from validation steps"""
         if split == "val":
-            outputs = self.validation_step_outputs
+            outputs = self.val_step_outputs
         elif split == "test":
             outputs = self.test_step_outputs
         else:
@@ -135,19 +146,50 @@ class STGymModule(pl.LightningModule):
 
         true = torch.cat([output["true"].cpu() for output in outputs])
         pred = torch.cat([output["pred_score"].cpu() for output in outputs])
-        return true, pred
+        if "ptr" not in outputs[0]:
+            return true, pred
+        else:
+            # values in ptr are relative within the batch
+            # need to accumulate values
+            # TODO: add unit test
+            offset = 0
+            ptr_list = []
+            for output in outputs:
+                ptr = output["ptr"].cpu()
+                ptr_list.append(ptr + offset)
+                offset = ptr[-1]
+            ptr = torch.cat(ptr_list)
+            return true, pred, ptr
+
+    def _shared_epoch_end(self, split: Split):
+
+        if self.task_cfg.type == "graph-classification":
+            true, pred = self._extract_pred_and_test_from_step_outputs(split=split)
+            pr_auc = roc_auc_score(true, pred)
+            self.log(f"{split}_pr_auc", pr_auc, prog_bar=True)
+        elif self.task_cfg.type == "node-clustering":
+            true, pred, ptr_batch = self._extract_pred_and_test_from_step_outputs(
+                split=split
+            )
+            print(f"ptr (all): {ptr_batch}")
+            nmi_scores = []
+            for start, end in zip(ptr_batch[:-1], ptr_batch[1:]):
+                nmi_scores.append(
+                    normalized_mutual_info_score(
+                        true[start:end], pred[start:end, :].argmax(axis=1)
+                    )
+                )
+            # nmi = normalized_mutual_info_score(true, pred.argmax(axis=1))
+            # adjusted_mutual_info_score, adjusted_rand_score
+            # ari =
+            self.log(f"{split}_nmi", np.mean(nmi_scores), prog_bar=True)
+        getattr(self, f"{split}_step_outputs").clear()
 
     def on_validation_epoch_end(self):
-        true, pred = self._extract_pred_and_test_from_step_outputs(split="val")
-        pr_auc = roc_auc_score(true, pred)
-        self.log("val_pr_auc", pr_auc, prog_bar=True)
-        self.validation_step_outputs.clear()  # free memory
+        return self._shared_epoch_end("val")
 
     def on_test_epoch_end(self):
-        true, pred = self._extract_pred_and_test_from_step_outputs(split="test")
-        pr_auc = roc_auc_score(true, pred)
-        self.log("test_pr_auc", pr_auc)
-        self.test_step_outputs.clear()  # free memory
+        return self._shared_epoch_end("test")
 
     def lr_scheduler_step(self, *args, **kwargs):
         # Needed for PyTorch 2.0 since the base class of LR schedulers changed.
