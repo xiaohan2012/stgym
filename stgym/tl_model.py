@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, Tuple
 
 import numpy as np
+import pydash as _
 import pytorch_lightning as pl
 import torch
 from sklearn.metrics import normalized_mutual_info_score, roc_auc_score
@@ -17,7 +18,7 @@ from stgym.config_schema import (
 from stgym.loss import compute_classification_loss
 from stgym.model import STClusteringModel, STGraphClassifier
 from stgym.optimizer import create_optimizer_from_cfg, create_scheduler
-from stgym.utils import flatten_dict
+from stgym.utils import collapse_ptr_list, flatten_dict
 
 # from torch_geometric.graphgym.loss import compute_loss
 # from torch_geometric.graphgym.models.gnn import GNN
@@ -99,8 +100,7 @@ class STGymModule(pl.LightningModule):
                 step_end_time=step_end_time,
             )
         elif self.task_cfg.type == "node-clustering":
-            ptr = batch.ptr  # used for determining instance boundaries
-            print(f"ptr: {ptr}")
+            ptr = batch.ptr  # used to determine instance boundaries
             batch, pred, layer_losses = self(batch)
             clustering_related_loss = sum(layer_losses[-1].values())
             step_end_time = time.time()
@@ -149,16 +149,7 @@ class STGymModule(pl.LightningModule):
         if "ptr" not in outputs[0]:
             return true, pred
         else:
-            # values in ptr are relative within the batch
-            # need to accumulate values
-            # TODO: add unit test
-            offset = 0
-            ptr_list = []
-            for output in outputs:
-                ptr = output["ptr"].cpu()
-                ptr_list.append(ptr + offset)
-                offset = ptr[-1]
-            ptr = torch.cat(ptr_list)
+            ptr = collapse_ptr_list(_.map_(outputs, lambda x: x["ptr"].cpu()))
             return true, pred, ptr
 
     def _shared_epoch_end(self, split: Split):
@@ -171,7 +162,6 @@ class STGymModule(pl.LightningModule):
             true, pred, ptr_batch = self._extract_pred_and_test_from_step_outputs(
                 split=split
             )
-            print(f"ptr (all): {ptr_batch}")
             nmi_scores = []
             for start, end in zip(ptr_batch[:-1], ptr_batch[1:]):
                 nmi_scores.append(
