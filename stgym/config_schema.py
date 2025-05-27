@@ -138,6 +138,15 @@ class ClusteringModelConfig(BaseModel):
     mem: Optional[MemoryConfig] = MemoryConfig(inplace=False)
 
 
+class NodeClassifierModelConfig(BaseModel):
+    # architecture
+    mp_layers: list[MessagePassingConfig]
+    post_mp_layer: PostMPConfig
+
+    # misc
+    mem: Optional[MemoryConfig] = MemoryConfig(inplace=False)
+
+
 class DataLoaderConfig(BaseModel):
     class DataSplitConfig(BaseModel):
         train_ratio: PositiveFloat
@@ -182,6 +191,10 @@ class TaskConfig(BaseModel):
     dataset_name: str
     type: TaskType
     eval_metrics: list[EvalMetric] = ["pr_auc"]
+
+
+class ClassificationTaskConfig(TaskConfig):
+    num_classes: int
 
 
 class ExperimentConfig(BaseModel):

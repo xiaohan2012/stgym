@@ -6,7 +6,12 @@ import numpy as np
 import pydash as _
 import pytorch_lightning as pl
 import torch
-from sklearn.metrics import normalized_mutual_info_score, roc_auc_score
+from sklearn.metrics import (
+    accuracy_score,
+    f1_score,
+    normalized_mutual_info_score,
+    roc_auc_score,
+)
 from torch_geometric.data import Data
 
 from stgym.config_schema import (
@@ -16,7 +21,7 @@ from stgym.config_schema import (
     TrainConfig,
 )
 from stgym.loss import compute_classification_loss
-from stgym.model import STClusteringModel, STGraphClassifier
+from stgym.model import STClusteringModel, STGraphClassifier, STNodeClassifier
 from stgym.optimizer import create_optimizer_from_cfg, create_scheduler
 from stgym.utils import collapse_ptr_list, flatten_dict
 
@@ -54,6 +59,8 @@ class STGymModule(pl.LightningModule):
             self.model = STGraphClassifier(dim_in, dim_out, model_cfg)
         elif task_cfg.type == "node-clustering":
             self.model = STClusteringModel(dim_in, model_cfg)
+        elif task_cfg.type == "node-classification":
+            self.model = STNodeClassifier(dim_in, dim_out, model_cfg)
         else:
             raise ValueError(f"Unsupported task type: {task_cfg.type}")
         self.val_step_outputs = []
@@ -118,6 +125,25 @@ class STGymModule(pl.LightningModule):
                     pred_score=pred.detach(),
                     step_end_time=step_end_time,
                 )
+        elif self.task_cfg.type == "node-classification":
+            batch, pred_logits, layer_losses = self(batch)
+            true = batch.y
+            loss, pred_score = compute_classification_loss(
+                pred_logits, true.type(torch.long)
+            )
+
+            if len(layer_losses):
+                loss += sum(layer_losses[-1].values())
+
+            step_end_time = time.time()
+            return dict(
+                loss=loss,
+                true=true,
+                pred_score=pred_score.detach(),
+                step_end_time=step_end_time,
+            )
+        else:
+            raise NotImplementedError
 
     def training_step(self, batch: Data, *args, **kwargs):
         output = self._shared_step(batch, split=Split.train)
@@ -169,10 +195,14 @@ class STGymModule(pl.LightningModule):
                         true[start:end], pred[start:end, :].argmax(axis=1)
                     )
                 )
-            # nmi = normalized_mutual_info_score(true, pred.argmax(axis=1))
-            # adjusted_mutual_info_score, adjusted_rand_score
-            # ari =
             self.log(f"{split}_nmi", np.mean(nmi_scores), prog_bar=True)
+        elif self.task_cfg.type == "node-classification":
+            true, pred = self._extract_pred_and_test_from_step_outputs(split=split)
+            acc = accuracy_score(true, pred.argmax(axis=1))
+            micro_f1_score = f1_score(true, pred.argmax(axis=1), average="micro")
+            self.log(f"{split}_accuracy", acc, prog_bar=True)
+            self.log(f"{split}_micro_f1_score", micro_f1_score, prog_bar=True)
+
         getattr(self, f"{split}_step_outputs").clear()
 
     def on_validation_epoch_end(self):

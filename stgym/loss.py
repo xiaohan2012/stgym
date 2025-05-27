@@ -26,7 +26,3 @@ def compute_classification_loss(pred: torch.Tensor, true: torch.Tensor):
         # binary or multilabel
         true = true.float()
         return bce_loss(pred, true), torch.sigmoid(pred)
-
-
-def compute_clustering_loss(pred: torch.Tensor, true: torch.Tensor):
-    pass

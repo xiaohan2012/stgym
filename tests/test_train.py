@@ -1,12 +1,14 @@
 import pytest
 
 from stgym.config_schema import (
+    ClassificationTaskConfig,
     ClusteringModelConfig,
     DataLoaderConfig,
     GraphClassifierModelConfig,
     LRScheduleConfig,
     MessagePassingConfig,
     MLFlowConfig,
+    NodeClassifierModelConfig,
     OptimizerConfig,
     PoolingConfig,
     PostMPConfig,
@@ -53,12 +55,26 @@ def clustering_model_cfg():
 
 
 @pytest.fixture
+def node_clf_model_cfg():
+    return NodeClassifierModelConfig(
+        # message passing layers
+        mp_layers=[
+            MessagePassingConfig(
+                layer_type="gcnconv",
+                pooling=PoolingConfig(type="dmon", n_clusters=8),
+            ),
+        ],
+        post_mp_layer=PostMPConfig(dims=[16, 8]),
+    )
+
+
+@pytest.fixture
 def graph_clf_train_cfg():
     return TrainConfig(
         optim=OptimizerConfig(),
         lr_schedule=LRScheduleConfig(type=None),
         max_epoch=10,
-        early_stopping={"metric": "val_pr_auc", "mode": "min"},
+        early_stopping={"metric": "val_pr_auc", "mode": "max"},
     )
 
 
@@ -68,7 +84,17 @@ def clustering_train_cfg():
         optim=OptimizerConfig(),
         lr_schedule=LRScheduleConfig(type=None),
         max_epoch=10,
-        early_stopping={"metric": "val_nmi", "mode": "min"},
+        early_stopping={"metric": "val_nmi", "mode": "max"},
+    )
+
+
+@pytest.fixture
+def node_clf_train_cfg():
+    return TrainConfig(
+        optim=OptimizerConfig(),
+        lr_schedule=LRScheduleConfig(type=None),
+        max_epoch=10,
+        early_stopping={"metric": "val_accuracy", "mode": "max"},
     )
 
 
@@ -85,6 +111,13 @@ def graph_clf_task_cfg():
 @pytest.fixture
 def clustering_task_cfg():
     return TaskConfig(dataset_name="human-crc-test", type="node-clustering")
+
+
+@pytest.fixture
+def node_clf_task_cfg():
+    return ClassificationTaskConfig(
+        dataset_name="human-crc-test", type="node-classification", num_classes=10
+    )
 
 
 @pytest.fixture
@@ -122,3 +155,20 @@ def test_train_on_clustering_task(
     )
 
     train(model_module, data_module, clustering_train_cfg, mlflow_cfg)
+
+
+def test_train_on_node_clf_task(
+    node_clf_task_cfg, dl_cfg, node_clf_model_cfg, node_clf_train_cfg, mlflow_cfg
+):
+    """for node classification task"""
+
+    data_module = STDataModule(node_clf_task_cfg, dl_cfg)
+    model_module = STGymModule(
+        dim_in=data_module.num_features,
+        model_cfg=node_clf_model_cfg,
+        train_cfg=node_clf_train_cfg,
+        task_cfg=node_clf_task_cfg,
+        dim_out=node_clf_task_cfg.num_classes,
+    )
+
+    train(model_module, data_module, node_clf_train_cfg, mlflow_cfg)
