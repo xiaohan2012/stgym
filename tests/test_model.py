@@ -6,10 +6,11 @@ from stgym.config_schema import (
     ClusteringModelConfig,
     GraphClassifierModelConfig,
     MessagePassingConfig,
+    NodeClassifierModelConfig,
     PoolingConfig,
     PostMPConfig,
 )
-from stgym.model import STClusteringModel, STGraphClassifier
+from stgym.model import STClusteringModel, STGraphClassifier, STNodeClassifier
 
 from .utils import BatchLoaderMixin
 
@@ -67,3 +68,43 @@ class TestSTClusteringModel(BatchLoaderMixin):
         )
         assert len(loss) == 1
         assert isinstance(loss[0], dict)
+
+
+class TestSTNodeClassifier(BatchLoaderMixin):
+    def _run_with_config(self, cfg, with_pooling: bool):
+        batch = self.load_batch()
+        model = STNodeClassifier(self.num_features, self.num_classes, cfg)
+        batch, pred, other_loss = model(batch)
+        assert isinstance(pred, Tensor)
+        assert isinstance(batch, Data)
+        assert pred.shape == (
+            self.batch_size * self.num_nodes_per_graph,
+            self.num_classes,
+        )
+        if with_pooling:
+            assert len(other_loss) == 1
+            for loss in other_loss:
+                assert isinstance(loss, dict)
+
+    def test_with_pooling(self):
+        cfg = NodeClassifierModelConfig(
+            mp_layers=[
+                MessagePassingConfig(
+                    layer_type="gcnconv",
+                    pooling=PoolingConfig(type="dmon", n_clusters=128),
+                ),
+                # Remark: it is unclear how to make the code run with more than one pooling layers
+            ],
+            post_mp_layer=PostMPConfig(dims=[64, 32]),
+        )
+        self._run_with_config(cfg, with_pooling=True)
+
+    def test_without_pooling(self):
+        cfg = NodeClassifierModelConfig(
+            mp_layers=[
+                MessagePassingConfig(layer_type="gcnconv", pooling=None),
+                MessagePassingConfig(layer_type="gcnconv", pooling=None),
+            ],
+            post_mp_layer=PostMPConfig(dims=[64, 32]),
+        )
+        self._run_with_config(cfg, with_pooling=False)
