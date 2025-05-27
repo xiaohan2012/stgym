@@ -4,6 +4,7 @@ import torch
 
 from stgym.utils import (
     batch2ptr,
+    collapse_ptr_list,
     flatten_dict,
     hsplit_and_vstack,
     mask_diagonal_sp,
@@ -110,3 +111,24 @@ def test_random_ints():
     assert rand_ints(10).shape == (10,)
     np.testing.assert_allclose(rand_ints(10, seed=42), rand_ints(10, seed=42))
     assert not np.allclose(rand_ints(10, seed=42), rand_ints(10, seed=24))
+
+
+@pytest.mark.parametrize(
+    "ptr_list, expected",
+    [
+        (
+            [
+                torch.Tensor([0, 10, 20]),
+                torch.Tensor([0, 20, 40]),
+                torch.Tensor([0, 30, 60]),
+            ],
+            [0, 10, 20, 40, 60, 90, 120],
+        ),
+        ([torch.Tensor([0, 10, 20])], torch.Tensor([0, 10, 20])),
+    ],
+)
+def test_collapse_ptr_list(ptr_list, expected):
+    expected = torch.Tensor(expected).type(torch.int)
+    actual = collapse_ptr_list(ptr_list)
+
+    assert torch.allclose(expected, actual)

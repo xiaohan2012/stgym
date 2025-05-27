@@ -129,3 +129,15 @@ def rand_ints(size, min=0, max=100000, seed: int = None) -> np.ndarray:
 def rm_dir_if_exists(dirname: str | Path):
     if os.path.exists(dirname):
         shutil.rmtree(dirname)
+
+
+def collapse_ptr_list(ptr_list: list[torch.Tensor]):
+    """given a list of pointer arrays, collapse them into one array and add offset to the elements accordingly"""
+
+    offset = 0
+    ptr_list_adjusted = []
+    for ptr in ptr_list:
+        ptr_list_adjusted += ptr[1:] + offset
+        offset = ptr_list_adjusted[-1]
+    ptr_list_adjusted.insert(0, 0)  # prepend 0
+    return torch.Tensor(ptr_list_adjusted).type(torch.int)
