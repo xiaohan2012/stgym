@@ -1,0 +1,89 @@
+#!/usr/bin/env python
+
+# In[1]:
+
+
+get_ipython().run_line_magic("load_ext", "autoreload")
+get_ipython().run_line_magic("autoreload", "2")
+
+
+# In[2]:
+
+
+from stgym.config_schema import (
+    ClassificationTaskConfig,
+    DataLoaderConfig,
+    LRScheduleConfig,
+    MessagePassingConfig,
+    MLFlowConfig,
+    NodeClassifierModelConfig,
+    OptimizerConfig,
+    PostMPConfig,
+    TrainConfig,
+)
+from stgym.data_loader import STDataModule
+from stgym.tl_model import STGymModule
+from stgym.train import train
+
+# In[3]:
+
+
+model_cfg = NodeClassifierModelConfig(
+    # message passing layers
+    mp_layers=[
+        MessagePassingConfig(layer_type="gcnconv", hidden_dim=64, pooling=None),
+        MessagePassingConfig(layer_type="gcnconv", hidden_dim=32, pooing=None),
+    ],
+    post_mp_layer=PostMPConfig(dims=[16, 8]),
+)
+
+
+# In[4]:
+
+
+task_cfg = ClassificationTaskConfig(
+    dataset_name="human-crc", type="node-classification", num_classes=10
+)
+train_cfg = TrainConfig(
+    optim=OptimizerConfig(),
+    lr_schedule=LRScheduleConfig(type=None),
+    max_epoch=10,
+    early_stopping={"metric": "val_accuracy", "mode": "max"},
+)
+
+
+data_cfg = DataLoaderConfig(batch_size=8)
+
+
+# In[6]:
+
+
+data_module = STDataModule(task_cfg, data_cfg)
+model_module = STGymModule(
+    dim_in=data_module.num_features,
+    dim_out=task_cfg.num_classes,
+    task_cfg=task_cfg,
+    model_cfg=model_cfg,
+    train_cfg=train_cfg,
+)
+print(model_module.model)
+
+
+# In[7]:
+
+
+mlflow_cfg = MLFlowConfig(
+    track=True, tracking_uri="http://127.0.0.1:8080", experiment_name="node-clf-demo"
+)
+
+
+# In[8]:
+
+
+train(
+    model_module,
+    data_module,
+    train_cfg,
+    mlflow_cfg,
+    tl_train_config={"log_every_n_steps": 10},
+)
