@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import BaseModel, PositiveFloat, PositiveInt
 
 from stgym.config_schema import (
@@ -8,11 +10,16 @@ from stgym.config_schema import (
     LayerType,
     LRSchedulerType,
     OptimizerType,
+    TaskType,
 )
 
 
-class ModelSpace(BaseModel):
-    class PoolingSpace(BaseModel):
+class ModelWithZip(BaseModel):
+    zip_: Optional[list[str]] = []  # used to specify the fields to be 'zipped' over
+
+
+class ModelSpace(ModelWithZip):
+    class PoolingSpace(ModelWithZip):
         type: HierarchicalPoolingType | list[HierarchicalPoolingType]
         n_clusters: PositiveInt | list[PositiveInt]
 
@@ -30,12 +37,12 @@ class ModelSpace(BaseModel):
     post_mp_dims: str | list[str]
 
 
-class TrainSpace(BaseModel):
-    class OptimSpace(BaseModel):
+class TrainSpace(ModelWithZip):
+    class OptimSpace(ModelWithZip):
         optimizer: OptimizerType | list[OptimizerType]
         base_lr: PositiveFloat | list[PositiveFloat]
 
-    class LRSchedulerSpace(BaseModel):
+    class LRSchedulerSpace(ModelWithZip):
         type: LRSchedulerType | list[LRSchedulerType]
 
     optim: OptimSpace
@@ -43,17 +50,18 @@ class TrainSpace(BaseModel):
     max_epoch: PositiveInt | list[PositiveInt]
 
 
-class DataLoaderSpace(BaseModel):
+class DataLoaderSpace(ModelWithZip):
     graph_const: GraphConstructionApproach | list[GraphConstructionApproach]
     knn_k: PositiveInt | list[PositiveInt]
     batch_size: PositiveInt | list[PositiveInt]
 
 
-class TaskSpace(BaseModel):
+class TaskSpace(ModelWithZip):
     dataset_name: str | list[str]
+    type: TaskType | list[TaskType]
 
 
-class DesignSpace(BaseModel):
+class DesignSpace(ModelWithZip):
     model: ModelSpace
     train: TrainSpace
     task: TaskSpace

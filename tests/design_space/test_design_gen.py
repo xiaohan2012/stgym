@@ -15,7 +15,7 @@ from stgym.design_space.design_gen import (
     generate_train_config,
     sample_across_dimensions,
 )
-from stgym.design_space.schema import DesignSpace, ModelSpace
+from stgym.design_space.schema import DesignSpace, ModelSpace, TaskSpace
 from stgym.utils import load_yaml
 
 from ..utils import RANDOM_SEEDS
@@ -41,6 +41,12 @@ class TestSampleAcrossDimensions:
         post_mp_dims=["64,32", "32, 16"],
     )
 
+    space_with_zip = TaskSpace(
+        zip_=["dataset_name", "type"],
+        dataset_name=["a", "b"],
+        type=["graph-classification", "node-classification"],
+    )
+
     def test_basic(self):
 
         design = sample_across_dimensions(self.space)
@@ -61,6 +67,14 @@ class TestSampleAcrossDimensions:
         same_design = sample_across_dimensions(self.space, seed=seed)
         assert design == same_design
 
+    @pytest.mark.parametrize("seed", RANDOM_SEEDS)
+    def test_with_zip(self, seed):
+        design = sample_across_dimensions(self.space_with_zip, seed=seed)
+        if design["dataset_name"] == "a":
+            assert design["type"] == "graph-classification"
+        else:
+            assert design["type"] == "node-classification"
+
 
 class TestGenerateDesign:
     @pytest.mark.parametrize("k", [1, 2, 3])
@@ -72,9 +86,17 @@ class TestGenerateDesign:
             assert isinstance(exp, ExperimentConfig)
 
     def test_task_config_validity(self, mock_design_space):
-        config = generate_task_config(mock_design_space.task, k=1)[0]
-        assert isinstance(config, TaskConfig)
-        assert config.dataset_name in ["brca", "animal"]
+        configs = generate_task_config(mock_design_space.task, k=100)
+        for config in configs:
+            assert isinstance(config, TaskConfig)
+            assert config.dataset_name in ["brca", "animal"]
+            assert config.type in ["graph-classification", "node-clustering"]
+
+            # ensure that the two fields are zipped
+            if config.dataset_name == "brca":
+                assert config.type == "graph-classification"
+            else:
+                assert config.type == "node-clustering"
 
     @pytest.mark.parametrize("seed", RANDOM_SEEDS)
     def test_consistency_under_fixed_random_seed(self, mock_design_space, seed):

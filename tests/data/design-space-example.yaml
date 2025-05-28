@@ -20,7 +20,11 @@ train:
     type: null
   max_epoch: [10, 100]
 task:
+  zip_:
+    - dataset_name
+    - type
   dataset_name: ['brca', 'animal']
+  type: ['graph-classification', 'node-clustering']
 data_loader:
   graph_const: ['knn', 'radius']
   knn_k: 20

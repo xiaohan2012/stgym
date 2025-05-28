@@ -41,7 +41,23 @@ def sample_across_dimensions(
 ):
     random.seed(int(seed) if seed is not None else None)
     ret = {}
-    for dimension in space.__fields__:
+    zipped_fields = space.zip_
+    zip_values = [getattr(space, f) for f in zipped_fields]
+
+    if zipped_fields:
+        # ensure that the length of the values in zipped fields match
+        assert (
+            len(_.uniq(_.map_(zip_values, len))) == 1
+        ), f"Array length mismatch: {zip_values}"
+
+        sampled_zip_values = random.choice(_.zip_(*zip_values))
+        ret = dict(zip(zipped_fields, sampled_zip_values))
+    else:
+        ret = {}
+
+    remaining_fields = _.pull_all(_.keys(space.__fields__), zipped_fields + ["zip_"])
+
+    for dimension in remaining_fields:
         val = getattr(space, dimension)
         if isinstance(val, list):
             ret[dimension] = random.choice(val)
@@ -94,8 +110,7 @@ def generate_task_config(
     seeds = rand_ints(k, seed=seed)
     for i in range(k):
         values = sample_across_dimensions(space, seed=seeds[i])
-        # TODO: populate task-specific evaluation metrics
-        ret.append(TaskConfig(**values, type="graph-classification"))
+        ret.append(TaskConfig(**values))
     return ret
 
 
