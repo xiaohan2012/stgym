@@ -1,15 +1,3 @@
-#!/usr/bin/env python
-
-# In[15]:
-
-
-get_ipython().run_line_magic("load_ext", "autoreload")
-get_ipython().run_line_magic("autoreload", "2")
-
-
-# In[16]:
-
-
 from stgym.config_schema import (
     ClusteringModelConfig,
     DataLoaderConfig,
@@ -24,9 +12,6 @@ from stgym.config_schema import (
 from stgym.data_loader import STDataModule
 from stgym.tl_model import STGymModule
 from stgym.train import train
-
-# In[17]:
-
 
 model_cfg = ClusteringModelConfig(
     # message passing layers
@@ -45,9 +30,6 @@ model_cfg = ClusteringModelConfig(
 )
 
 
-# In[18]:
-
-
 task_cfg = TaskConfig(
     dataset_name="human-crc",
     type="node-clustering",
@@ -63,9 +45,6 @@ train_cfg = TrainConfig(
 data_cfg = DataLoaderConfig(batch_size=8)
 
 
-# In[19]:
-
-
 data_module = STDataModule(task_cfg, data_cfg)
 model_module = STGymModule(
     dim_in=data_module.num_features,
@@ -76,15 +55,9 @@ model_module = STGymModule(
 print(model_module.model)
 
 
-# In[20]:
-
-
 mlflow_cfg = MLFlowConfig(
     track=True, tracking_uri="http://127.0.0.1:8080", experiment_name="clustering-demo"
 )
-
-
-# In[21]:
 
 
 train(

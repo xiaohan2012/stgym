@@ -1,15 +1,3 @@
-#!/usr/bin/env python
-
-# In[1]:
-
-
-get_ipython().run_line_magic("load_ext", "autoreload")
-get_ipython().run_line_magic("autoreload", "2")
-
-
-# In[2]:
-
-
 from stgym.config_schema import (
     ClassificationTaskConfig,
     DataLoaderConfig,
@@ -25,9 +13,6 @@ from stgym.data_loader import STDataModule
 from stgym.tl_model import STGymModule
 from stgym.train import train
 
-# In[3]:
-
-
 model_cfg = NodeClassifierModelConfig(
     # message passing layers
     mp_layers=[
@@ -36,9 +21,6 @@ model_cfg = NodeClassifierModelConfig(
     ],
     post_mp_layer=PostMPConfig(dims=[16, 8]),
 )
-
-
-# In[4]:
 
 
 task_cfg = ClassificationTaskConfig(
@@ -55,9 +37,6 @@ train_cfg = TrainConfig(
 data_cfg = DataLoaderConfig(batch_size=8)
 
 
-# In[6]:
-
-
 data_module = STDataModule(task_cfg, data_cfg)
 model_module = STGymModule(
     dim_in=data_module.num_features,
@@ -69,15 +48,9 @@ model_module = STGymModule(
 print(model_module.model)
 
 
-# In[7]:
-
-
 mlflow_cfg = MLFlowConfig(
     track=True, tracking_uri="http://127.0.0.1:8080", experiment_name="node-clf-demo"
 )
-
-
-# In[8]:
 
 
 train(
