@@ -61,6 +61,7 @@ class STGymModule(pl.LightningModule):
         elif task_cfg.type == "node-clustering":
             self.model = STClusteringModel(dim_in, model_cfg)
         elif task_cfg.type == "node-classification":
+            assert dim_out is not None, "`dim_out` should be provided."
             self.model = STNodeClassifier(dim_in, dim_out, model_cfg)
         else:
             raise ValueError(f"Unsupported task type: {task_cfg.type}")
