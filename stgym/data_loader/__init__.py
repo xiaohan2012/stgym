@@ -6,7 +6,9 @@ from torch_geometric.data.lightning.datamodule import LightningDataModule
 from torch_geometric.loader import DataLoader
 
 from stgym.config_schema import DataLoaderConfig, TaskConfig
+from stgym.data_loader.brca import BRCADataset
 from stgym.data_loader.ds_info import get_info
+from stgym.data_loader.human_crc import HumanCRCDataset
 
 
 def load_dataset(task_cfg: TaskConfig, dl_cfg: DataLoaderConfig):
@@ -33,12 +35,14 @@ def load_dataset(task_cfg: TaskConfig, dl_cfg: DataLoaderConfig):
 
     data_dir = f"./data/{ds_name}"
     if ds_name == "brca":
-        from stgym.data_loader.brca import BRCADataset
-
         return BRCADataset(root=data_dir, transform=transform)
+    elif ds_name == "human-crc":
+        ds = HumanCRCDataset(
+            root="./data/human-crc",
+            transform=transform,
+        )
+        return ds
     elif ds_name == "brca-test":
-        from stgym.data_loader.brca import BRCADataset
-
         ds = BRCADataset(
             root="./tests/data/brca-test",
             transform=transform,
@@ -47,8 +51,6 @@ def load_dataset(task_cfg: TaskConfig, dl_cfg: DataLoaderConfig):
         )
         return ds
     elif ds_name == "human-crc-test":
-        from stgym.data_loader.human_crc import HumanCRCDataset
-
         ds = HumanCRCDataset(
             root="./tests/data/human-crc-test",
             transform=transform,

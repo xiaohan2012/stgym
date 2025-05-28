@@ -8,6 +8,7 @@ import pytorch_lightning as pl
 import torch
 from sklearn.metrics import (
     accuracy_score,
+    adjusted_rand_score,
     f1_score,
     normalized_mutual_info_score,
     roc_auc_score,
@@ -189,13 +190,20 @@ class STGymModule(pl.LightningModule):
                 split=split
             )
             nmi_scores = []
+            ari_scores = []
             for start, end in zip(ptr_batch[:-1], ptr_batch[1:]):
                 nmi_scores.append(
                     normalized_mutual_info_score(
                         true[start:end], pred[start:end, :].argmax(axis=1)
                     )
                 )
+                ari_scores.append(
+                    adjusted_rand_score(
+                        true[start:end], pred[start:end, :].argmax(axis=1)
+                    )
+                )
             self.log(f"{split}_nmi", np.mean(nmi_scores), prog_bar=True)
+            self.log(f"{split}_ari", np.mean(ari_scores), prog_bar=True)
         elif self.task_cfg.type == "node-classification":
             true, pred = self._extract_pred_and_test_from_step_outputs(split=split)
             acc = accuracy_score(true, pred.argmax(axis=1))

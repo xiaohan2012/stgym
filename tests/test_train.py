@@ -142,7 +142,7 @@ def test_train_on_graph_clf_task(
     train(model_module, data_module, graph_clf_train_cfg, mlflow_cfg)
 
 
-def test_train_on_clustering_task(
+def test_clustering_task(
     clustering_task_cfg, dl_cfg, clustering_model_cfg, clustering_train_cfg, mlflow_cfg
 ):
     """for node clustering task"""

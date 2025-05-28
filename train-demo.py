@@ -54,8 +54,9 @@ model_module = STGymModule(
     dim_out=1,  # 1 for binary classification
     model_cfg=model_cfg,
     train_cfg=train_cfg,
+    task_cfg=task_cfg,
 )
-print(model_module.model)
+print(model_module)
 
 
 train(
