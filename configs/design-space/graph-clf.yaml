@@ -21,6 +21,7 @@ train:
   max_epoch: 1
 task:
   dataset_name: 'brca'
+  type: 'graph-classification'
 data_loader:
   graph_const: ['knn', 'radius']
   knn_k: 20

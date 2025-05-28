@@ -24,13 +24,15 @@ class ModelSpace(ModelWithZip):
         n_clusters: PositiveInt | list[PositiveInt]
 
     num_mp_layers: PositiveInt | list[PositiveInt]
-    global_pooling: GlobalPoolingType | list[GlobalPoolingType]
+    global_pooling: (
+        GlobalPoolingType | list[GlobalPoolingType] | None
+    )  # not null only for graph classification
     normalize_adj: bool | list[bool]
     layer_type: LayerType | list[LayerType]
     dim_inner: PositiveInt | list[PositiveInt]
     act: ActivationType | list[ActivationType]
     use_batchnorm: bool | list[bool]
-    pooling: PoolingSpace
+    pooling: PoolingSpace | None
 
     # temporary hack, which stores a tuple of ints as a comma-separated string
     # because yaml does not distinguish tuple from list

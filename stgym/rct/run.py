@@ -10,11 +10,21 @@ from stgym.utils import RayProgressBar
 
 def run_exp(exp_cfg: ExperimentConfig, mlflow_cfg: MLFlowConfig):
     data_module = STDataModule(exp_cfg.task, exp_cfg.data_loader)
+
+    if exp_cfg.task.type in ("node-classification", "graph-classification"):
+        dim_out = exp_cfg.task.num_classes
+        if exp_cfg.task == "graph-classification" and dim_out == 2:
+            dim_out -= 1
+    else:
+        # for clustering, dim_out is specified by the pooling operation
+        dim_out = None
+
     model_module = STGymModule(
         dim_in=data_module.num_features,
-        dim_out=1,  # 1 for binary classification
+        dim_out=dim_out,
         model_cfg=exp_cfg.model,
         train_cfg=exp_cfg.train,
+        task_cfg=exp_cfg.task,
     )
     train(
         model_module,
@@ -34,7 +44,7 @@ def run_exp(exp_cfg: ExperimentConfig, mlflow_cfg: MLFlowConfig):
 
 
 def main():
-    rct_config_path = "./configs/rct/bn.yaml"
+    rct_config_path = "./configs/rct/bn-node-clf.yaml"
     mlflow_cfg_path = "./configs/mlflow.yaml"
     resource_cfg_path = "./configs/resource.yaml"
     rct_config = load_rct_config(rct_config_path)

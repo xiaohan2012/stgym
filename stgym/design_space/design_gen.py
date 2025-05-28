@@ -5,12 +5,15 @@ import pydash as _
 from pydantic import BaseModel
 
 from stgym.config_schema import (
+    ClusteringModelConfig,
     DataLoaderConfig,
     ExperimentConfig,
     GraphClassifierModelConfig,
     MessagePassingConfig,
+    NodeClassifierModelConfig,
     PostMPConfig,
     TaskConfig,
+    TaskType,
     TrainConfig,
 )
 from stgym.design_space.schema import (
@@ -69,8 +72,10 @@ def sample_across_dimensions(
 
 
 def generate_model_config(
-    space: ModelSpace, k: int = 1, seed: int = None
-) -> list[GraphClassifierModelConfig]:
+    task_type: TaskType, space: ModelSpace, k: int = 1, seed: int = None
+) -> list[
+    GraphClassifierModelConfig | NodeClassifierModelConfig | ClusteringModelConfig
+]:
     seeds = rand_ints(k, seed=seed)
     ret = []
     for i in range(k):
@@ -81,14 +86,32 @@ def generate_model_config(
         post_mp_dims = _.map_(
             values["post_mp_dims"].split(","), lambda s: int(s.strip())
         )
-        ret.append(
-            GraphClassifierModelConfig(
-                global_pooling=values["global_pooling"],
-                normalize_adj=values["normalize_adj"],
-                mp_layers=mp_layers,
-                post_mp_layer=PostMPConfig(dims=post_mp_dims, **values),
+        if task_type == "graph-classification":
+            ret.append(
+                GraphClassifierModelConfig(
+                    global_pooling=values["global_pooling"],
+                    normalize_adj=values["normalize_adj"],
+                    mp_layers=mp_layers,
+                    post_mp_layer=PostMPConfig(dims=post_mp_dims, **values),
+                )
             )
-        )
+        elif task_type == "node-classification":
+            ret.append(
+                NodeClassifierModelConfig(
+                    normalize_adj=values["normalize_adj"],
+                    mp_layers=mp_layers,
+                    post_mp_layer=PostMPConfig(dims=post_mp_dims, **values),
+                )
+            )
+        elif task_type == "node-clustering":
+            ret.append(
+                ClusteringModelConfig(
+                    normalize_adj=values["normalize_adj"],
+                    mp_layers=mp_layers,
+                )
+            )
+        else:
+            raise ValueError(f"Unsupported task type: {task_type}")
     return ret
 
 
