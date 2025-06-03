@@ -50,6 +50,7 @@ def generate_experiment_configs(cfg: RCTConfig) -> list[ExperimentConfig]:
                 for choice in cfg.design_choices
             ]
         )
+        # TODO: add ids
     else:
         raise ValueError(f"Non-exisitent design dimension: '{cfg.design_dimension}'")
 

@@ -29,7 +29,7 @@ from stgym.utils import rand_ints
 def generate_experiment(
     space: DesignSpace, k: int = 1, seed: int = None
 ) -> list[ExperimentConfig]:
-    model_designs = generate_model_config(space.model, k, seed)
+    model_designs = generate_model_config(space.task.type, space.model, k, seed)
     train_designs = generate_train_config(space.train, k, seed)
     task_designs = generate_task_config(space.task, k, seed)
     dl_designs = generate_data_loader_config(space.data_loader, k, seed)
@@ -83,33 +83,20 @@ def generate_model_config(
         mp_layers = [
             MessagePassingConfig(**values) for j in range(values["num_mp_layers"])
         ]
-        post_mp_dims = _.map_(
-            values["post_mp_dims"].split(","), lambda s: int(s.strip())
-        )
+        kwargs = {"mp_layers": mp_layers, "normalize_adj": values["normalize_adj"]}
+        if values["post_mp_dims"]:
+            dims = _.map_(values["post_mp_dims"].split(","), lambda s: int(s.strip()))
+            kwargs["post_mp_layer"] = PostMPConfig(dims=dims, **values)
+
+        if values["global_pooling"]:
+            kwargs["global_pooling"] = values["global_pooling"]
+
         if task_type == "graph-classification":
-            ret.append(
-                GraphClassifierModelConfig(
-                    global_pooling=values["global_pooling"],
-                    normalize_adj=values["normalize_adj"],
-                    mp_layers=mp_layers,
-                    post_mp_layer=PostMPConfig(dims=post_mp_dims, **values),
-                )
-            )
+            ret.append(GraphClassifierModelConfig(**kwargs))
         elif task_type == "node-classification":
-            ret.append(
-                NodeClassifierModelConfig(
-                    normalize_adj=values["normalize_adj"],
-                    mp_layers=mp_layers,
-                    post_mp_layer=PostMPConfig(dims=post_mp_dims, **values),
-                )
-            )
+            ret.append(NodeClassifierModelConfig(**kwargs))
         elif task_type == "node-clustering":
-            ret.append(
-                ClusteringModelConfig(
-                    normalize_adj=values["normalize_adj"],
-                    mp_layers=mp_layers,
-                )
-            )
+            ret.append(ClusteringModelConfig(**kwargs))
         else:
             raise ValueError(f"Unsupported task type: {task_type}")
     return ret

@@ -200,7 +200,9 @@ class ClassificationTaskConfig(TaskConfig):
 class ExperimentConfig(BaseModel):
     task: TaskConfig
     data_loader: DataLoaderConfig
-    model: GraphClassifierModelConfig
+    model: (
+        GraphClassifierModelConfig | NodeClassifierModelConfig | ClusteringModelConfig
+    )
     train: TrainConfig
 
 

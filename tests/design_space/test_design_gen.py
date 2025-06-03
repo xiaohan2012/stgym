@@ -1,9 +1,11 @@
 import pytest
 
 from stgym.config_schema import (
+    ClusteringModelConfig,
     DataLoaderConfig,
     ExperimentConfig,
     GraphClassifierModelConfig,
+    NodeClassifierModelConfig,
     TaskConfig,
     TrainConfig,
 )
@@ -15,17 +17,45 @@ from stgym.design_space.design_gen import (
     generate_train_config,
     sample_across_dimensions,
 )
-from stgym.design_space.schema import DesignSpace, ModelSpace, TaskSpace
+from stgym.design_space.schema import DesignSpace, ModelSpace
 from stgym.utils import load_yaml
 
 from ..utils import RANDOM_SEEDS
 
 
 @pytest.fixture
-def mock_design_space():
-    data = load_yaml("./tests/data/design-space-example.yaml")
+def mock_node_clf_design_space():
+    data = load_yaml("./tests/data/design-space-node-clf.yaml")
 
     return DesignSpace.model_validate(data)
+
+
+@pytest.fixture
+def mock_graph_clf_design_space():
+    data = load_yaml("./tests/data/design-space-graph-clf.yaml")
+
+    return DesignSpace.model_validate(data)
+
+
+@pytest.fixture
+def mock_clustering_design_space():
+    data = load_yaml("./tests/data/design-space-clustering.yaml")
+
+    return DesignSpace.model_validate(data)
+
+
+# A factory fixture that yields the other data sources
+@pytest.fixture(
+    params=[
+        "mock_node_clf_design_space",
+        "mock_graph_clf_design_space",
+        "mock_clustering_design_space",
+    ]
+)
+def mock_design_space(request):
+    # 'request.param' will be the string name of the fixture
+    # This dynamically requests the fixture by name
+    return request.getfixturevalue(request.param)
 
 
 class TestSampleAcrossDimensions:
@@ -41,14 +71,6 @@ class TestSampleAcrossDimensions:
             use_batchnorm=True,
             pooling=dict(type="dmon", n_clusters=[10, 20]),
             post_mp_dims=["64,32", "32, 16"],
-        )
-
-    @property
-    def space_with_zip(self):
-        return TaskSpace(
-            zip_=["dataset_name", "type"],
-            dataset_name=["a", "b"],
-            type=["graph-classification", "node-classification"],
         )
 
     def test_basic(self):
@@ -79,14 +101,6 @@ class TestSampleAcrossDimensions:
         same_design = sample_across_dimensions(self.space, seed=seed)
         assert design == same_design
 
-    @pytest.mark.parametrize("seed", RANDOM_SEEDS)
-    def test_with_zip(self, seed):
-        design = sample_across_dimensions(self.space_with_zip, seed=seed)
-        if design["dataset_name"] == "a":
-            assert design["type"] == "graph-classification"
-        else:
-            assert design["type"] == "node-classification"
-
 
 class TestGenerateDesign:
     @pytest.mark.parametrize("k", [1, 2, 3])
@@ -101,14 +115,8 @@ class TestGenerateDesign:
         configs = generate_task_config(mock_design_space.task, k=100)
         for config in configs:
             assert isinstance(config, TaskConfig)
-            assert config.dataset_name in ["brca", "animal"]
-            assert config.type in ["graph-classification", "node-clustering"]
-
-            # ensure that the two fields are zipped
-            if config.dataset_name == "brca":
-                assert config.type == "graph-classification"
-            else:
-                assert config.type == "node-clustering"
+            assert config.dataset_name == "brca"
+            assert config.type == mock_design_space.task.type
 
     @pytest.mark.parametrize("seed", RANDOM_SEEDS)
     def test_consistency_under_fixed_random_seed(self, mock_design_space, seed):
@@ -122,12 +130,31 @@ class TestGenerateDesign:
         assert exp1 != exp2
 
 
-def test_model_config_validity(mock_design_space):
-    config = generate_model_config(mock_design_space.model, k=1)[0]
-    assert isinstance(config, GraphClassifierModelConfig)
-    assert config.post_mp_layer.dims in ([64, 32], [32, 16])
-    assert config.mp_layers[0].use_batchnorm is True
-    assert config.post_mp_layer.use_batchnorm is True
+class TestModelConfig:
+    def test_graph_clf_model_config(self, mock_graph_clf_design_space):
+        config = generate_model_config(
+            "graph-classification", mock_graph_clf_design_space.model, k=1
+        )[0]
+        assert isinstance(config, GraphClassifierModelConfig)
+        assert config.post_mp_layer.dims in ([64, 32], [32, 16])
+        assert config.mp_layers[0].use_batchnorm is True
+        assert config.post_mp_layer.use_batchnorm is True
+
+    def test_node_clf_model_config(self, mock_node_clf_design_space):
+        config = generate_model_config(
+            "node-classification", mock_node_clf_design_space.model, k=1
+        )[0]
+        assert isinstance(config, NodeClassifierModelConfig)
+        assert config.post_mp_layer.dims in ([64, 32], [32, 16])
+        assert config.mp_layers[0].use_batchnorm is True
+        assert config.post_mp_layer.use_batchnorm is True
+
+    def test_clustering_model_config(self, mock_clustering_design_space):
+        config = generate_model_config(
+            "node-clustering", mock_clustering_design_space.model, k=1
+        )[0]
+        assert isinstance(config, ClusteringModelConfig)
+        assert config.mp_layers[0].use_batchnorm is True
 
 
 def test_train_config_validity(mock_design_space):

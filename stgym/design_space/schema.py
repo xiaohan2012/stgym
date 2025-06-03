@@ -24,9 +24,10 @@ class ModelSpace(ModelWithZip):
         n_clusters: PositiveInt | list[PositiveInt]
 
     num_mp_layers: PositiveInt | list[PositiveInt]
-    global_pooling: (
-        GlobalPoolingType | list[GlobalPoolingType] | None
-    )  # not null only for graph classification
+
+    # not null only for graph classification
+    global_pooling: Optional[GlobalPoolingType | list[GlobalPoolingType]] = None
+
     normalize_adj: bool | list[bool]
     layer_type: LayerType | list[LayerType]
     dim_inner: PositiveInt | list[PositiveInt]
@@ -36,7 +37,7 @@ class ModelSpace(ModelWithZip):
 
     # temporary hack, which stores a tuple of ints as a comma-separated string
     # because yaml does not distinguish tuple from list
-    post_mp_dims: str | list[str]
+    post_mp_dims: Optional[str | list[str]] = None
 
 
 class TrainSpace(ModelWithZip):
@@ -60,7 +61,7 @@ class DataLoaderSpace(ModelWithZip):
 
 class TaskSpace(ModelWithZip):
     dataset_name: str | list[str]
-    type: TaskType | list[TaskType]
+    type: TaskType  # list[TaskType], only one type can be specified in one config
 
 
 class DesignSpace(ModelWithZip):
