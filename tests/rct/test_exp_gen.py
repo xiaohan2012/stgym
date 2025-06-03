@@ -35,6 +35,17 @@ def test_config_equivalence(cfg, seed):
     cfg.sample_size = 1
     cfg.random_seed = seed
     exp_cfgs = generate_experiment_configs(cfg)
+    # choice at the design dimension should vary
+    assert (
+        exp_cfgs[0].model.mp_layers[0].use_batchnorm
+        != exp_cfgs[1].model.mp_layers[0].use_batchnorm
+    )
+    assert (
+        exp_cfgs[0].model.mp_layers[0].has_bias
+        != exp_cfgs[1].model.mp_layers[0].has_bias
+    )
+
+    # overriding the values
     exp_cfgs[0].model.mp_layers[0].use_batchnorm = (
         exp_cfgs[1].model.mp_layers[0].use_batchnorm
     )
