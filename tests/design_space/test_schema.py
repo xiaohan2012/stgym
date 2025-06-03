@@ -1,3 +1,5 @@
+import pytest
+
 from stgym.design_space.schema import (
     DataLoaderSpace,
     DesignSpace,
@@ -8,8 +10,9 @@ from stgym.design_space.schema import (
 from stgym.utils import load_yaml
 
 
-def test_basic():
-    data = load_yaml("./tests/data/design-space-example.yaml")
+@pytest.mark.parametrize("name", ["node-clf", "graph-clf", "clustering"])
+def test_basic(name):
+    data = load_yaml(f"./tests/data/design-space-{name}.yaml")
 
     ModelSpace.model_validate(data["model"])
     TrainSpace.model_validate(data["train"])
