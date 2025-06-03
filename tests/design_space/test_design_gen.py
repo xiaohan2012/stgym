@@ -29,23 +29,27 @@ def mock_design_space():
 
 
 class TestSampleAcrossDimensions:
-    space = ModelSpace(
-        num_mp_layers=1,
-        global_pooling="mean",
-        normalize_adj=True,
-        layer_type="ginconv",
-        dim_inner=[64, 128],
-        act=["prelu", "relu"],
-        use_batchnorm=True,
-        pooling=dict(type="dmon", n_clusters=[10, 20]),
-        post_mp_dims=["64,32", "32, 16"],
-    )
+    @property
+    def space(self):
+        return ModelSpace(
+            num_mp_layers=1,
+            global_pooling="mean",
+            normalize_adj=True,
+            layer_type="ginconv",
+            dim_inner=[64, 128],
+            act=["prelu", "relu"],
+            use_batchnorm=True,
+            pooling=dict(type="dmon", n_clusters=[10, 20]),
+            post_mp_dims=["64,32", "32, 16"],
+        )
 
-    space_with_zip = TaskSpace(
-        zip_=["dataset_name", "type"],
-        dataset_name=["a", "b"],
-        type=["graph-classification", "node-classification"],
-    )
+    @property
+    def space_with_zip(self):
+        return TaskSpace(
+            zip_=["dataset_name", "type"],
+            dataset_name=["a", "b"],
+            type=["graph-classification", "node-classification"],
+        )
 
     def test_basic(self):
 
@@ -60,6 +64,14 @@ class TestSampleAcrossDimensions:
         assert design["global_pooling"] == "mean"
 
         assert design["post_mp_dims"] in ["64,32", "32, 16"]
+
+    def test_with_none_values(self):
+        space = self.space
+        space.global_pooling = None
+        space.post_mp_dims = None
+        design = sample_across_dimensions(space)
+        assert design["global_pooling"] == None
+        assert design["post_mp_dims"] == None
 
     @pytest.mark.parametrize("seed", RANDOM_SEEDS)
     def test_seed(self, seed):
