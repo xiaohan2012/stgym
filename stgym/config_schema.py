@@ -204,6 +204,7 @@ class ExperimentConfig(BaseModel):
         GraphClassifierModelConfig | NodeClassifierModelConfig | ClusteringModelConfig
     )
     train: TrainConfig
+    group_id: Optional[int] = None
 
 
 class MLFlowConfig(BaseModel, YamlLoaderMixin):

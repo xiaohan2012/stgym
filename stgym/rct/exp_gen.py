@@ -40,17 +40,19 @@ def generate_experiment_configs(cfg: RCTConfig) -> list[ExperimentConfig]:
     )
 
     if _.has(design_space_template.model_dump(), cfg.design_dimension):
-        return _.flatten(
-            [
-                generate_experiment(
-                    _.set_(design_space_template, cfg.design_dimension, choice),
-                    k=cfg.sample_size,
-                    seed=cfg.random_seed,
-                )
-                for choice in cfg.design_choices
-            ]
-        )
-        # TODO: add ids
+        exp_cfgs_by_design_choice = [
+            generate_experiment(
+                _.set_(design_space_template, cfg.design_dimension, choice),
+                k=cfg.sample_size,
+                seed=cfg.random_seed,
+            )
+            for choice in cfg.design_choices
+        ]
+        for group_id, grouped_exps in enumerate(zip(*exp_cfgs_by_design_choice)):
+            for exp in grouped_exps:
+                exp.group_id = group_id
+
+        return _.flatten(exp_cfgs_by_design_choice)
     else:
         raise ValueError(f"Non-exisitent design dimension: '{cfg.design_dimension}'")
 

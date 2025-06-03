@@ -1,5 +1,5 @@
 experiment_name: 'test-rct-batch-norm'
-design_space_source: design-space-example.yaml
+design_space_source: design-space-graph-clf.yaml
 sample_size: 8
 design_dimension: 'model.use_batchnorm'
 design_choices: [true, false]

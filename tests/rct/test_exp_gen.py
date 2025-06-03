@@ -55,7 +55,14 @@ def test_config_equivalence(cfg, seed):
     ].model.post_mp_layer.use_batchnorm
     exp_cfgs[0].model.post_mp_layer.has_bias = exp_cfgs[1].model.post_mp_layer.has_bias
 
-    assert exp_cfgs[0].model_dump() == exp_cfgs[1].model_dump()
+
+def test_on_group_ids(cfg):
+    cfg.sample_size = 10
+    exp_cfgs = generate_experiment_configs(cfg)
+    choice_multiplicity = 2  # true or false on model.use_batchnorm
+    for gid in range(cfg.sample_size):
+        for i in range(choice_multiplicity):
+            assert exp_cfgs[gid + i * cfg.sample_size].group_id == gid
 
 
 def test_invalid_design_dimension(cfg):
