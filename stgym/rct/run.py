@@ -29,7 +29,10 @@ def run_exp(exp_cfg: ExperimentConfig, mlflow_cfg: MLFlowConfig):
 
     if exp_cfg.group_id is not None:
         mlflow_cfg = mlflow_cfg.model_copy()
-        mlflow_cfg.tags = {"group_id": str(exp_cfg.group_id)}
+        mlflow_cfg.tags = {
+            "group_id": str(exp_cfg.group_id),
+            "task_type": exp_cfg.task.type,
+        }
 
     train(
         model_module,
@@ -57,7 +60,7 @@ def main():
     mlflow_cfg = MLFlowConfig.from_yaml(mlflow_cfg_path)
     mlflow_cfg.experiment_name = rct_config.experiment_name
 
-    # create the experiment before runs start to avoid multi-thread competition
+    # create the experiment before runs start, to avoid multi-thread competition
     create_mlflow_experiment(rct_config.experiment_name)
 
     resource_cfg = ResourceConfig.from_yaml(resource_cfg_path)
