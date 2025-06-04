@@ -1,7 +1,6 @@
 import pytest
 
 from stgym.config_schema import (
-    ClassificationTaskConfig,
     ClusteringModelConfig,
     DataLoaderConfig,
     GraphClassifierModelConfig,
@@ -115,7 +114,7 @@ def clustering_task_cfg():
 
 @pytest.fixture
 def node_clf_task_cfg():
-    return ClassificationTaskConfig(
+    return TaskConfig(
         dataset_name="human-crc-test", type="node-classification", num_classes=10
     )
 

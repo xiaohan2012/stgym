@@ -1,5 +1,4 @@
 from stgym.config_schema import (
-    ClassificationTaskConfig,
     DataLoaderConfig,
     LRScheduleConfig,
     MessagePassingConfig,
@@ -7,6 +6,7 @@ from stgym.config_schema import (
     NodeClassifierModelConfig,
     OptimizerConfig,
     PostMPConfig,
+    TaskConfig,
     TrainConfig,
 )
 from stgym.data_loader import STDataModule
@@ -23,7 +23,7 @@ model_cfg = NodeClassifierModelConfig(
 )
 
 
-task_cfg = ClassificationTaskConfig(
+task_cfg = TaskConfig(
     dataset_name="human-crc", type="node-classification", num_classes=10
 )
 train_cfg = TrainConfig(

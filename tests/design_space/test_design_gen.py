@@ -117,6 +117,8 @@ class TestGenerateDesign:
             assert isinstance(config, TaskConfig)
             assert config.dataset_name == "brca"
             assert config.type == mock_design_space.task.type
+            if config.type == "node-classification":
+                assert config.num_classes == 10
 
     @pytest.mark.parametrize("seed", RANDOM_SEEDS)
     def test_consistency_under_fixed_random_seed(self, mock_design_space, seed):

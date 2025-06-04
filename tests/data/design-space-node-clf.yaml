@@ -20,8 +20,14 @@ train:
     type: null
   max_epoch: [10, 100]
 task:
-  dataset_name: brca
+  _zip:
+    - dataset_name
+    - num_classes
+  dataset_name:
+    - brca
   type: node-classification
+  num_classes:
+    - 10
 data_loader:
   graph_const: ['knn', 'radius']
   knn_k: 20
