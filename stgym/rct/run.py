@@ -1,8 +1,11 @@
+import hydra
 import ray
+from omegaconf import DictConfig, OmegaConf
 
 from stgym.config_schema import ExperimentConfig, MLFlowConfig, ResourceConfig
 from stgym.data_loader import STDataModule
-from stgym.rct.exp_gen import generate_experiment_configs, load_rct_config
+from stgym.design_space.schema import DesignSpace
+from stgym.rct.exp_gen import generate_experiment_configs
 from stgym.tl_model import STGymModule
 from stgym.train import train
 from stgym.utils import RayProgressBar, create_mlflow_experiment
@@ -51,22 +54,25 @@ def run_exp(exp_cfg: ExperimentConfig, mlflow_cfg: MLFlowConfig):
     return True
 
 
-def main():
-    rct_config_path = "./configs/rct/bn-clustering.yaml"
-    mlflow_cfg_path = "./configs/mlflow.yaml"
-    resource_cfg_path = "./configs/resource.yaml"
-    rct_config = load_rct_config(rct_config_path)
-
-    mlflow_cfg = MLFlowConfig.from_yaml(mlflow_cfg_path)
-    mlflow_cfg.experiment_name = rct_config.experiment_name
+@hydra.main(version_base=None, config_path="../../conf", config_name="config")
+def main(cfg: DictConfig):
+    print(OmegaConf.to_yaml(cfg))
+    design_space = DesignSpace.model_validate(cfg.design_space)
+    mlflow_cfg = MLFlowConfig.model_validate(cfg.mlflow)
 
     # create the experiment before runs start, to avoid multi-thread competition
-    create_mlflow_experiment(rct_config.experiment_name)
+    create_mlflow_experiment(mlflow_cfg.experiment_name)
 
-    resource_cfg = ResourceConfig.from_yaml(resource_cfg_path)
+    resource_cfg = ResourceConfig.model_validate(cfg.resource)
     ray.init(num_cpus=resource_cfg.num_cpus, num_gpus=resource_cfg.num_cpus)
 
-    exp_cfgs = generate_experiment_configs(rct_config)
+    exp_cfgs = generate_experiment_configs(
+        design_space,
+        cfg.design_dimension,
+        cfg.design_choices,
+        cfg.sample_size,
+        cfg.random_seed,
+    )
     ray_run_exp = ray.remote(run_exp).options(
         num_cpus=resource_cfg.num_cpus_per_trial,
         num_gpus=resource_cfg.num_gpus_per_trial,

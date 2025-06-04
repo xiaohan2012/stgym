@@ -1,0 +1,15 @@
+defaults:
+  - full
+  - _self_
+
+model:
+  global_pooling: null
+task:
+  type: node-classification
+  _zip:
+    - dataset_name
+    - num_classes
+  dataset_name:
+    - brca
+  num_classes:
+    - 10

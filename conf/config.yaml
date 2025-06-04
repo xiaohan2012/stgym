@@ -1,0 +1,8 @@
+defaults:
+  - design_space: node_clf
+  - resource: cpu-4
+  - mlflow: local
+  - _self_
+
+sample_size: 2
+random_seed: 42
