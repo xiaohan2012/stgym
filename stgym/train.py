@@ -33,8 +33,10 @@ def train(
     # warnings.filterwarnings('ignore', '.*use `CSVLogger` as the default.*')
     logger = (
         MLFlowLogger(
+            run_name=mlflow_config.run_name,
             experiment_name=mlflow_config.experiment_name,
             tracking_uri=str(mlflow_config.tracking_uri),
+            tags=mlflow_config.tags,
         )
         if mlflow_config.track
         else None

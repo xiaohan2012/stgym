@@ -208,6 +208,8 @@ class MLFlowConfig(BaseModel, YamlLoaderMixin):
     track: Optional[bool] = True
     tracking_uri: Optional[HttpUrl] = "http://127.0.0.1:8080"
     experiment_name: Optional[str] = Field(default="test", min_length=1)
+    run_name: Optional[str] = None
+    tags: Optional[dict[str, str]] = None
 
 
 class ResourceConfig(BaseModel, YamlLoaderMixin):

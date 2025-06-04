@@ -26,6 +26,11 @@ def run_exp(exp_cfg: ExperimentConfig, mlflow_cfg: MLFlowConfig):
         train_cfg=exp_cfg.train,
         task_cfg=exp_cfg.task,
     )
+
+    if exp_cfg.group_id is not None:
+        mlflow_cfg = mlflow_cfg.copy()
+        mlflow_cfg.tags = {"group_id": str(exp_cfg.group_id)}
+
     train(
         model_module,
         data_module,

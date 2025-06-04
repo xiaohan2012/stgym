@@ -18,6 +18,7 @@ from torch_geometric.data import Data
 from stgym.config_schema import (
     ClusteringModelConfig,
     GraphClassifierModelConfig,
+    NodeClassifierModelConfig,
     TaskConfig,
     TrainConfig,
 )
@@ -47,7 +48,11 @@ class STGymModule(pl.LightningModule):
     def __init__(
         self,
         dim_in,
-        model_cfg: GraphClassifierModelConfig | ClusteringModelConfig,
+        model_cfg: (
+            GraphClassifierModelConfig
+            | ClusteringModelConfig
+            | NodeClassifierModelConfig
+        ),
         train_cfg: TrainConfig,
         task_cfg: TaskConfig,
         dim_out: int = None,
