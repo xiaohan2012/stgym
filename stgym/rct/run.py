@@ -5,7 +5,7 @@ from stgym.data_loader import STDataModule
 from stgym.rct.exp_gen import generate_experiment_configs, load_rct_config
 from stgym.tl_model import STGymModule
 from stgym.train import train
-from stgym.utils import RayProgressBar
+from stgym.utils import RayProgressBar, create_mlflow_experiment
 
 
 def run_exp(exp_cfg: ExperimentConfig, mlflow_cfg: MLFlowConfig):
@@ -28,7 +28,7 @@ def run_exp(exp_cfg: ExperimentConfig, mlflow_cfg: MLFlowConfig):
     )
 
     if exp_cfg.group_id is not None:
-        mlflow_cfg = mlflow_cfg.copy()
+        mlflow_cfg = mlflow_cfg.model_copy()
         mlflow_cfg.tags = {"group_id": str(exp_cfg.group_id)}
 
     train(
@@ -49,13 +49,16 @@ def run_exp(exp_cfg: ExperimentConfig, mlflow_cfg: MLFlowConfig):
 
 
 def main():
-    rct_config_path = "./configs/rct/bn-node-clf.yaml"
+    rct_config_path = "./configs/rct/bn-graph-clf.yaml"
     mlflow_cfg_path = "./configs/mlflow.yaml"
     resource_cfg_path = "./configs/resource.yaml"
     rct_config = load_rct_config(rct_config_path)
 
     mlflow_cfg = MLFlowConfig.from_yaml(mlflow_cfg_path)
     mlflow_cfg.experiment_name = rct_config.experiment_name
+
+    # create the experiment before runs start to avoid multi-thread competition
+    create_mlflow_experiment(rct_config.experiment_name)
 
     resource_cfg = ResourceConfig.from_yaml(resource_cfg_path)
     ray.init(num_cpus=resource_cfg.num_cpus, num_gpus=resource_cfg.num_cpus)

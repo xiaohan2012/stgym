@@ -2,10 +2,12 @@ import os
 import shutil
 from pathlib import Path
 
+import mlflow
 import numpy as np
 import ray
 import torch
 import yaml
+from logzero import logger
 from torch_geometric.data import Data
 from tqdm import tqdm
 
@@ -141,3 +143,18 @@ def collapse_ptr_list(ptr_list: list[torch.Tensor]):
         offset = ptr_list_adjusted[-1]
     ptr_list_adjusted.insert(0, 0)  # prepend 0
     return torch.Tensor(ptr_list_adjusted).type(torch.int)
+
+
+def create_mlflow_experiment(exp_name: str):
+    """create a MLFlow experiment"""
+    try:
+        mlflow.create_experiment(exp_name)
+    except mlflow.exceptions.MlflowException:
+        experiment = mlflow.get_experiment_by_name(exp_name)
+    if experiment:
+        experiment_id = experiment.experiment_id
+        logger.info(f"Experiment '{exp_name}' already exists with ID: {experiment_id}")
+    else:
+        logger.error(
+            "Could not find the experiment even after error. Please check your setup."
+        )
