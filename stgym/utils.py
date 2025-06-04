@@ -151,10 +151,12 @@ def create_mlflow_experiment(exp_name: str):
         mlflow.create_experiment(exp_name)
     except mlflow.exceptions.MlflowException:
         experiment = mlflow.get_experiment_by_name(exp_name)
-    if experiment:
-        experiment_id = experiment.experiment_id
-        logger.info(f"Experiment '{exp_name}' already exists with ID: {experiment_id}")
-    else:
-        logger.error(
-            "Could not find the experiment even after error. Please check your setup."
-        )
+        if experiment:
+            experiment_id = experiment.experiment_id
+            logger.info(
+                f"Experiment '{exp_name}' already exists with ID: {experiment_id}"
+            )
+        else:
+            logger.error(
+                "Could not find the experiment even after error. Please check your setup."
+            )

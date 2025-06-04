@@ -49,7 +49,7 @@ def run_exp(exp_cfg: ExperimentConfig, mlflow_cfg: MLFlowConfig):
 
 
 def main():
-    rct_config_path = "./configs/rct/bn-graph-clf.yaml"
+    rct_config_path = "./configs/rct/bn-clustering.yaml"
     mlflow_cfg_path = "./configs/mlflow.yaml"
     resource_cfg_path = "./configs/resource.yaml"
     rct_config = load_rct_config(rct_config_path)
