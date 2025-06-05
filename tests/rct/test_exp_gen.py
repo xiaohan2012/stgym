@@ -1,26 +1,28 @@
 import pydash as _
 import pytest
 
-from stgym.rct.exp_gen import RCTConfig, generate_experiment_configs, load_rct_config
+from stgym.design_space.schema import DesignSpace
+from stgym.rct.exp_gen import generate_experiment_configs
 
 from ..utils import RANDOM_SEEDS
 
 
 @pytest.fixture
-def cfg() -> RCTConfig:
-    return load_rct_config("./tests/data/controlled-randomized-experiment-example.yaml")
-
-
-def test_basic(cfg):
-    assert cfg.design_space_source.is_absolute()
+def mock_design_space():
+    return DesignSpace.from_yaml("./tests/data/design-space-graph-clf.yaml")
 
 
 @pytest.mark.parametrize("k", [1, 2, 3])
-def test_generation(cfg, k):
-    cfg.sample_size = k
-    exp_cfgs = generate_experiment_configs(cfg)
+def test_generation(mock_design_space, k):
+    exp_cfgs = generate_experiment_configs(
+        mock_design_space,
+        design_dimension="model.use_batchnorm",
+        design_choices=[True, False],
+        sample_size=k,
+        random_seed=123,
+    )
 
-    assert len(exp_cfgs) == k * len(cfg.design_choices)
+    assert len(exp_cfgs) == k * 2
     exp_cfg_dicts = _.map_(exp_cfgs, lambda x: x.model_dump())
 
     assert _.sort(
@@ -29,12 +31,16 @@ def test_generation(cfg, k):
 
 
 @pytest.mark.parametrize("seed", RANDOM_SEEDS)
-def test_config_equivalence(cfg, seed):
+def test_config_equivalence(mock_design_space, seed):
     """ensure that there are a 'pair' of identical experiments except on the design dimension to modify"""
+    exp_cfgs = generate_experiment_configs(
+        mock_design_space,
+        design_dimension="model.use_batchnorm",
+        design_choices=[True, False],
+        sample_size=1,
+        random_seed=seed,
+    )
 
-    cfg.sample_size = 1
-    cfg.random_seed = seed
-    exp_cfgs = generate_experiment_configs(cfg)
     # choice at the design dimension should vary
     assert (
         exp_cfgs[0].model.mp_layers[0].use_batchnorm
@@ -56,16 +62,27 @@ def test_config_equivalence(cfg, seed):
     exp_cfgs[0].model.post_mp_layer.has_bias = exp_cfgs[1].model.post_mp_layer.has_bias
 
 
-def test_on_group_ids(cfg):
-    cfg.sample_size = 10
-    exp_cfgs = generate_experiment_configs(cfg)
+def test_on_group_ids(mock_design_space):
+    k = 10
+    exp_cfgs = generate_experiment_configs(
+        mock_design_space,
+        design_dimension="model.use_batchnorm",
+        design_choices=[True, False],
+        sample_size=k,
+        random_seed=None,
+    )
     choice_multiplicity = 2  # true or false on model.use_batchnorm
-    for gid in range(cfg.sample_size):
+    for gid in range(k):
         for i in range(choice_multiplicity):
-            assert exp_cfgs[gid + i * cfg.sample_size].group_id == gid
+            assert exp_cfgs[gid + i * k].group_id == gid
 
 
-def test_invalid_design_dimension(cfg):
-    cfg.design_dimension = "non-exisitent-choice"
+def test_invalid_design_dimension(mock_design_space):
     with pytest.raises(ValueError, match="Non-exisitent design dimension: .*"):
-        generate_experiment_configs(cfg)
+        generate_experiment_configs(
+            mock_design_space,
+            design_dimension="non-exisitent-choice",
+            design_choices=[True, False],
+            sample_size=10,
+            random_seed=None,
+        )

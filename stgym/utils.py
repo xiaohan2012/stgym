@@ -160,3 +160,12 @@ def create_mlflow_experiment(exp_name: str):
             logger.error(
                 "Could not find the experiment even after error. Please check your setup."
             )
+
+
+class YamlLoaderMixin:
+
+    @classmethod
+    def from_yaml(cls, yaml_file):
+        data = load_yaml(yaml_file)
+
+        return cls.model_validate(data)

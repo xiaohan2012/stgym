@@ -14,7 +14,7 @@ from pydantic import (
 from pydantic.json_schema import SkipJsonSchema
 from typing_extensions import Self
 
-from stgym.utils import load_yaml
+from stgym.utils import YamlLoaderMixin
 
 ActivationType = Literal["prelu", "relu", "swish"]
 GlobalPoolingType = Literal["mean", "sum", "max"]
@@ -28,15 +28,6 @@ PostMPLayerType = Literal["mlp", "linear"]
 GraphConstructionApproach = Literal["knn", "radius"]
 TaskType = Literal["node-classification", "graph-classification", "node-clustering"]
 EvalMetric = Literal["pr-auc", "roc-auc", "accuracy", "nmi"]
-
-
-class YamlLoaderMixin:
-
-    @classmethod
-    def from_yaml(cls, yaml_file):
-        data = load_yaml(yaml_file)
-
-        return cls.model_validate(data)
 
 
 class PoolingConfig(BaseModel):

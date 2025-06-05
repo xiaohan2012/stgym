@@ -12,6 +12,7 @@ from stgym.config_schema import (
     OptimizerType,
     TaskType,
 )
+from stgym.utils import YamlLoaderMixin
 
 
 class ModelWithZip(BaseModel):
@@ -67,7 +68,7 @@ class TaskSpace(ModelWithZip):
     )
 
 
-class DesignSpace(ModelWithZip):
+class DesignSpace(ModelWithZip, YamlLoaderMixin):
     model: ModelSpace
     train: TrainSpace
     task: TaskSpace
