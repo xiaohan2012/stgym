@@ -1,0 +1,9 @@
+# @package _global_
+
+design_dimension: model.pooling.type
+design_choices:
+  - dmon
+  - mincut
+
+mlflow:
+  experiment_name: hpooling
