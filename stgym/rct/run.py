@@ -1,18 +1,14 @@
-import hydra
-import ray
-from omegaconf import DictConfig, OmegaConf
+from logzero import logger
+from omegaconf import OmegaConf
 
-from stgym.config_schema import ExperimentConfig, MLFlowConfig, ResourceConfig
+from stgym.config_schema import ExperimentConfig, MLFlowConfig
 from stgym.data_loader import STDataModule
-from stgym.design_space.schema import DesignSpace
-from stgym.rct.exp_gen import generate_experiment_configs
 from stgym.tl_model import STGymModule
 from stgym.train import train
-from stgym.utils import RayProgressBar, create_mlflow_experiment
 
 
 def run_exp(exp_cfg: ExperimentConfig, mlflow_cfg: MLFlowConfig):
-    print(OmegaConf.to_yaml(exp_cfg.model_dump()))
+    logger.debug(OmegaConf.to_yaml(exp_cfg.model_dump()))
     data_module = STDataModule(exp_cfg.task, exp_cfg.data_loader)
 
     if exp_cfg.task.type in ("node-classification", "graph-classification"):
@@ -53,39 +49,3 @@ def run_exp(exp_cfg: ExperimentConfig, mlflow_cfg: MLFlowConfig):
     )
 
     return True
-
-
-@hydra.main(version_base=None, config_path="../../conf", config_name="config")
-def main(cfg: DictConfig):
-    print(OmegaConf.to_yaml(cfg))
-    design_space = DesignSpace.model_validate(cfg.design_space)
-    mlflow_cfg = MLFlowConfig.model_validate(cfg.mlflow)
-
-    # create the experiment before runs start, to avoid multi-thread competition
-    create_mlflow_experiment(mlflow_cfg.experiment_name)
-
-    resource_cfg = ResourceConfig.model_validate(cfg.resource)
-    ray.init(num_cpus=resource_cfg.num_cpus, num_gpus=resource_cfg.num_cpus)
-
-    exp_cfgs = generate_experiment_configs(
-        design_space,
-        cfg.design_dimension,
-        cfg.design_choices,
-        cfg.sample_size,
-        cfg.random_seed,
-    )
-    ray_run_exp = ray.remote(run_exp).options(
-        num_cpus=resource_cfg.num_cpus_per_trial,
-        num_gpus=resource_cfg.num_gpus_per_trial,
-    )
-    promises = [ray_run_exp.remote(exp_cfg, mlflow_cfg) for exp_cfg in exp_cfgs]
-
-    RayProgressBar.show(promises)
-
-    results = ray.get(promises)
-    print(f"results: {results}")
-    ray.shutdown()
-
-
-if __name__ == "__main__":
-    main()
