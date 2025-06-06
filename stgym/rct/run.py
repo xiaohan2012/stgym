@@ -12,6 +12,7 @@ from stgym.utils import RayProgressBar, create_mlflow_experiment
 
 
 def run_exp(exp_cfg: ExperimentConfig, mlflow_cfg: MLFlowConfig):
+    print(OmegaConf.to_yaml(exp_cfg.model_dump()))
     data_module = STDataModule(exp_cfg.task, exp_cfg.data_loader)
 
     if exp_cfg.task.type in ("node-classification", "graph-classification"):

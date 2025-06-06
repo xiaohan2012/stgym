@@ -6,7 +6,7 @@ model:
   dim_inner: [64, 128]
   act: ['prelu', 'relu']
   use_batchnorm: true
-  pooliong:
+  pooling:
     type:
       - dmon
       - mincut

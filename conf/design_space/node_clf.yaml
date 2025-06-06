@@ -10,6 +10,6 @@ task:
     - dataset_name
     - num_classes
   dataset_name:
-    - brca
+    - human-crc
   num_classes:
     - 10
