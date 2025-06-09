@@ -1,4 +1,4 @@
-__data__ = {"brca": {"max_span": 731.96027}, "human-crc": {"max_span": 0.0}}
+__data__ = {"brca": {"max_span": 1018.48}, "human-crc": {"max_span": 1919.00}}
 
 
 def get_info(ds_name: str) -> dict:
