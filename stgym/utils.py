@@ -173,6 +173,7 @@ class YamlLoaderMixin:
 
 def get_maximum_coord_span(ds: InMemoryDataset) -> float:
     """get the maximum cooridnate span from datums in a dataset"""
+    # TODO: apply on training data only to avoid data leakage
     span_list = []
     for dt in ds:
         xy_min, _ = dt.pos.min(axis=0)
