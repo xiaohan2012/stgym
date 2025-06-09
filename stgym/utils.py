@@ -8,7 +8,7 @@ import ray
 import torch
 import yaml
 from logzero import logger
-from torch_geometric.data import Data
+from torch_geometric.data import Data, InMemoryDataset
 from tqdm import tqdm
 
 
@@ -169,3 +169,15 @@ class YamlLoaderMixin:
         data = load_yaml(yaml_file)
 
         return cls.model_validate(data)
+
+
+def get_maximum_coord_span(ds: InMemoryDataset) -> float:
+    """get the maximum cooridnate span from datums in a dataset"""
+    span_list = []
+    for dt in ds:
+        xy_min, _ = dt.pos.min(axis=0)
+        xy_max, _ = dt.pos.max(axis=0)
+        span_list.append((xy_max - xy_min).max().numpy())
+    logger.debug(f"min span: {min(span_list)}")
+    logger.debug(f"max span: {max(span_list)}")
+    return float(max(span_list))

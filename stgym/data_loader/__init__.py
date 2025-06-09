@@ -11,6 +11,15 @@ from stgym.data_loader.ds_info import get_info
 from stgym.data_loader.human_crc import HumanCRCDataset
 
 
+def get_dataset_class(ds_name: str):
+    if ds_name in ("brca", "brca-test"):
+        return BRCADataset
+    elif ds_name in ("human-crc", "human-crc-test"):
+        return HumanCRCDataset
+    else:
+        raise NotImplementedError(f"{ds_name} is not available yet.")
+
+
 def load_dataset(task_cfg: TaskConfig, dl_cfg: DataLoaderConfig):
     """load dataset by name"""
 
@@ -33,33 +42,16 @@ def load_dataset(task_cfg: TaskConfig, dl_cfg: DataLoaderConfig):
         ]
     )
 
-    data_dir = f"./data/{ds_name}"
-    if ds_name == "brca":
-        return BRCADataset(root=data_dir, transform=transform)
-    elif ds_name == "human-crc":
-        ds = HumanCRCDataset(
-            root="./data/human-crc",
-            transform=transform,
-        )
-        return ds
-    elif ds_name == "brca-test":
-        ds = BRCADataset(
-            root="./tests/data/brca-test",
+    ds_cls = get_dataset_class(ds_name)
+    if ds_name.endswith("-test"):
+        return ds_cls(
+            root=f"./tests/data/{ds_name}",
             transform=transform,
             # keep only small graphs
             pre_filter=lambda g: g.num_nodes <= 500,
         )
-        return ds
-    elif ds_name == "human-crc-test":
-        ds = HumanCRCDataset(
-            root="./tests/data/human-crc-test",
-            transform=transform,
-            # keep only small graphs
-            pre_filter=lambda g: g.num_nodes <= 500,
-        )
-        return ds
     else:
-        raise NotImplementedError(ds_name)
+        return ds_cls(root=f"./data/{ds_name}", transform=transform)
 
 
 def create_loader(
