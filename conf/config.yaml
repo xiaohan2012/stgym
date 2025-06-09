@@ -4,5 +4,5 @@ defaults:
   - mlflow: local
   - _self_
 
-sample_size: 2
+sample_size: 128
 random_seed: 42
