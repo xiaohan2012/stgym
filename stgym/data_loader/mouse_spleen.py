@@ -23,7 +23,6 @@ class MouseSpleenDataset(AbstractDataset):
         csv_data_path = Path(self.raw_dir) / RAW_FILE_NAME
         df = pd.read_csv(csv_data_path)
         df[LABEL_COL] = pd.Categorical(df[LABEL_COL]).codes
-        print(f"df[LABEL_COL]: {df[LABEL_COL]}")
         groups = list(df.groupby(GROUP_COLS))
         data_list = []
         for name, sample_df in groups:

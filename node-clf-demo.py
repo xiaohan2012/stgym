@@ -10,6 +10,7 @@ from stgym.config_schema import (
     TrainConfig,
 )
 from stgym.data_loader import STDataModule
+from stgym.data_loader.ds_info import get_info
 from stgym.tl_model import STGymModule
 from stgym.train import train
 
@@ -23,8 +24,11 @@ model_cfg = NodeClassifierModelConfig(
 )
 
 
+ds_name = "mouse-spleen"
 task_cfg = TaskConfig(
-    dataset_name="human-crc", type="node-classification", num_classes=10
+    dataset_name=ds_name,
+    type="node-classification",
+    num_classes=get_info(ds_name)["num_classes"],
 )
 train_cfg = TrainConfig(
     optim=OptimizerConfig(),
