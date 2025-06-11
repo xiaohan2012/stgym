@@ -21,8 +21,8 @@ def mock_df():
             "sample2",
         ],
         "Z.Z": [0, 0, 0, 0, 0, 0],
-        "X:X": [1.0, 2.0, 3.0, 1.0, 2.0, 3.0],
-        "Y:Y": [1.0, 2.0, 3.0, 1.0, 2.0, 3.0],
+        "X.X": [1.0, 2.0, 3.0, 1.0, 2.0, 3.0],
+        "Y.Y": [1.0, 2.0, 3.0, 1.0, 2.0, 3.0],
         "Imaging phenotype cluster ID": [1, 1, 1, 2, 2, 2],
         "niche cluster ID": [0, 1, 0, 0, 1, 0],
         "feature1": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6],
@@ -38,14 +38,13 @@ def test_mouse_spleen_dataset(mock_df):
         ds = MouseSpleenDataset(root=data_root)
         assert len(ds) == 2  # there are two graph samples
 
-        # Test first sample
-        data1 = ds[0]
-        assert data1.x.shape == (3, 2)  # 3 cells, 2 features
-        assert data1.y.shape == (3,)  # 3 labels
-        assert data1.pos.shape == (3, 2)  # 3 positions (x,y)
+        assert ds.y.min() == 0
+        assert ds.y.max() == 1
 
-        # Test second sample
-        data2 = ds[1]
-        assert data2.x.shape == (3, 2)  # 3 cells, 2 features
-        assert data2.y.shape == (3,)  # 3 labels
-        assert data2.pos.shape == (3, 2)  # 3 positions (x,y)
+        for data in ds:
+            assert data.x.shape == (3, 2)  # 3 cells, 2 features
+            assert data.y.shape == (3,)  # 3 labels
+            assert len(set(data.y.numpy())) == 1
+            assert data.pos.shape == (3, 2)  # 3 positions (x,y)
+
+        assert set(ds[0].y.numpy()) != set(ds[1].y.numpy())

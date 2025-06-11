@@ -9,7 +9,7 @@ from .base import AbstractDataset
 RAW_FILE_NAME = "source.csv"
 LABEL_COL = "Imaging phenotype cluster ID"
 GROUP_COLS = ["sample_Xtile_Ytile", "Z.Z"]
-POS_COLS = ["X:X", "Y:Y"]
+POS_COLS = ["X.X", "Y.Y"]
 COLUMNS_TO_DROP = ["niche cluster ID"]
 
 
@@ -22,6 +22,8 @@ class MouseSpleenDataset(AbstractDataset):
         # from: ~/Desktop/Codex数据集-2025.3.26/dataset1/Suppl.Table2.CODEX_paper_MRLdatasetexpression.csv
         csv_data_path = Path(self.raw_dir) / RAW_FILE_NAME
         df = pd.read_csv(csv_data_path)
+        df[LABEL_COL] = pd.Categorical(df[LABEL_COL]).codes
+        print(f"df[LABEL_COL]: {df[LABEL_COL]}")
         groups = list(df.groupby(GROUP_COLS))
         data_list = []
         for name, sample_df in groups:
