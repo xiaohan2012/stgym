@@ -13,6 +13,7 @@ from stgym.config_schema import (
     TrainConfig,
 )
 from stgym.data_loader import STDataModule
+from stgym.data_loader.ds_info import get_info
 from stgym.tl_model import STGymModule
 from stgym.train import train
 
@@ -42,7 +43,14 @@ train_cfg = TrainConfig(
 )
 
 
-task_cfg = TaskConfig(dataset_name="brca", type="graph-classification")
+dataset_name = "mouse-preoptic"
+ds_indo = get_info(dataset_name)
+task_cfg = TaskConfig(
+    dataset_name=dataset_name,
+    type="graph-classification",
+    num_classes=ds_indo["num_classes"],
+)
+
 dl_cfg = DataLoaderConfig(batch_size=8)
 mlflow_cfg = MLFlowConfig(
     track=True, tracking_uri="http://127.0.0.1:8080", experiment_name="train-demo"
@@ -51,7 +59,9 @@ mlflow_cfg = MLFlowConfig(
 data_module = STDataModule(task_cfg, dl_cfg)
 model_module = STGymModule(
     dim_in=data_module.num_features,
-    dim_out=1,  # 1 for binary classification
+    dim_out=(
+        1 if task_cfg.num_classes == 1 else task_cfg.num_classes
+    ),  # 1 for binary classification
     model_cfg=model_cfg,
     train_cfg=train_cfg,
     task_cfg=task_cfg,
