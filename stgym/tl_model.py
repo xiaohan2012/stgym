@@ -6,6 +6,7 @@ import numpy as np
 import pydash as _
 import pytorch_lightning as pl
 import torch
+import torch.nn.functional as F
 from sklearn.metrics import (
     accuracy_score,
     adjusted_rand_score,
@@ -62,6 +63,7 @@ class STGymModule(pl.LightningModule):
         self.train_cfg = train_cfg
         self.task_cfg = task_cfg
         if task_cfg.type == "graph-classification":
+            assert dim_out is not None, "`dim_out` should be provided."
             self.model = STGraphClassifier(dim_in, dim_out, model_cfg)
         elif task_cfg.type == "node-clustering":
             self.model = STClusteringModel(dim_in, model_cfg)
@@ -97,7 +99,6 @@ class STGymModule(pl.LightningModule):
         if self.task_cfg.type == "graph-classification":
             batch, pred_logits, layer_losses = self(batch)
             true = batch.y
-
             # the corner case of batch size = 1
             if pred_logits.ndim == 0:
                 pred_logits = pred_logits.unsqueeze(-1)
@@ -105,7 +106,10 @@ class STGymModule(pl.LightningModule):
             loss, pred_score = compute_classification_loss(pred_logits, true)
 
             # TODO: may attach different weights to the loss terms
-            pooling_loss = sum(layer_losses[-1].values())
+            if len(layer_losses) > 0:
+                pooling_loss = sum(layer_losses[-1].values())
+            else:
+                pooling_loss = 0
             step_end_time = time.time()
             return dict(
                 loss=loss + pooling_loss,
@@ -189,7 +193,15 @@ class STGymModule(pl.LightningModule):
 
         if self.task_cfg.type == "graph-classification":
             true, pred = self._extract_pred_and_test_from_step_outputs(split=split)
-            pr_auc = roc_auc_score(true, pred)
+            if self.task_cfg.num_classes > 2:
+                # multi-classs
+                pr_auc = roc_auc_score(
+                    F.one_hot(true, num_classes=self.task_cfg.num_classes),
+                    F.softmax(pred, dim=0),
+                    multi_class="ovr",
+                )
+            else:
+                pr_auc = roc_auc_score(true, pred)
             self.log(f"{split}_pr_auc", pr_auc, prog_bar=True)
         elif self.task_cfg.type == "node-clustering":
             true, pred, ptr_batch = self._extract_pred_and_test_from_step_outputs(
