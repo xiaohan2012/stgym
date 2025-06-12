@@ -171,7 +171,7 @@ class YamlLoaderMixin:
         return cls.model_validate(data)
 
 
-def get_maximum_coord_span(ds: InMemoryDataset) -> float:
+def get_coord_span(ds: InMemoryDataset) -> float:
     """get the maximum cooridnate span from datums in a dataset"""
     # TODO: apply on training data only to avoid data leakage
     span_list = []
@@ -179,6 +179,6 @@ def get_maximum_coord_span(ds: InMemoryDataset) -> float:
         xy_min, _ = dt.pos.min(axis=0)
         xy_max, _ = dt.pos.max(axis=0)
         span_list.append((xy_max - xy_min).max().numpy())
-    logger.debug(f"min span: {min(span_list)}")
-    logger.debug(f"max span: {max(span_list)}")
-    return float(max(span_list))
+    # logger.debug(f"min span: {min(span_list)}")
+    # logger.debug(f"max span: {max(span_list)}")
+    return {"min_span": float(min(span_list)), "max_span": float(max(span_list))}
