@@ -9,6 +9,7 @@ from stgym.config_schema import DataLoaderConfig, TaskConfig
 from stgym.data_loader.brca import BRCADataset
 from stgym.data_loader.ds_info import get_info
 from stgym.data_loader.human_crc import HumanCRCDataset
+from stgym.data_loader.human_intestine import HumanIntestineDataset
 from stgym.data_loader.mouse_preoptic import MousePreopticDataset
 from stgym.data_loader.mouse_spleen import MouseSpleenDataset
 
@@ -22,6 +23,8 @@ def get_dataset_class(ds_name: str):
         return MouseSpleenDataset
     elif ds_name == "mouse-preoptic":
         return MousePreopticDataset
+    elif ds_name == "human-intestine":
+        return HumanIntestineDataset
     else:
         raise NotImplementedError(f"{ds_name} is not available yet.")
 
@@ -30,7 +33,8 @@ def load_dataset(task_cfg: TaskConfig, dl_cfg: DataLoaderConfig):
     """load dataset by name"""
 
     if dl_cfg.graph_const == "radius":
-        radius = dl_cfg.radius_ratio * get_info(task_cfg.dataset_name)["max_span"]
+        ds_info = get_info(task_cfg.dataset_name)
+        radius = dl_cfg.radius_ratio * (ds_info["max_span"] - ds_info["min_span"])
         logger.debug("Using radius graph construction")
         logger.debug(f"Setting radius to {radius}")
 

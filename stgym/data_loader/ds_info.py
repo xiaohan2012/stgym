@@ -6,6 +6,7 @@ __data__ = {
     "human-crc": {"max_span": 1919.00, "num_classes": 10},
     "mouse-spleen": {"max_span": 1341.0, "num_classes": 58},
     "mouse-preoptic": {"max_span": 9512.359375, "num_classes": 6},
+    "human-intestine": {"min_span": 9070.0, "max_span": 9406.0, "num_classes": 21},
 }
 
 
