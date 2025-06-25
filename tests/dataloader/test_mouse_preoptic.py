@@ -51,3 +51,4 @@ def test_mouse_preoptic_dataset(mock_df):
             assert data.y.shape == (1,)  # single label per graph
             assert data.y.dtype == torch.long
             assert data.pos.shape == (3, 2)  # 3 positions (x,y)
+        rm_dir_if_exists(data_root / "processed")

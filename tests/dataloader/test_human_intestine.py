@@ -45,3 +45,4 @@ def test_human_intestine_dataset(mock_df):
             assert data.y.shape == (3,)  # 3 labels
             assert data.y.dtype == torch.long
             assert data.pos.shape == (3, 2)  # 3 positions (x,y)
+        rm_dir_if_exists(data_root / "processed")

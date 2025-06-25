@@ -54,6 +54,7 @@ def load_dataset(task_cfg: TaskConfig, dl_cfg: DataLoaderConfig):
 
     ds_cls = get_dataset_class(ds_name)
     if ds_name.endswith("-test"):
+        print(f"./tests/data/{ds_name}")
         return ds_cls(
             root=f"./tests/data/{ds_name}",
             transform=transform,

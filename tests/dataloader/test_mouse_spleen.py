@@ -48,3 +48,4 @@ def test_mouse_spleen_dataset(mock_df):
             assert data.pos.shape == (3, 2)  # 3 positions (x,y)
 
         assert set(ds[0].y.numpy()) != set(ds[1].y.numpy())
+        rm_dir_if_exists(data_root / "processed")

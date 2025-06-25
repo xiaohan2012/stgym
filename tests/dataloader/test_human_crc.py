@@ -30,7 +30,7 @@ def mock_df():
 
 def test_human_crc_dataset(mock_df):
     with patch("pandas.read_csv", return_value=mock_df):
-        data_root = Path("./tests/data/human-crc")
+        data_root = Path("./tests/data/human-crc-test")
         rm_dir_if_exists(data_root / "processed")
         ds = HumanCRCDataset(root=data_root)
         assert len(ds) == 1  # there is only one graph sample
@@ -38,3 +38,4 @@ def test_human_crc_dataset(mock_df):
         assert data.x.shape == (3, 2)  # 3 cells, 2 features
         assert data.y.shape == (3,)  # 3 labels
         assert data.pos.shape == (3, 2)  # 3 positions (x,y)
+        rm_dir_if_exists(data_root / "processed")
