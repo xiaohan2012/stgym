@@ -60,7 +60,7 @@ data_module = STDataModule(task_cfg, dl_cfg)
 model_module = STGymModule(
     dim_in=data_module.num_features,
     dim_out=(
-        1 if task_cfg.num_classes == 1 else task_cfg.num_classes
+        1 if task_cfg.num_classes == 2 else task_cfg.num_classes
     ),  # 1 for binary classification
     model_cfg=model_cfg,
     train_cfg=train_cfg,

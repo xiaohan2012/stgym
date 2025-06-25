@@ -14,7 +14,9 @@ def mock_dl_cfg():
 
 @pytest.fixture
 def mock_task_cfg():
-    return TaskConfig(dataset_name="brca-test", type="graph-classification")
+    return TaskConfig(
+        dataset_name="brca-test", type="graph-classification", num_classes=2
+    )
 
 
 def test_load_dataset(mock_task_cfg, mock_dl_cfg):

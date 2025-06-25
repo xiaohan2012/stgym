@@ -19,7 +19,7 @@ class HumanIntestineDataset(AbstractDataset):
         return [RAW_FILE_NAME]
 
     def process_data(self):
-        # from: /Users/hanxiao/Desktop/Codex数据集-2025.3.26/dataset4/B004_training_dryad.csv
+        # from: ~/Desktop/Codex数据集-2025.3.26/dataset4/B004_training_dryad.csv
         csv_data_path = Path(self.raw_dir) / RAW_FILE_NAME
         df = pd.read_csv(csv_data_path)
         df[LABEL_COL] = pd.Categorical(df[LABEL_COL]).codes

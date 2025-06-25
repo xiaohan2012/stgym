@@ -104,7 +104,9 @@ def dl_cfg():
 
 @pytest.fixture
 def graph_clf_task_cfg():
-    return TaskConfig(dataset_name="brca-test", type="graph-classification")
+    return TaskConfig(
+        dataset_name="brca-test", type="graph-classification", num_classes=2
+    )
 
 
 @pytest.fixture

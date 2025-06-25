@@ -184,6 +184,20 @@ class TaskConfig(BaseModel):
     eval_metrics: list[EvalMetric] = ["pr_auc"]
     num_classes: Optional[int] = None
 
+    @model_validator(mode="after")
+    def validate_num_classes(self) -> Self:
+        if self.type != "node-clustering" and self.num_classes is None:
+            raise ValueError("num_classes is required for node-classification")
+
+        return self
+
+
+class DataConfig(BaseModel):
+    class DataSplitConfig(BaseModel):
+        train_ratio: PositiveFloat
+        val_ratio: PositiveFloat
+        test_ratio: PositiveFloat
+
 
 class ExperimentConfig(BaseModel):
     task: TaskConfig
