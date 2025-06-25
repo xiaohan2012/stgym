@@ -19,7 +19,7 @@ class HumanCRCDataset(AbstractDataset):
         return [RAW_FILE_NAME]
 
     def process_data(self):
-        # from: ~/Desktop/Codex数据集-2025.3.26/dataset3/CRC_clusters_neighborhoods_markers.csv
+        # from: ~/Downloads/Codex数据集-2025.3.26/dataset3/CRC_clusters_neighborhoods_markers.csv
         csv_data_path = Path(self.raw_dir) / RAW_FILE_NAME
         df = pd.read_csv(csv_data_path)
         groups = list(df.groupby(GROUP_COLS))

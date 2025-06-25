@@ -19,7 +19,7 @@ class MouseSpleenDataset(AbstractDataset):
         return [RAW_FILE_NAME]
 
     def process_data(self):
-        # from: ~/Desktop/Codex数据集-2025.3.26/dataset1/Suppl.Table2.CODEX_paper_MRLdatasetexpression.csv
+        # from: ~/Downloads/Codex数据集-2025.3.26/dataset1/Suppl.Table2.CODEX_paper_MRLdatasetexpression.csv
         csv_data_path = Path(self.raw_dir) / RAW_FILE_NAME
         df = pd.read_csv(csv_data_path)
         df[LABEL_COL] = pd.Categorical(df[LABEL_COL]).codes

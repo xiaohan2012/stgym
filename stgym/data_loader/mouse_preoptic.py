@@ -22,7 +22,7 @@ class MousePreopticDataset(AbstractDataset):
         return [RAW_FILE_NAME]
 
     def process_data(self):
-        # from: ~/Desktop/Codex数据集-2025.3.26/dataset2/Moffitt_and_Bambah-Mukku_et_al_merfish_all_cells.csv
+        # from: ~/Downloads/Codex数据集-2025.3.26/dataset2/Moffitt_and_Bambah-Mukku_et_al_merfish_all_cells.csv
         csv_data_path = Path(self.raw_dir) / RAW_FILE_NAME
         df = pd.read_csv(csv_data_path)
         df[LABEL_COL] = pd.Categorical(df[LABEL_COL]).codes

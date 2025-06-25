@@ -33,7 +33,7 @@ class BRCADataset(AbstractDataset):
         return [RAW_FILE_NAME]
 
     def process_data(self):
-        # from: ~/Desktop/Codex数据集-2025.3.26/dataset6/BRCA_adata_expression_matrix.csv
+        # from: ~/Downloads/Codex数据集-2025.3.26/dataset6/BRCA_adata_expression_matrix.csv
         csv_data_path = Path(self.raw_dir) / RAW_FILE_NAME
         df = pd.read_csv(csv_data_path)
         groups = list(df.groupby(GROUP_COLS))

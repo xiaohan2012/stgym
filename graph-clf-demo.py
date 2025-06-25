@@ -53,7 +53,7 @@ task_cfg = TaskConfig(
 
 dl_cfg = DataLoaderConfig(batch_size=8)
 mlflow_cfg = MLFlowConfig(
-    track=True, tracking_uri="http://127.0.0.1:8080", experiment_name="train-demo"
+    track=True, tracking_uri="http://127.0.0.1:5000", experiment_name="train-demo"
 )
 
 data_module = STDataModule(task_cfg, dl_cfg)
