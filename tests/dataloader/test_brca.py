@@ -38,9 +38,8 @@ def mock_df():
 def test_brca_dataset(mock_df):
     with patch("pandas.read_csv", return_value=mock_df):
         data_root = Path("./tests/data/brca-test")
-        rm_dir_if_exists(data_root / "processed")
         ds = BRCADataset(root=data_root)
-        assert len(ds) == 1, "There should be only one graph sample"
+        assert len(ds) == 1, f"There should be only one graph sample but got {len(ds)}"
         data = ds[0]
         assert data.x.shape == (3, 2), "Shape of x should be (3 cells, 2 features)"
         assert data.y.item() == 1, "Label should be 1 (tumor)"
