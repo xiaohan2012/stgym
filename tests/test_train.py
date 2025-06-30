@@ -17,6 +17,7 @@ from stgym.config_schema import (
 from stgym.data_loader import STDataModule
 from stgym.tl_model import STGymModule
 from stgym.train import train
+from stgym.utils import rm_dir_if_exists
 
 
 @pytest.fixture
@@ -141,6 +142,7 @@ def test_train_on_graph_clf_task(
     )
 
     train(model_module, data_module, graph_clf_train_cfg, mlflow_cfg)
+    rm_dir_if_exists("tests/data/brca-test/processed")
 
 
 def test_clustering_task(

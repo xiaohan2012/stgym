@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader
 from stgym.config_schema import DataLoaderConfig, TaskConfig
 from stgym.data_loader import STDataModule, create_loader, load_dataset
 from stgym.data_loader.brca import BRCADataset
+from stgym.utils import rm_dir_if_exists
 
 
 @pytest.fixture
@@ -44,4 +45,7 @@ def test_tl_module_init(mock_task_cfg, mock_dl_cfg):
     assert isinstance(mod.val_dataloader(), DataLoader)
     assert isinstance(mod.test_dataloader(), DataLoader)
 
-    # assert mod.num_features == 32
+
+def teardown_module(module):
+    """Teardown function called after all tests in this module."""
+    rm_dir_if_exists("tests/data/brca-test/processed")
