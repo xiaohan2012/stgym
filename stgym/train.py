@@ -9,9 +9,6 @@ from stgym.config_schema import MLFlowConfig, TrainConfig
 from stgym.data_loader import STDataModule
 from stgym.tl_model import STGymModule
 
-EXPERIMENT_NAME = "lightning_logs"
-TRACKING_URI = "http://127.0.0.1:8080"
-
 
 def train(
     model: STGymModule,

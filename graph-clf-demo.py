@@ -47,11 +47,11 @@ dataset_name = "mouse-preoptic"
 ds_indo = get_info(dataset_name)
 task_cfg = TaskConfig(
     dataset_name=dataset_name,
-    type="graph-classification",
+    type=ds_indo["task_type"],
     num_classes=ds_indo["num_classes"],
 )
 
-dl_cfg = DataLoaderConfig(batch_size=8)
+dl_cfg = DataLoaderConfig(batch_size=16)
 mlflow_cfg = MLFlowConfig(
     track=True, tracking_uri="http://127.0.0.1:5000", experiment_name="train-demo"
 )
