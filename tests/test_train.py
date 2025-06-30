@@ -73,7 +73,7 @@ def graph_clf_train_cfg():
         optim=OptimizerConfig(),
         lr_schedule=LRScheduleConfig(type=None),
         max_epoch=10,
-        early_stopping={"metric": "val_pr_auc", "mode": "max"},
+        early_stopping={"metric": "val_roc_auc", "mode": "max"},
     )
 
 

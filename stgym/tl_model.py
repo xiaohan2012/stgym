@@ -195,14 +195,15 @@ class STGymModule(pl.LightningModule):
             true, pred = self._extract_pred_and_test_from_step_outputs(split=split)
             if self.task_cfg.num_classes > 2:
                 # multi-classs
-                pr_auc = roc_auc_score(
-                    F.one_hot(true, num_classes=self.task_cfg.num_classes),
-                    F.softmax(pred, dim=0),
-                    multi_class="ovr",
+                roc_auc = roc_auc_score(
+                    true,
+                    F.softmax(pred, dim=1).numpy(),
+                    multi_class="ovo",  # Han: ovr does not work for incomplete label values (typically in small batches and num_classes is not small)
+                    labels=list(range(self.task_cfg.num_classes)),
                 )
             else:
-                pr_auc = roc_auc_score(true, pred)
-            self.log(f"{split}_pr_auc", pr_auc, prog_bar=True)
+                roc_auc = roc_auc_score(true, pred)
+            self.log(f"{split}_roc_auc", roc_auc, prog_bar=True)
         elif self.task_cfg.type == "node-clustering":
             true, pred, ptr_batch = self._extract_pred_and_test_from_step_outputs(
                 split=split
