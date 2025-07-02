@@ -5,11 +5,6 @@ defaults:
 model:
   global_pooling: ['mean', 'max']
 task:
-  type: 'graph-classification'
-  _zip:
-    - dataset_name
-    - num_classes
+  type: graph-classification
   dataset_name:
     - brca
-  num_classes:
-    - 1

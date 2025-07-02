@@ -6,10 +6,6 @@ model:
   global_pooling: null
 task:
   type: node-classification
-  _zip:
-    - dataset_name
-    - num_classes
   dataset_name:
     - human-crc
-  num_classes:
-    - 10
+    - mouse-spleen

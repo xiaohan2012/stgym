@@ -35,6 +35,7 @@ __data__ = {
         "used_in_paper": "Unsupervised and supervised discovery of tissue cellular neighborhoods from cell phenotypes.",
     },
     "human-intestine": {
+        # has only 8 data points
         "min_span": 9070.0,
         "max_span": 9406.0,
         "num_classes": 21,

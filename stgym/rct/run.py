@@ -13,8 +13,8 @@ def run_exp(exp_cfg: ExperimentConfig, mlflow_cfg: MLFlowConfig):
 
     if exp_cfg.task.type in ("node-classification", "graph-classification"):
         dim_out = exp_cfg.task.num_classes
-        if exp_cfg.task == "graph-classification" and dim_out == 2:
-            dim_out -= 1
+        if dim_out == 2:
+            dim_out -= 1  # for binary classification, output dim being 1 is enough
     else:
         # for clustering, dim_out is specified by the pooling operation
         dim_out = None
@@ -32,6 +32,7 @@ def run_exp(exp_cfg: ExperimentConfig, mlflow_cfg: MLFlowConfig):
         mlflow_cfg.tags = {
             "group_id": str(exp_cfg.group_id),
             "task_type": exp_cfg.task.type,
+            "dataset_name": exp_cfg.task.dataset_name,
         }
 
     train(
