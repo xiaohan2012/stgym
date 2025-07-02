@@ -16,6 +16,7 @@ from stgym.config_schema import (
     TaskType,
     TrainConfig,
 )
+from stgym.data_loader.ds_info import get_info
 from stgym.design_space.schema import (
     DataLoaderSpace,
     DesignSpace,
@@ -120,7 +121,8 @@ def generate_task_config(
     seeds = rand_ints(k, seed=seed)
     for i in range(k):
         values = sample_across_dimensions(space, seed=seeds[i])
-        ret.append(TaskConfig(**values))
+        ds_info = get_info(values["dataset_name"])
+        ret.append(TaskConfig(**values, num_classes=ds_info.get("num_classes")))
     return ret
 
 

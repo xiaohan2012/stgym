@@ -63,9 +63,6 @@ class DataLoaderSpace(ModelWithZip):
 class TaskSpace(ModelWithZip):
     dataset_name: str | list[str]
     type: TaskType  # list[TaskType], only one type can be specified in one config
-    num_classes: Optional[int | list[int]] = (
-        None  # only needed for classification tasks
-    )
 
 
 class DesignSpace(ModelWithZip, YamlLoaderMixin):

@@ -115,10 +115,14 @@ class TestGenerateDesign:
         configs = generate_task_config(mock_design_space.task, k=100)
         for config in configs:
             assert isinstance(config, TaskConfig)
-            assert config.dataset_name == "brca"
+
             assert config.type == mock_design_space.task.type
             if config.type == "node-classification":
                 assert config.num_classes == 10
+                assert config.dataset_name == "human-crc"
+            if config.type == "graph-classification":
+                assert config.num_classes == 2
+                assert config.dataset_name == "brca"
 
     @pytest.mark.parametrize("seed", RANDOM_SEEDS)
     def test_consistency_under_fixed_random_seed(self, mock_design_space, seed):

@@ -22,7 +22,6 @@ train:
 task:
   dataset_name: brca
   type: graph-classification
-  num_classes: 2
 data_loader:
   graph_const: ['knn', 'radius']
   knn_k: 20
