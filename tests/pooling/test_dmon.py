@@ -131,7 +131,7 @@ class TestWrapper(BatchLoaderMixin):
         )
         assert batch.batch.size() == (self.batch_size * num_clusters,)
         np.testing.assert_allclose(
-            batch.ptr, torch.arange(self.batch_size + 1) * num_clusters
+            batch.ptr.cpu(), torch.arange(self.batch_size + 1) * num_clusters
         )
 
         assert -1 <= batch.loss[0]["spectral_loss"] <= 0.5
