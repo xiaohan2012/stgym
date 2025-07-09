@@ -66,7 +66,7 @@ def mincut_pool(
         mincut_normalizer.to_dense()
     )
 
-    sqrt_K = torch.sqrt(torch.tensor(K, device=device))
+    sqrt_K = torch.sqrt(torch.tensor(K, device=device, dtype=torch.float))
 
     # orthogonality loss
     # CC = torch.sparse.mm(C_bd.T, C_bd)  # [KxB, KxB]
@@ -106,7 +106,9 @@ def mincut_pool(
     out_adj = C_bd.T @ adj @ C_bd
     out_adj = mask_diagonal_sp(out_adj)
     d = torch.einsum("ij->i", out_adj).to_dense().sqrt() + 1e-12
-    d_norm = torch.sparse_coo_tensor(diagonal_indices, (1 / d), requires_grad=False)
+    d_norm = torch.sparse_coo_tensor(
+        diagonal_indices, (1 / d), requires_grad=False, device=device
+    )
     out_adj_normalized = d_norm @ out_adj @ d_norm
 
     x_bd = stacked_blocks_to_block_diagonal(x, ptr)
