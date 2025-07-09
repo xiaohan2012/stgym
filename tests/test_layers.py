@@ -63,7 +63,9 @@ class TestGeneralLayer(BatchLoaderMixin):
 
         mem_config = MemoryConfig()
         batch = self.load_batch()
-        layer = GeneralLayer(self.num_features, inner_dim, layer_config, mem_config)
+        layer = GeneralLayer(self.num_features, inner_dim, layer_config, mem_config).to(
+            self.device
+        )
 
         output_batch = layer(batch).to(self.device)
         assert output_batch.adj_t.shape == (
