@@ -65,7 +65,7 @@ class TestGeneralLayer(BatchLoaderMixin):
         batch = self.load_batch()
         layer = GeneralLayer(self.num_features, inner_dim, layer_config, mem_config)
 
-        output_batch = layer(batch).to(self.deivice)
+        output_batch = layer(batch).to(self.device)
         assert output_batch.adj_t.shape == (
             self.batch_size * n_clusters,
             self.batch_size * n_clusters,
@@ -87,7 +87,7 @@ class TestGeneralMultiLayer(BatchLoaderMixin):
             self.num_features,
             layer_configs,
             mem_config,
-        ).to(self.deivice)
+        ).to(self.device)
 
         layers = list(model.children())
         assert len(layers) == n_layers
@@ -129,7 +129,7 @@ class TestGeneralMultiLayer(BatchLoaderMixin):
             self.num_features,
             layer_configs,
             mem_config,
-        ).to(self.deivice)
+        ).to(self.device)
 
         layers = list(model.children())
         assert len(layers) == n_layers
@@ -170,7 +170,7 @@ class TestMLP(BatchLoaderMixin):
         ]
         mem_config = MemoryConfig()
 
-        model = MLP(self.num_features, layer_configs, mem_config).to(self.deivice)
+        model = MLP(self.num_features, layer_configs, mem_config).to(self.device)
         self.check(model)
 
     def test_creation_from_post_mp_config(self):
@@ -178,5 +178,5 @@ class TestMLP(BatchLoaderMixin):
 
         mem_config = MemoryConfig()
 
-        model = MLP(self.num_features, postmp_cfg, mem_config).to(self.deivice)
+        model = MLP(self.num_features, postmp_cfg, mem_config).to(self.device)
         self.check(model)
