@@ -40,7 +40,7 @@ class TestGeneralLayer(BatchLoaderMixin):
             self.num_classes,
             layer_config,
             mem_config,
-        )
+        ).to(self.device)
         assert isinstance(layer.layer, expected_layer_class)
 
         output = layer(batch)
