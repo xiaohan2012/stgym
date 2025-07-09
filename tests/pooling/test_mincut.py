@@ -140,7 +140,7 @@ class TestWrapper(BatchLoaderMixin):
         # assert torch.isclose(batch.s.sum(axis=1), torch.ones(num_clusters * self.batch_size)).all()
         assert batch.batch.size() == (self.batch_size * num_clusters,)
         np.testing.assert_allclose(
-            batch.ptr, torch.arange(self.batch_size + 1) * num_clusters
+            batch.ptr.cpu(), torch.arange(self.batch_size + 1) * num_clusters
         )
 
         assert -1 <= batch.loss[0]["mincut_loss"] <= 0

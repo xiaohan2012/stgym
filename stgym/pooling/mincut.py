@@ -46,9 +46,8 @@ def mincut_pool(
     # print(f"K: {K}")
     d = adj.sum(axis=0).to_dense()  # degree vector
     # print(f"d.shape: {d.shape}")
-    diagonal_indices = torch.stack(
-        [torch.arange(K * B).to(device), torch.arange(K * B).to(device)]
-    )
+    range_k_times_b = torch.arange(K * B, device=device)
+    diagonal_indices = torch.stack([range_k_times_b, range_k_times_b])
 
     # block diagonal matrices of C and d
     C_bd = stacked_blocks_to_block_diagonal(s, ptr, requires_grad=True)  # [N, K x B]
@@ -67,7 +66,7 @@ def mincut_pool(
         mincut_normalizer.to_dense()
     )
 
-    sqrt_K = torch.sqrt(torch.tensor(K))
+    sqrt_K = torch.sqrt(torch.tensor(K, device=device))
 
     # orthogonality loss
     # CC = torch.sparse.mm(C_bd.T, C_bd)  # [KxB, KxB]
@@ -84,11 +83,14 @@ def mincut_pool(
         )
     )
     CC_normalizer = torch.sparse_coo_tensor(
-        diagonal_indices, 1 / CC_norm.repeat_interleave(K), requires_grad=True
+        diagonal_indices,
+        1 / CC_norm.repeat_interleave(K),
+        requires_grad=True,
+        device=device,
     )
     # construct the I_k matrix of shape [KxB, KxB], further divided by sqrt(K)
     I_div_k = torch.sparse_coo_tensor(
-        diagonal_indices, torch.Tensor(1 / sqrt_K).to(device).repeat(K * B)
+        diagonal_indices, torch.Tensor(1 / sqrt_K).repeat(K * B)
     )
 
     # compute the norm of the block diagonal over graph batches
