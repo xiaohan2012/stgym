@@ -48,7 +48,9 @@ def mask_diagonal_sp(A: torch.sparse.Tensor) -> torch.sparse.Tensor:
     indices = A.indices()
     values = A.values()
     mask = indices[0] != indices[1]
-    return torch.sparse_coo_tensor(indices[:, mask], values[mask], A.size())
+    return torch.sparse_coo_tensor(
+        indices[:, mask], values[mask], A.size(), device=indices.device
+    )
 
 
 def batch2ptr(batch: torch.Tensor) -> torch.Tensor:

@@ -64,9 +64,7 @@ def mincut_pool(
     print(f"range_n_sum.device: {range_n_sum.device}")
     # print(f"C_bd.shape: {C_bd.shape}")
     d_diag = torch.sparse_coo_tensor(
-        torch.stack([range_n_sum, range_n_sum]),
-        d,
-        requires_grad=True,
+        torch.stack([range_n_sum, range_n_sum]), d, requires_grad=True, device=device
     )
     print(f"d_diag.device: {d_diag.device}")
     # print(f"d_diag.shape: {d_diag.shape}")
@@ -109,7 +107,7 @@ def mincut_pool(
     print(f"CC_normalizer.device: {CC_normalizer.device}")
     # construct the I_k matrix of shape [KxB, KxB], further divided by sqrt(K)
     I_div_k = torch.sparse_coo_tensor(
-        diagonal_indices, torch.Tensor(1 / sqrt_K).repeat(K * B)
+        diagonal_indices, torch.Tensor(1 / sqrt_K).repeat(K * B), device=device
     )
 
     print(f"I_div_k.device: {I_div_k.device}")
