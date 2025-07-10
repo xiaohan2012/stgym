@@ -32,7 +32,9 @@ class TestSTGraphClassifier(BatchLoaderMixin):
             post_mp_layer=PostMPConfig(dims=[64, 32]),
         )
         batch = self.load_batch()
-        model = STGraphClassifier(self.num_features, self.num_classes, cfg)
+        model = STGraphClassifier(self.num_features, self.num_classes, cfg).to(
+            self.device
+        )
         batch, pred, other_loss = model(batch)
         assert isinstance(pred, Tensor)
         assert isinstance(batch, Data)
