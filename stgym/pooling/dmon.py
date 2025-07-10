@@ -51,11 +51,11 @@ def dmon_pool(adj: torch.Tensor, batch: torch.Tensor, s: torch.Tensor) -> torch.
 
     m_inv = torch.repeat_interleave(1 / m2, K)
 
-    # TODO: or torhc.stack(...).to(device)
-    diagonal_indices = torch.stack(
-        [torch.arange(K * B).to(device), torch.arange(K * B).to(device)]
+    range_k_times_b = torch.arange(K * B, device=device)
+    diagonal_indices = torch.stack([range_k_times_b, range_k_times_b])
+    m_inv_sp = torch.sparse_coo_tensor(
+        diagonal_indices, m_inv, requires_grad=False, device=device
     )
-    m_inv_sp = torch.sparse_coo_tensor(diagonal_indices, m_inv, requires_grad=False)
 
     # block diagonal matrices of C and d
     C_bd = stacked_blocks_to_block_diagonal(s, ptr, requires_grad=True)  # [N, K x B]
@@ -78,7 +78,7 @@ def dmon_pool(adj: torch.Tensor, batch: torch.Tensor, s: torch.Tensor) -> torch.
 
     # -----------------------------
     # cluster loss (collapse regularization)
-    sqrt_K = torch.sqrt(torch.tensor(K))
+    sqrt_K = torch.sqrt(torch.tensor(K, device=device))
 
     # cluster_size = C_bd.sum(axis=0).to_dense().reshape((B, K))  # B x K
     # Han: converting C_bd to dense to temporarily address RuntimeError: expand is unsupported for Sparse tensors
@@ -94,7 +94,7 @@ def dmon_pool(adj: torch.Tensor, batch: torch.Tensor, s: torch.Tensor) -> torch.
     CC = (C_bd.T @ C_bd).to_dense()  # [KxB, KxB]
 
     # normalization matrix
-    CC_batch = torch.arange(0, B).to(device).repeat_interleave(K)
+    CC_batch = torch.arange(0, B, device=device).repeat_interleave(K)
     CC_norm = torch.sqrt(
         scatter_sum(
             CC.pow(2).sum(axis=1).to_dense(),
@@ -102,12 +102,15 @@ def dmon_pool(adj: torch.Tensor, batch: torch.Tensor, s: torch.Tensor) -> torch.
         )
     )
     CC_normalizer = torch.sparse_coo_tensor(
-        diagonal_indices, 1 / CC_norm.repeat_interleave(K), requires_grad=True
+        diagonal_indices,
+        1 / CC_norm.repeat_interleave(K),
+        requires_grad=True,
+        device=device,
     )
 
     # construct the I_k matrix of shape [KxB, KxB], further divided by sqrt(K)
     I_div_k = torch.sparse_coo_tensor(
-        diagonal_indices, torch.Tensor(1 / sqrt_K).to(device).repeat(K * B)
+        diagonal_indices, torch.Tensor(1 / sqrt_K).repeat(K * B)
     )
 
     # compute the norm of the block diagonal over graph batches
