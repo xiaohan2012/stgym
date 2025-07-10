@@ -55,7 +55,7 @@ class TestSTClusteringModel(BatchLoaderMixin):
             ],
         )
         batch = self.load_batch()
-        model = STClusteringModel(self.num_features, cfg)
+        model = STClusteringModel(self.num_features, cfg).to(self.device)
         batch, pred, loss = model(batch)
         assert isinstance(pred, Tensor)
         assert torch.allclose(
@@ -75,7 +75,9 @@ class TestSTClusteringModel(BatchLoaderMixin):
 class TestSTNodeClassifier(BatchLoaderMixin):
     def _run_with_config(self, cfg, with_pooling: bool):
         batch = self.load_batch()
-        model = STNodeClassifier(self.num_features, self.num_classes, cfg)
+        model = STNodeClassifier(self.num_features, self.num_classes, cfg).to(
+            self.device
+        )
         batch, pred, other_loss = model(batch)
         assert isinstance(pred, Tensor)
         assert isinstance(batch, Data)
