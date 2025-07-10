@@ -88,10 +88,11 @@ class TestAutoGrad(BatchLoaderMixin):
 
         batch = self.load_batch()
         print(f"batch.adj_t.device: {batch.adj_t.device}")
-
+        print(f"batch.x.device: {batch.x.device}")
+        print(f"batch.batch.device: {batch.batch.device}")
         n_nodes = batch.x.shape[0]
         C = torch.rand(n_nodes, num_clusters, requires_grad=True).to(batch.adj_t.device)
-
+        print(f"C.device: {C.device}")
         (
             out_x,
             out_adj,
@@ -100,6 +101,11 @@ class TestAutoGrad(BatchLoaderMixin):
             output_batch,
         ) = sparse_mincut_pool(batch.x, batch.adj_t, batch.batch, C)
 
+        print(f"out_x.device: {out_x.device}")
+        print(f"out_adj.device: {out_adj.device}")
+        print(f"output_batch.device: {output_batch.device}")
+        print(f"mincut_loss.device: {mincut_loss.device}")
+        print(f"ortho_loss.device: {ortho_loss.device}")
         loss = mincut_loss + ortho_loss
 
         loss.backward()
