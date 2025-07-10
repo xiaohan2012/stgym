@@ -59,7 +59,7 @@ class TestSTClusteringModel(BatchLoaderMixin):
         batch, pred, loss = model(batch)
         assert isinstance(pred, Tensor)
         assert torch.allclose(
-            pred.sum(axis=1),
+            pred.sum(axis=1).cpu(),
             torch.ones(self.num_nodes_per_graph * self.batch_size),
             rtol=1e-5,
         )
