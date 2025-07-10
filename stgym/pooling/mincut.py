@@ -96,7 +96,7 @@ def mincut_pool(
         requires_grad=True,
         device=device,
     )
-    print(f"CC_normalizer.device(): {CC_normalizer.device()}")
+    print(f"CC_normalizer.device: {CC_normalizer.device}")
     # construct the I_k matrix of shape [KxB, KxB], further divided by sqrt(K)
     I_div_k = torch.sparse_coo_tensor(
         diagonal_indices, torch.Tensor(1 / sqrt_K).repeat(K * B)
