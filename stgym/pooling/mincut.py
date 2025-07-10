@@ -51,48 +51,58 @@ def mincut_pool(
 
     # block diagonal matrices of C and d
     C_bd = stacked_blocks_to_block_diagonal(s, ptr, requires_grad=True)  # [N, K x B]
+    print(f"C_bd.device: {C_bd.device}")
+    range_n_sum = torch.arange(n.sum(), device=device)
     # print(f"C_bd.shape: {C_bd.shape}")
     d_diag = torch.sparse_coo_tensor(
-        torch.stack([torch.arange(n.sum()), torch.arange(n.sum())]).to(device),
+        torch.stack([range_n_sum, range_n_sum]),
         d,
         requires_grad=True,
     )
+    print(f"d_diag.device: {d_diag.device}")
     # print(f"d_diag.shape: {d_diag.shape}")
 
     # mincut loss
     mincut_normalizer = C_bd.T @ d_diag @ C_bd
+    print(f"mincut_normalizer.device: {mincut_normalizer.device}")
 
     mincut_loss = -torch.trace(C_bd.T @ adj @ C_bd.to_dense()) / torch.trace(
         mincut_normalizer.to_dense()
     )
+    print(f"mincut_loss.device: {mincut_loss.device}")
 
     sqrt_K = torch.sqrt(torch.tensor(K, device=device, dtype=torch.float))
+    print(f"sqrt_K.device: {sqrt_K.device}")
 
     # orthogonality loss
     # CC = torch.sparse.mm(C_bd.T, C_bd)  # [KxB, KxB]
     # CC = C_bd.T @ C_bd  # [KxB, KxB]
     # Han: converting CC to dense to temporarly address RuntimeError: expand is unsupported for Sparse tensors
     CC = (C_bd.T @ C_bd).to_dense()  # [KxB, KxB]
+    print(f"CC.device: {CC.device}")
 
     # normalization matrix
-    CC_batch = torch.arange(0, B).to(device).repeat_interleave(K)
+    CC_batch = torch.arange(0, B, device=device).repeat_interleave(K)
     CC_norm = torch.sqrt(
         scatter_sum(
             CC.pow(2).sum(axis=1).to_dense(),
             index=CC_batch,
         )
     )
+    print(f"CC_norm.device: {CC_norm.device}")
     CC_normalizer = torch.sparse_coo_tensor(
         diagonal_indices,
         1 / CC_norm.repeat_interleave(K),
         requires_grad=True,
         device=device,
     )
+    print(f"CC_normalizer.device(): {CC_normalizer.device()}")
     # construct the I_k matrix of shape [KxB, KxB], further divided by sqrt(K)
     I_div_k = torch.sparse_coo_tensor(
         diagonal_indices, torch.Tensor(1 / sqrt_K).repeat(K * B)
     )
 
+    print(f"I_div_k.device: {I_div_k.device}")
     # compute the norm of the block diagonal over graph batches
     ortho_loss = (
         scatter_sum(
