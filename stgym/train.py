@@ -63,10 +63,29 @@ def train(
         devices="auto",
         # 'mps' not supporting some sparse operations, therefore shouldn't be used
         accelerator="cpu" if not torch.cuda.is_available() else "gpu",
-        logger=logger
+        logger=logger,
     )
+    import torch
+
+    # Before your model's forward pass
+    initial_mem = torch.cuda.memory_allocated()
+
+    # make a forward pass to initialize the model
+    # this is needed for DDP mode
     for batch in datamodule.train_dataloader():
         model(batch)
         break
+
+    # After forward pass
+    forward_mem = torch.cuda.memory_allocated() - initial_mem
+    print(f"Memory allocated after forward pass: {forward_mem / (1024**2):.2f} MB")
+
+    # # Before backward pass
+    # initial_mem = torch.cuda.ing_allocated()
+    # loss.backward()
+    # # After backward pass
+    # backward_mem = torch.cuda.memory_allocated() - initial_mem
+    # print(f"Memory allocated after backward pass: {backward_mem / (1024**2):.2f} MB")
+
     trainer.fit(model, datamodule=datamodule)
     trainer.test(model, datamodule=datamodule)
