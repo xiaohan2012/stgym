@@ -53,17 +53,6 @@ def train(
     #     ckpt_cbk = pl.callbacks.ModelCheckpoint(dirpath=get_ckpt_dir())
     #     callbacks.append(ckpt_cbk)
 
-    # Before your model's forward pass
-    initial_mem = torch.cuda.memory_allocated()
-
-    print(f"inital_mem: {initial_mem / (1024**2):.2f} MB")
-
-    # make a forward pass to initialize the model
-    # this is needed for DDP mode
-    for batch in datamodule.train_dataloader():
-        print(f"batch: {batch}" f"batch: {batch}")
-        break
-
     trainer_config = tl_train_config or {}
     trainer = pl.Trainer(
         **trainer_config,
@@ -83,17 +72,6 @@ def train(
         print(f"batch: {batch}" f"batch: {batch}")
         model(batch)
         break
-
-    # After forward pass
-    forward_mem = torch.cuda.memory_allocated() - initial_mem
-    print(f"Memory allocated after forward pass: {forward_mem / (1024**2):.2f} MB")
-
-    # # Before backward pass
-    # initial_mem = torch.cuda.ing_allocated()
-    # loss.backward()
-    # # After backward pass
-    # backward_mem = torch.cuda.memory_allocated() - initial_mem
-    # print(f"Memory allocated after backward pass: {backward_mem / (1024**2):.2f} MB")
 
     trainer.fit(model, datamodule=datamodule)
     trainer.test(model, datamodule=datamodule)
