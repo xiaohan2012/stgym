@@ -69,9 +69,11 @@ def train(
     # Before your model's forward pass
     initial_mem = torch.cuda.memory_allocated()
 
+    print(f"inital_mem: {initial_mem / (1024**2):.2f} MB")
     # make a forward pass to initialize the model
     # this is needed for DDP mode
     for batch in datamodule.train_dataloader():
+        print(f"batch: {batch}")
         model(batch)
         break
 
