@@ -65,6 +65,8 @@ def train(
         accelerator="cpu" if not torch.cuda.is_available() else "gpu",
         logger=logger
     )
-
+    for batch in datamodule.train_dataloader():
+        model(batch)
+        break
     trainer.fit(model, datamodule=datamodule)
     trainer.test(model, datamodule=datamodule)
