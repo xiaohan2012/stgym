@@ -12,6 +12,8 @@ from stgym.utils import (
     stacked_blocks_to_block_diagonal,
 )
 
+from .utils import DEVICE
+
 RTOL = 1e-10
 
 
@@ -51,9 +53,9 @@ RTOL = 1e-10
     ],
 )
 def test_stacked_blocks_to_block_diagonal(A, ptr, expected):
-    A = torch.tensor(A)
-    ptr = torch.tensor(ptr, dtype=torch.int64)
-    expected = torch.tensor(expected)
+    A = torch.tensor(A, device=DEVICE)
+    ptr = torch.tensor(ptr, dtype=torch.int64, device=DEVICE)
+    expected = torch.tensor(expected, device=DEVICE)
     actual = stacked_blocks_to_block_diagonal(A, ptr)
 
     assert actual.layout == torch.sparse_coo
@@ -61,9 +63,9 @@ def test_stacked_blocks_to_block_diagonal(A, ptr, expected):
 
 
 def test_mask_diagonal_sp():
-    indices = torch.tensor([[0, 0, 1, 1], [0, 1, 0, 1]])
-    values = torch.tensor([1, 2, 3, 4])
-    A = torch.sparse_coo_tensor(indices, values, (2, 2)).coalesce()
+    indices = torch.tensor([[0, 0, 1, 1], [0, 1, 0, 1]], device=DEVICE)
+    values = torch.tensor([1, 2, 3, 4], device=DEVICE)
+    A = torch.sparse_coo_tensor(indices, values, (2, 2), device=DEVICE).coalesce()
     masked_A = mask_diagonal_sp(A)
     assert masked_A.layout == torch.sparse_coo
 
@@ -71,9 +73,9 @@ def test_mask_diagonal_sp():
 
 
 def test_batch2ptr():
-    actual = batch2ptr(torch.tensor([0, 1, 1, 2, 2, 2]))
+    actual = batch2ptr(torch.tensor([0, 1, 1, 2, 2, 2], device=DEVICE))
     # actual = batch2ptr(torch.tensor([1, 2, 2, 3, 3, 3]))
-    expected = torch.tensor([0, 1, 3, 6])
+    expected = torch.tensor([0, 1, 3, 6], device=DEVICE)
     np.testing.assert_allclose(actual, expected)
 
 
@@ -81,14 +83,16 @@ def test_batch2ptr_with_error():
     with pytest.raises(
         ValueError, match=".*The batch contains zero-frequency element.*"
     ):
-        batch2ptr(torch.tensor([1, 2, 2, 3, 3, 3]))
+        batch2ptr(torch.tensor([1, 2, 2, 3, 3, 3], device=DEVICE))
 
 
 def test_hsplit_and_vstack():
-    A = torch.tensor([[0, 1, 2, 3, 4, 5], [6, 7, 8, 9, 10, 11]])
+    A = torch.tensor([[0, 1, 2, 3, 4, 5], [6, 7, 8, 9, 10, 11]], device=DEVICE)
     chunk_size = 2
     actual = hsplit_and_vstack(A, chunk_size)
-    expected = torch.tensor([[0, 1], [6, 7], [2, 3], [8, 9], [4, 5], [10, 11]])
+    expected = torch.tensor(
+        [[0, 1], [6, 7], [2, 3], [8, 9], [4, 5], [10, 11]], device=DEVICE
+    )
     np.testing.assert_allclose(actual, expected)
 
 
@@ -128,7 +132,7 @@ def test_random_ints():
     ],
 )
 def test_collapse_ptr_list(ptr_list, expected):
-    expected = torch.Tensor(expected).type(torch.int)
+    expected = torch.tensor(expected).type(torch.int)
     actual = collapse_ptr_list(ptr_list)
 
     assert torch.allclose(expected, actual)
