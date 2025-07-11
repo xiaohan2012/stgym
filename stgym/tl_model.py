@@ -112,10 +112,8 @@ class STGymModule(pl.LightningModule):
                 pooling_loss = 0
             step_end_time = time.time()
 
-            import torch
-
             # ... inside your training loop or before a suspicious operation
-            print(torch.cuda.ing_summary())
+            print(torch.cuda.memory_summary())
 
             return dict(
                 loss=loss + pooling_loss,

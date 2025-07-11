@@ -65,7 +65,6 @@ def train(
         accelerator="cpu" if not torch.cuda.is_available() else "gpu",
         logger=logger,
     )
-    import torch
 
     # Before your model's forward pass
     initial_mem = torch.cuda.memory_allocated()
