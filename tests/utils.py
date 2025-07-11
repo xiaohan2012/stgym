@@ -45,12 +45,15 @@ def create_data_batch(
     return batch.to(device)
 
 
+DEVICE = "cpu" if not torch.cuda.is_available() else "cuda:0"
+
+
 class BatchLoaderMixin:
     num_nodes_per_graph = 100
     num_features = 128
     num_classes = 10
     batch_size = 3
-    device = "cpu" if not torch.cuda.is_available() else "cuda"
+    device = DEVICE
 
     def load_batch(self):
         return create_data_batch(
