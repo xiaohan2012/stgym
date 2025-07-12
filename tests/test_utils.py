@@ -55,11 +55,12 @@ RTOL = 1e-10
 def test_stacked_blocks_to_block_diagonal(A, ptr, expected):
     A = torch.tensor(A, device=DEVICE)
     ptr = torch.tensor(ptr, dtype=torch.int64, device=DEVICE)
-    expected = torch.tensor(expected, device=DEVICE)
+    expected = torch.tensor(expected)
     actual = stacked_blocks_to_block_diagonal(A, ptr)
 
     assert actual.layout == torch.sparse_coo
-    np.testing.assert_allclose(expected, actual.to_dense(), rtol=RTOL)
+    assert actual.device == A.device
+    np.testing.assert_allclose(expected, actual.to_dense().cpu(), rtol=RTOL)
 
 
 def test_mask_diagonal_sp():
@@ -68,15 +69,19 @@ def test_mask_diagonal_sp():
     A = torch.sparse_coo_tensor(indices, values, (2, 2), device=DEVICE).coalesce()
     masked_A = mask_diagonal_sp(A)
     assert masked_A.layout == torch.sparse_coo
-
-    np.testing.assert_allclose(masked_A.to_dense(), torch.tensor([[0, 2], [3, 0]]))
+    assert masked_A.device == A.device
+    np.testing.assert_allclose(
+        masked_A.to_dense().cpu(), torch.tensor([[0, 2], [3, 0]])
+    )
 
 
 def test_batch2ptr():
-    actual = batch2ptr(torch.tensor([0, 1, 1, 2, 2, 2], device=DEVICE))
+    batch = torch.tensor([0, 1, 1, 2, 2, 2], device=DEVICE)
+    actual = batch2ptr(batch)
+    assert actual.device == batch.device
     # actual = batch2ptr(torch.tensor([1, 2, 2, 3, 3, 3]))
-    expected = torch.tensor([0, 1, 3, 6], device=DEVICE)
-    np.testing.assert_allclose(actual, expected)
+    expected = torch.tensor([0, 1, 3, 6])
+    np.testing.assert_allclose(actual.cpu(), expected)
 
 
 def test_batch2ptr_with_error():
@@ -90,10 +95,9 @@ def test_hsplit_and_vstack():
     A = torch.tensor([[0, 1, 2, 3, 4, 5], [6, 7, 8, 9, 10, 11]], device=DEVICE)
     chunk_size = 2
     actual = hsplit_and_vstack(A, chunk_size)
-    expected = torch.tensor(
-        [[0, 1], [6, 7], [2, 3], [8, 9], [4, 5], [10, 11]], device=DEVICE
-    )
-    np.testing.assert_allclose(actual, expected)
+    assert actual.device == A.device
+    expected = torch.tensor([[0, 1], [6, 7], [2, 3], [8, 9], [4, 5], [10, 11]])
+    np.testing.assert_allclose(actual.cpu(), expected)
 
 
 @pytest.mark.parametrize(
@@ -126,13 +130,13 @@ def test_random_ints():
                 torch.Tensor([0, 20, 40]),
                 torch.Tensor([0, 30, 60]),
             ],
-            [0, 10, 20, 40, 60, 90, 120],
+            torch.Tensor([0, 10, 20, 40, 60, 90, 120]),
         ),
         ([torch.Tensor([0, 10, 20])], torch.Tensor([0, 10, 20])),
     ],
 )
 def test_collapse_ptr_list(ptr_list, expected):
-    expected = torch.tensor(expected).type(torch.int)
+    expected = expected.type(torch.int)
     actual = collapse_ptr_list(ptr_list)
 
     assert torch.allclose(expected, actual)
