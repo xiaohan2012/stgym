@@ -24,7 +24,7 @@ def mincut_pool(
     temp: float = 1.0,
 ) -> tuple[Tensor, Tensor, Tensor, Tensor, Tensor]:
     device = adj.device
-    print(device)
+
     if not is_sparse(adj):
         raise TypeError("adjacency matrix is not sparse")
 
