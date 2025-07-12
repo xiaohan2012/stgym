@@ -114,43 +114,29 @@ def mincut_pool(
         .sqrt()
         .mean()
     )
-    print(f"ortho_loss.device: {ortho_loss.device}")
+
     # normalize the output adjacency matrix
     out_adj = C_bd.T @ adj @ C_bd
-    print(f"out_adj.device: {out_adj.device}")
     out_adj = mask_diagonal_sp(out_adj)
-    print(f"out_adj.device: {out_adj.device}")
     d = torch.einsum("ij->i", out_adj).to_dense().sqrt() + 1e-12
-    print(f"d.device: {d.device}")
     d_norm = torch.sparse_coo_tensor(
         diagonal_indices, (1 / d), requires_grad=False, device=device
     )
-    print(f"d_norm.device: {d_norm.device}")
     out_adj_normalized = d_norm @ out_adj @ d_norm
-    print(f"out_adj_normalized.device: {out_adj_normalized.device}")
 
     x_bd = stacked_blocks_to_block_diagonal(x, ptr)
-    print(f"x_bd.device: {x_bd.device}")
     out_x = hsplit_and_vstack(s.T @ x_bd, chunk_size=x.shape[1])  # (BxK) x D
-    print(f"out_x.device: {out_x.device}" f"ortho_loss.device: {ortho_loss.device}")
     # normalize the output adjacency matrix
     out_adj = C_bd.T @ adj @ C_bd
-    print(f"out_adj.device: {out_adj.device}")
     out_adj = mask_diagonal_sp(out_adj)
-    print(f"out_adj.device: {out_adj.device}")
     d = torch.einsum("ij->i", out_adj).to_dense().sqrt() + 1e-12
-    print(f"d.device: {d.device}")
     d_norm = torch.sparse_coo_tensor(
         diagonal_indices, (1 / d), requires_grad=False, device=device
     )
-    print(f"d_norm.device: {d_norm.device}")
     out_adj_normalized = d_norm @ out_adj @ d_norm
-    print(f"out_adj_normalized.device: {out_adj_normalized.device}")
 
     x_bd = stacked_blocks_to_block_diagonal(x, ptr)
-    print(f"x_bd.device: {x_bd.device}")
     out_x = hsplit_and_vstack(s.T @ x_bd, chunk_size=x.shape[1])  # (BxK) x D
-    print(f"out_x.device: {out_x.device}")
     return out_x, out_adj_normalized, mincut_loss, ortho_loss, CC_batch
 
 
