@@ -64,7 +64,7 @@ def mincut_pool(
     print(f"range_n_sum.device: {range_n_sum.device}")
     # print(f"C_bd.shape: {C_bd.shape}")
     d_diag = torch.sparse_coo_tensor(
-        torch.stack([range_n_sum, range_n_sum]), d, requires_grad=True, device=device
+        torch.stack([range_n_sum, range_n_sum]), d, requires_grad=False, device=device
     )
     print(f"d_diag.device: {d_diag.device}")
     # print(f"d_diag.shape: {d_diag.shape}")

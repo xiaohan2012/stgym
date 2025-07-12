@@ -111,8 +111,7 @@ class TestAutoGrad(BatchLoaderMixin):
         print(f"output_batch.device: {output_batch.device}")
         print(f"mincut_loss.device: {mincut_loss.device}")
         print(f"ortho_loss.device: {ortho_loss.device}")
-        # loss = mincut_loss + ortho_loss
-        loss = ortho_loss
+        loss = mincut_loss + ortho_loss
 
         loss.backward()
 
