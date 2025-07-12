@@ -27,6 +27,7 @@ def train(
             (default: :obj:`True`)
         tl_train_config (dict, optional): Additional configuration to tl.Trainer
     """
+    print(f"model device: {model.device}")
     # warnings.filterwarnings('ignore', '.*use `CSVLogger` as the default.*')
     logger = (
         MLFlowLogger(
@@ -60,7 +61,7 @@ def train(
         callbacks=callbacks,
         # default_root_dir=cfg.out_dir,
         max_epochs=train_cfg.max_epoch,
-        devices="auto",
+        devices=1,
         # 'mps' not supporting some sparse operations, therefore shouldn't be used
         accelerator="cpu" if not torch.cuda.is_available() else "gpu",
         logger=logger,

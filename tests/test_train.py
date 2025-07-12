@@ -1,4 +1,5 @@
 import pytest
+import torch
 
 from stgym.config_schema import (
     ClusteringModelConfig,
@@ -18,6 +19,8 @@ from stgym.data_loader import STDataModule
 from stgym.tl_model import STGymModule
 from stgym.train import train
 from stgym.utils import rm_dir_if_exists
+
+DEVICE = "cpu" if not torch.cuda.is_available() else "cuda:0"
 
 
 @pytest.fixture
@@ -139,8 +142,7 @@ def test_train_on_graph_clf_task(
         train_cfg=graph_clf_train_cfg,
         task_cfg=graph_clf_task_cfg,
         dim_out=1,  # 1 for binary classification
-    )
-
+    ).to(DEVICE)
     train(model_module, data_module, graph_clf_train_cfg, mlflow_cfg)
     rm_dir_if_exists("tests/data/brca-test/processed")
 
