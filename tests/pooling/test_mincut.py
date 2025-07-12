@@ -92,9 +92,7 @@ class TestAutoGrad(BatchLoaderMixin):
         num_clusters = 2
 
         batch = self.load_batch()
-        print(f"batch.adj_t.device: {batch.adj_t.device}")
-        print(f"batch.x.device: {batch.x.device}")
-        print(f"batch.batch.device: {batch.batch.device}")
+
         n_nodes = batch.x.shape[0]
         C = torch.rand(n_nodes, num_clusters, requires_grad=True).to(batch.adj_t.device)
         print(f"C.device: {C.device}")
