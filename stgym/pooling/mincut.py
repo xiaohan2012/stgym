@@ -29,7 +29,6 @@ def mincut_pool(
         raise TypeError("adjacency matrix is not sparse")
 
     ptr = batch2ptr(batch)
-    print(f"ptr.device: {ptr.device}")
     assert adj.ndim == 2
     assert batch.ndim == 1
     assert batch.shape[0] == adj.shape[0], f"{batch.shape[0]} != {adj.shape[0]}"
@@ -37,31 +36,26 @@ def mincut_pool(
     assert s.ndim == 2
 
     n = ptr[1:] - ptr[:-1]
-    print(f"n.device: {n.device}")
     # print(f"n: {n}")
 
     s = torch.softmax(s / temp if temp != 1.0 else s, dim=-1)
-    print(f"s.device: {s.device}")
 
     K = s.shape[1]  # number of clusters
-    # print(f"K.device: {K.device}")
     B = ptr.shape[0] - 1  # number of blocks
-    # print(f"B.device: {B.device}")
     # print(f"B: {B}")
     # print(f"K: {K}")
     d = adj.sum(axis=0).to_dense()  # degree vector
-    print(f"d.device: {d.device}")
     # print(f"d.shape: {d.shape}")
     range_k_times_b = torch.arange(K * B, device=device)
-    print(f"range_k_times_b.device: {range_k_times_b.device}")
     diagonal_indices = torch.stack([range_k_times_b, range_k_times_b])
-    print(f"diagonal_indices.device: {diagonal_indices.device}")
 
     # block diagonal matrices of C and d
     C_bd = stacked_blocks_to_block_diagonal(s, ptr, requires_grad=True)  # [N, K x B]
+
+    range_n_sum = torch.arange(n.sum(), device=device)
     # print(f"C_bd.shape: {C_bd.shape}")
     d_diag = torch.sparse_coo_tensor(
-        torch.stack([torch.arange(n.sum()), torch.arange(n.sum())]).to(device),
+        torch.stack([range_n_sum, range_n_sum]).to(device),
         d,
         requires_grad=False,
     )
@@ -137,6 +131,7 @@ def mincut_pool(
 
     x_bd = stacked_blocks_to_block_diagonal(x, ptr)
     out_x = hsplit_and_vstack(s.T @ x_bd, chunk_size=x.shape[1])  # (BxK) x D
+
     return out_x, out_adj_normalized, mincut_loss, ortho_loss, CC_batch
 
 
