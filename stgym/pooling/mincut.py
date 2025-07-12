@@ -24,12 +24,11 @@ def mincut_pool(
     temp: float = 1.0,
 ) -> tuple[Tensor, Tensor, Tensor, Tensor, Tensor]:
     device = adj.device
-    print(device)
+
     if not is_sparse(adj):
         raise TypeError("adjacency matrix is not sparse")
 
     ptr = batch2ptr(batch)
-    print(f"ptr.device: {ptr.device}")
     assert adj.ndim == 2
     assert batch.ndim == 1
     assert batch.shape[0] == adj.shape[0], f"{batch.shape[0]} != {adj.shape[0]}"
@@ -37,74 +36,60 @@ def mincut_pool(
     assert s.ndim == 2
 
     n = ptr[1:] - ptr[:-1]
-    print(f"n.device: {n.device}")
     # print(f"n: {n}")
 
     s = torch.softmax(s / temp if temp != 1.0 else s, dim=-1)
-    print(f"s.device: {s.device}")
 
     K = s.shape[1]  # number of clusters
-    # print(f"K.device: {K.device}")
     B = ptr.shape[0] - 1  # number of blocks
-    # print(f"B.device: {B.device}")
     # print(f"B: {B}")
     # print(f"K: {K}")
     d = adj.sum(axis=0).to_dense()  # degree vector
-    print(f"d.device: {d.device}")
     # print(f"d.shape: {d.shape}")
     range_k_times_b = torch.arange(K * B, device=device)
-    print(f"range_k_times_b.device: {range_k_times_b.device}")
     diagonal_indices = torch.stack([range_k_times_b, range_k_times_b])
-    print(f"diagonal_indices.device: {diagonal_indices.device}")
 
     # block diagonal matrices of C and d
     C_bd = stacked_blocks_to_block_diagonal(s, ptr, requires_grad=True)  # [N, K x B]
-    print(f"C_bd.device: {C_bd.device}")
+
     range_n_sum = torch.arange(n.sum(), device=device)
-    print(f"range_n_sum.device: {range_n_sum.device}")
     # print(f"C_bd.shape: {C_bd.shape}")
     d_diag = torch.sparse_coo_tensor(
-        torch.stack([range_n_sum, range_n_sum]), d, requires_grad=False, device=device
+        torch.stack([range_n_sum, range_n_sum]).to(device),
+        d,
+        requires_grad=False,
     )
-    print(f"d_diag.device: {d_diag.device}")
     # print(f"d_diag.shape: {d_diag.shape}")
 
     # mincut loss
     mincut_normalizer = C_bd.T @ d_diag @ C_bd
-    print(f"mincut_normalizer.device: {mincut_normalizer.device}")
 
     mincut_loss = -torch.trace(C_bd.T @ adj @ C_bd.to_dense()) / torch.trace(
         mincut_normalizer.to_dense()
     )
-    print(f"mincut_loss.device: {mincut_loss.device}")
 
     sqrt_K = torch.sqrt(torch.tensor(K, device=device, dtype=torch.float))
-    print(f"sqrt_K.device: {sqrt_K.device}")
 
     # orthogonality loss
     # CC = torch.sparse.mm(C_bd.T, C_bd)  # [KxB, KxB]
     # CC = C_bd.T @ C_bd  # [KxB, KxB]
     # Han: converting CC to dense to temporarly address RuntimeError: expand is unsupported for Sparse tensors
     CC = (C_bd.T @ C_bd).to_dense()  # [KxB, KxB]
-    print(f"CC.device: {CC.device}")
 
     # normalization matrix
     CC_batch = torch.arange(0, B, device=device).repeat_interleave(K)
-    print(f"CC_batch.device: {CC_batch.device}")
     CC_norm = torch.sqrt(
         scatter_sum(
             CC.pow(2).sum(axis=1).to_dense(),
             index=CC_batch,
         )
     )
-    print(f"CC_norm.device: {CC_norm.device}")
     CC_normalizer = torch.sparse_coo_tensor(
         diagonal_indices,
         1 / CC_norm.repeat_interleave(K),
         requires_grad=True,
         device=device,
     )
-    print(f"CC_normalizer.device: {CC_normalizer.device}")
     # construct the I_k matrix of shape [KxB, KxB], further divided by sqrt(K)
     I_div_k = torch.sparse_coo_tensor(
         diagonal_indices,
@@ -115,7 +100,6 @@ def mincut_pool(
         device=device,
     )
 
-    print(f"I_div_k.device: {I_div_k.device}")
     # compute the norm of the block diagonal over graph batches
     ortho_loss = (
         scatter_sum(
@@ -124,43 +108,30 @@ def mincut_pool(
         .sqrt()
         .mean()
     )
-    print(f"ortho_loss.device: {ortho_loss.device}")
+
     # normalize the output adjacency matrix
     out_adj = C_bd.T @ adj @ C_bd
-    print(f"out_adj.device: {out_adj.device}")
     out_adj = mask_diagonal_sp(out_adj)
-    print(f"out_adj.device: {out_adj.device}")
     d = torch.einsum("ij->i", out_adj).to_dense().sqrt() + 1e-12
-    print(f"d.device: {d.device}")
     d_norm = torch.sparse_coo_tensor(
         diagonal_indices, (1 / d), requires_grad=False, device=device
     )
-    print(f"d_norm.device: {d_norm.device}")
     out_adj_normalized = d_norm @ out_adj @ d_norm
-    print(f"out_adj_normalized.device: {out_adj_normalized.device}")
 
     x_bd = stacked_blocks_to_block_diagonal(x, ptr)
-    print(f"x_bd.device: {x_bd.device}")
     out_x = hsplit_and_vstack(s.T @ x_bd, chunk_size=x.shape[1])  # (BxK) x D
-    print(f"out_x.device: {out_x.device}" f"ortho_loss.device: {ortho_loss.device}")
     # normalize the output adjacency matrix
     out_adj = C_bd.T @ adj @ C_bd
-    print(f"out_adj.device: {out_adj.device}")
     out_adj = mask_diagonal_sp(out_adj)
-    print(f"out_adj.device: {out_adj.device}")
     d = torch.einsum("ij->i", out_adj).to_dense().sqrt() + 1e-12
-    print(f"d.device: {d.device}")
     d_norm = torch.sparse_coo_tensor(
         diagonal_indices, (1 / d), requires_grad=False, device=device
     )
-    print(f"d_norm.device: {d_norm.device}")
     out_adj_normalized = d_norm @ out_adj @ d_norm
-    print(f"out_adj_normalized.device: {out_adj_normalized.device}")
 
     x_bd = stacked_blocks_to_block_diagonal(x, ptr)
-    print(f"x_bd.device: {x_bd.device}")
     out_x = hsplit_and_vstack(s.T @ x_bd, chunk_size=x.shape[1])  # (BxK) x D
-    print(f"out_x.device: {out_x.device}")
+
     return out_x, out_adj_normalized, mincut_loss, ortho_loss, CC_batch
 
 
