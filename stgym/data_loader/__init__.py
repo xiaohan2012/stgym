@@ -96,7 +96,7 @@ class STDataModule(LightningDataModule):
     """
 
     def __init__(self, task_cfg: TaskConfig, dl_cfg: DataLoaderConfig):
-        self.ds = load_dataset(task_cfg, dl_cfg)  # .to("cuda:0")
+        self.ds = load_dataset(task_cfg, dl_cfg).to("cuda:0")
         self.loaders = create_loader(self.ds, dl_cfg)
         super().__init__(has_val=True, has_test=True)
 
