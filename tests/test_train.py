@@ -157,7 +157,7 @@ def test_clustering_task(
         model_cfg=clustering_model_cfg,
         train_cfg=clustering_train_cfg,
         task_cfg=clustering_task_cfg,
-    )
+    ).to(DEVICE)
 
     train(model_module, data_module, clustering_train_cfg, mlflow_cfg)
 
@@ -174,6 +174,6 @@ def test_train_on_node_clf_task(
         train_cfg=node_clf_train_cfg,
         task_cfg=node_clf_task_cfg,
         dim_out=node_clf_task_cfg.num_classes,
-    )
+    ).to(DEVICE)
 
     train(model_module, data_module, node_clf_train_cfg, mlflow_cfg)
