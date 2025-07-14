@@ -1,6 +1,7 @@
 from typing import Literal, Optional
 
 import pydash as _
+import torch
 from pydantic import (
     BaseModel,
     Field,
@@ -160,6 +161,8 @@ class DataLoaderConfig(BaseModel):
     split: Optional[DataSplitConfig] = DataSplitConfig(
         train_ratio=0.7, val_ratio=0.15, test_ratio=0.15
     )
+
+    device: Optional[str] = "cpu" if not torch.cuda.is_available() else "cuda:0"
 
 
 class TrainConfig(BaseModel):
