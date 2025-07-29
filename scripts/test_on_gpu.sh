@@ -1,3 +1,5 @@
+#! /bin/bash
+
 python run_rct.py \
        +exp=bn \
        design_space=graph_clf \
