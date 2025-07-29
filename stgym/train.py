@@ -70,7 +70,6 @@ def train(
     # make a forward pass to initialize the model
     # this is needed for DDP mode
     for batch in datamodule.train_dataloader():
-        print(f"batch: {batch}" f"batch: {batch}")
         model(batch)
         break
 
