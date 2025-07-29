@@ -69,9 +69,9 @@ def train(
 
     # make a forward pass to initialize the model
     # this is needed for DDP mode
-    for batch in datamodule.train_dataloader():
-        model(batch)
-        break
-
+    # for batch in datamodule.train_dataloader():
+    #     print("batch.x.device", batch.x.device)
+    #     model(batch)
+    #     break
     trainer.fit(model, datamodule=datamodule)
     trainer.test(model, datamodule=datamodule)
