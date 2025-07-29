@@ -56,7 +56,7 @@ print(model_module.model)
 
 
 mlflow_cfg = MLFlowConfig(
-    track=True, tracking_uri="http://127.0.0.1:8080", experiment_name="clustering-demo"
+    track=True, tracking_uri="http://127.0.0.1:5000", experiment_name="clustering-demo"
 )
 
 
