@@ -37,7 +37,7 @@ task_cfg = TaskConfig(
 train_cfg = TrainConfig(
     optim=OptimizerConfig(),
     lr_schedule=LRScheduleConfig(type=None),
-    max_epoch=10,
+    max_epoch=2,
     early_stopping={"metric": "val_nmi", "mode": "max"},
 )
 
