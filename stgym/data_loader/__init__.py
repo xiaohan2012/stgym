@@ -10,6 +10,7 @@ from stgym.data_loader.brca import BRCADataset
 from stgym.data_loader.ds_info import get_info  # noqa
 from stgym.data_loader.human_crc import HumanCRCDataset
 from stgym.data_loader.human_intestine import HumanIntestineDataset
+from stgym.data_loader.human_lung import HumanLungDataset
 from stgym.data_loader.mouse_preoptic import MousePreopticDataset
 from stgym.data_loader.mouse_spleen import MouseSpleenDataset
 
@@ -25,6 +26,8 @@ def get_dataset_class(ds_name: str):
         return MousePreopticDataset
     elif ds_name == "human-intestine":
         return HumanIntestineDataset
+    elif ds_name == "human-lung":
+        return HumanLungDataset
     else:
         raise NotImplementedError(f"{ds_name} is not available yet.")
 
