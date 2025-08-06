@@ -12,6 +12,7 @@ from stgym.data_loader.ds_info import get_info  # noqa
 from stgym.data_loader.human_crc import HumanCRCDataset
 from stgym.data_loader.human_intestine import HumanIntestineDataset
 from stgym.data_loader.human_lung import HumanLungDataset
+from stgym.data_loader.mouse_kidney import MouseKidneyDataset
 from stgym.data_loader.mouse_preoptic import MousePreopticDataset
 from stgym.data_loader.mouse_spleen import MouseSpleenDataset
 
@@ -27,6 +28,8 @@ def get_dataset_class(ds_name: str):
         return MouseSpleenDataset
     elif ds_name == "mouse-preoptic":
         return MousePreopticDataset
+    elif ds_name == "mouse-kidney":
+        return MouseKidneyDataset
     elif ds_name == "human-intestine":
         return HumanIntestineDataset
     elif ds_name == "human-lung":
