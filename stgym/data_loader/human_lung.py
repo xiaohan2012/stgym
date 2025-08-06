@@ -20,6 +20,12 @@ COLUMNS_TO_DROP = [
 
 
 class HumanLungDataset(AbstractDataset):
+    """
+    Example:
+    >> from stgym.data_loader.human_lung import HumanLungDataset
+    >> ds = HumanLungDataset(root="../data/human-lung")
+    """
+
     @property
     def raw_file_names(self):
         return [RAW_FILE_NAME]
