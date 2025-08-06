@@ -26,7 +26,8 @@ model_cfg = NodeClassifierModelConfig(
 
 # ds_name = "mouse-spleen"
 # ds_name = "human-intestine"
-ds_name = "human-lung"
+# ds_name = "human-lung"
+ds_name = "breast-cancer"
 
 task_cfg = TaskConfig(
     dataset_name=ds_name,

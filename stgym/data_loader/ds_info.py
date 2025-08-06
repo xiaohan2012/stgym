@@ -51,6 +51,14 @@ __data__ = {
         "data_source_url": "https://www.lungmap.net/dataset/?experiment_id=LMEX0000004396&view=downloads",
         "used_in_paper": "The human body at cellular resolution: the NIH Human Biomolecular Atlas Program",
     },
+    "breast-cancer": {
+        "min_span": 22.807723999023438,
+        "max_span": 31.39260482788086,
+        "num_classes": 39,
+        "task_type": "node-classification",
+        "data_source_url": "https://cellxgene.cziscience.com/collections/4195ab4c-20bd-4cd3-8b3d-65601277e731",
+        "used_in_paper": "CellContrast: Reconstructing spatial relationships in single-cell RNA sequencing data via deep contrastive learning",
+    },
 }
 
 
