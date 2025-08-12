@@ -55,13 +55,16 @@ def train(
     #     callbacks.append(ckpt_cbk)
 
     trainer_config = tl_train_config or {}
+    # Extract devices from trainer_config, fallback to 1
+    devices = trainer_config.pop("devices", 1)
+
     trainer = pl.Trainer(
         **trainer_config,
         # enable_checkpointing=cfg.train.enable_ckpt,
         callbacks=callbacks,
         # default_root_dir=cfg.out_dir,
         max_epochs=train_cfg.max_epoch,
-        devices=1,
+        devices=devices,
         # 'mps' not supporting some sparse operations, therefore shouldn't be used
         accelerator="cpu" if not torch.cuda.is_available() else "gpu",
         logger=logger,

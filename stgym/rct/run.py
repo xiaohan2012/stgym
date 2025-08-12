@@ -1,3 +1,4 @@
+import ray
 from logzero import logger
 from omegaconf import OmegaConf
 
@@ -35,6 +36,17 @@ def run_exp(exp_cfg: ExperimentConfig, mlflow_cfg: MLFlowConfig):
             "dataset_name": exp_cfg.task.dataset_name,
         }
 
+    # Get GPU assignment from Ray
+    assigned_resources = ray.get_runtime_context().get_assigned_resources()
+    gpu_ids = assigned_resources.get("GPU", [])
+
+    # Determine which GPU device to use
+    if gpu_ids:
+        # Convert GPU IDs to device list for PyTorch Lightning
+        devices = [int(gpu_id) for gpu_id in gpu_ids]
+    else:
+        devices = 1  # fallback to default behavior
+
     train(
         model_module,
         data_module,
@@ -46,6 +58,7 @@ def run_exp(exp_cfg: ExperimentConfig, mlflow_cfg: MLFlowConfig):
             "enable_progress_bar": False,
             "enable_model_summary": False,
             "enable_checkpointing": False,
+            "devices": devices,
         },
     )
 
