@@ -1,3 +1,3 @@
 #! /bin/bash
 
-rsync -avzh --progress --exclude '*/processed/' data/ cyy:stgym/data/
+rsync -avzh --compress-level 9 --progress --exclude '*/processed/' data/ cyy:stgym/data/
