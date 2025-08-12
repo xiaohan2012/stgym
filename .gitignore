@@ -175,3 +175,7 @@ outputs/
 
 lightning_logs/
 mlruns
+
+*.ipynb
+
+[0-9]*/
