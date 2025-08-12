@@ -1,6 +1,6 @@
 #! /bin/bash
 
-python run_rct.py \
+time python run_rct.py \
        +exp=bn \
        design_space=graph_clf \
        resource=gpu-2 \
