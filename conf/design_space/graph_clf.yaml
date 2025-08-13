@@ -8,3 +8,5 @@ task:
   type: graph-classification
   dataset_name:
     - brca
+    - mouse-preoptic
+    - mouse-kidney
