@@ -7,5 +7,6 @@ model:
 task:
   type: node-classification
   dataset_name:
-    - human-crc
+    - human-lung
+    - breast-cancer
     - mouse-spleen

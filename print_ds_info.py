@@ -1,20 +1,10 @@
 import pandas as pd
 
-from stgym.data_loader import (
-    BRCADataset,
-    HumanCRCDataset,
-    HumanIntestineDataset,
-    MousePreopticDataset,
-    MouseSpleenDataset,
-)
+from stgym.data_loader import get_all_ds_names, get_dataset_class
 from stgym.data_loader import get_info as get_ds_info
 
 ds_list = [
-    BRCADataset(root="data/brca"),
-    HumanCRCDataset(root="data/human-crc"),
-    HumanIntestineDataset(root="data/human-intestine"),
-    MousePreopticDataset(root="data/mouse-preoptic"),
-    MouseSpleenDataset(root="data/mouse-spleen"),
+    get_dataset_class(ds_name)(root=f"data/{ds_name}") for ds_name in get_all_ds_names()
 ]
 
 
@@ -33,4 +23,4 @@ def get_info(ds):
 
 
 ds_df = pd.DataFrame([get_info(ds) for ds in ds_list])
-print(ds_df.to_markdown(index=None))
+print(ds_df.sort_values(by="task_type").to_markdown(index=None))
