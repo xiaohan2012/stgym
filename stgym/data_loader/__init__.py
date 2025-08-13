@@ -8,7 +8,7 @@ from torch_geometric.loader import DataLoader
 from stgym.config_schema import DataLoaderConfig, TaskConfig
 from stgym.data_loader.brca import BRCADataset
 from stgym.data_loader.breast_cancer import BreastCancerDataset
-from stgym.data_loader.ds_info import get_info  # noqa
+from stgym.data_loader.ds_info import get_all_ds_names, get_info  # noqa
 from stgym.data_loader.human_crc import HumanCRCDataset
 from stgym.data_loader.human_intestine import HumanIntestineDataset
 from stgym.data_loader.human_lung import HumanLungDataset

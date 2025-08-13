@@ -70,5 +70,9 @@ __data__ = {
 }
 
 
+def get_all_ds_names() -> list[str]:
+    return list(__data__.keys())
+
+
 def get_info(ds_name: str) -> dict:
     return __data__[ds_name]
