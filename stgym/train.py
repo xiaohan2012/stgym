@@ -27,7 +27,6 @@ def train(
             (default: :obj:`True`)
         tl_train_config (dict, optional): Additional configuration to tl.Trainer
     """
-    print(f"model device: {model.device}")
     # warnings.filterwarnings('ignore', '.*use `CSVLogger` as the default.*')
     logger = (
         MLFlowLogger(
