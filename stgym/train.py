@@ -5,6 +5,7 @@ import torch
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import MLFlowLogger
 
+from stgym.callbacks import MLFlowSystemMonitorCallback
 from stgym.config_schema import MLFlowConfig, TrainConfig
 from stgym.data_loader import STDataModule
 from stgym.tl_model import STGymModule
@@ -28,6 +29,7 @@ def train(
         tl_train_config (dict, optional): Additional configuration to tl.Trainer
     """
     # warnings.filterwarnings('ignore', '.*use `CSVLogger` as the default.*')
+
     logger = (
         MLFlowLogger(
             run_name=mlflow_config.run_name,
@@ -39,7 +41,8 @@ def train(
         else None
     )
 
-    callbacks = []
+    callbacks = [MLFlowSystemMonitorCallback()]
+
     if train_cfg.early_stopping:
         callbacks.append(
             EarlyStopping(
