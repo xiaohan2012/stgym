@@ -4,6 +4,7 @@ from pytorch_lightning.loggers import MLFlowLogger
 
 
 class MLFlowSystemMonitorCallback(pl.Callback):
+    # Copied from https://github.com/Lightning-AI/pytorch-lightning/issues/20563
     def on_fit_start(self, trainer: pl.Trainer, pl_module: pl.LightningModule) -> None:
         if not isinstance(trainer.logger, MLFlowLogger):
             raise Exception("MLFlowSystemMonitorCallback requires MLFlowLogger")
