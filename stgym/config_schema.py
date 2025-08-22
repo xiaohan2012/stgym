@@ -13,6 +13,7 @@ from pydantic import (
     model_validator,
 )
 from pydantic.json_schema import SkipJsonSchema
+from pytorch_lightning.loggers import MLFlowLogger
 from typing_extensions import Self
 
 from stgym.utils import YamlLoaderMixin
@@ -220,6 +221,18 @@ class MLFlowConfig(BaseModel, YamlLoaderMixin):
     experiment_name: Optional[str] = Field(default="test", min_length=1)
     run_name: Optional[str] = None
     tags: Optional[dict[str, str]] = None
+
+    def create_tl_logger(self) -> MLFlowLogger | None:
+        return (
+            MLFlowLogger(
+                run_name=self.run_name,
+                experiment_name=self.experiment_name,
+                tracking_uri=str(self.tracking_uri),
+                tags=self.tags,
+            )
+            if self.track
+            else None
+        )
 
 
 class ResourceConfig(BaseModel, YamlLoaderMixin):
