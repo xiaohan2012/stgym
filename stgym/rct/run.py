@@ -1,14 +1,15 @@
-from logzero import logger
+from logzero import logger as logz_logger
 from omegaconf import OmegaConf
 
 from stgym.config_schema import ExperimentConfig, MLFlowConfig
 from stgym.data_loader import STDataModule
 from stgym.tl_model import STGymModule
 from stgym.train import train
+from stgym.utils import log_experiment_config_as_artifact
 
 
 def run_exp(exp_cfg: ExperimentConfig, mlflow_cfg: MLFlowConfig):
-    logger.debug(OmegaConf.to_yaml(exp_cfg.model_dump()))
+    logz_logger.debug(OmegaConf.to_yaml(exp_cfg.model_dump()))
     data_module = STDataModule(exp_cfg.task, exp_cfg.data_loader)
 
     if exp_cfg.task.type in ("node-classification", "graph-classification"):
@@ -35,6 +36,11 @@ def run_exp(exp_cfg: ExperimentConfig, mlflow_cfg: MLFlowConfig):
             "dataset_name": exp_cfg.task.dataset_name,
         }
 
+    logger = mlflow_cfg.create_tl_logger()
+
+    if logger is not None and mlflow_cfg.track:
+        log_experiment_config_as_artifact(logger, exp_cfg.model_dump())
+
     train(
         model_module,
         data_module,
@@ -48,6 +54,7 @@ def run_exp(exp_cfg: ExperimentConfig, mlflow_cfg: MLFlowConfig):
             "enable_checkpointing": False,
             "devices": "auto",  # this is important to utilitze multiple GPUs, since in train.py, we set devices to `1``
         },
+        logger=logger,
     )
 
     return True

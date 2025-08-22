@@ -3,7 +3,6 @@ from typing import Optional
 import pytorch_lightning as pl
 import torch
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
-from pytorch_lightning.loggers import MLFlowLogger
 
 from stgym.callbacks import MLFlowSystemMonitorCallback
 from stgym.config_schema import MLFlowConfig, TrainConfig
@@ -16,8 +15,8 @@ def train(
     datamodule: STDataModule,
     train_cfg: TrainConfig,
     mlflow_config: MLFlowConfig,
-    logger: bool = True,
     tl_train_config: Optional[dict[str, any]] = None,
+    logger: Optional = None,
 ):
     r"""Trains a GraphGym model using PyTorch Lightning.
 
@@ -29,18 +28,6 @@ def train(
         tl_train_config (dict, optional): Additional configuration to tl.Trainer
     """
     # warnings.filterwarnings('ignore', '.*use `CSVLogger` as the default.*')
-
-    logger = (
-        MLFlowLogger(
-            run_name=mlflow_config.run_name,
-            experiment_name=mlflow_config.experiment_name,
-            tracking_uri=str(mlflow_config.tracking_uri),
-            tags=mlflow_config.tags,
-        )
-        if mlflow_config.track
-        else None
-    )
-
     callbacks = [MLFlowSystemMonitorCallback()]
 
     if train_cfg.early_stopping:

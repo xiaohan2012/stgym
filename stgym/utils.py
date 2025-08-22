@@ -1,5 +1,6 @@
 import os
 import shutil
+import tempfile
 from pathlib import Path
 
 import mlflow
@@ -8,6 +9,7 @@ import ray
 import torch
 import yaml
 from logzero import logger
+from pytorch_lightning.loggers import MLFlowLogger
 from torch_geometric.data import Data, InMemoryDataset
 from tqdm import tqdm
 
@@ -184,3 +186,30 @@ def get_coord_span(ds: InMemoryDataset) -> float:
     # logger.debug(f"min span: {min(span_list)}")
     # logger.debug(f"max span: {max(span_list)}")
     return {"min_span": float(min(span_list)), "max_span": float(max(span_list))}
+
+
+def log_experiment_config_as_artifact(
+    mlflow_logger: MLFlowLogger,
+    config_dict: dict,
+    filename: str = "experiment_config.yaml",
+):
+    """Log experiment configuration as MLflow artifact
+
+    Args:
+        mlflow_logger: MLFlow logger instance
+        config_dict: Configuration dictionary to log
+        filename: Name for the artifact file (default: "experiment_config.yaml")
+    """
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+        yaml.dump(config_dict, f, default_flow_style=False)
+        temp_path = f.name
+
+    try:
+        # Create the desired filename by renaming the temp file
+        config_path = Path(temp_path).parent / filename
+        Path(temp_path).rename(config_path)
+        mlflow_logger.experiment.log_artifact(mlflow_logger.run_id, str(config_path))
+    finally:
+        # Clean up the renamed file
+        if config_path.exists():
+            config_path.unlink()
