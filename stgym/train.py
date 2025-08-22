@@ -28,7 +28,11 @@ def train(
         tl_train_config (dict, optional): Additional configuration to tl.Trainer
     """
     # warnings.filterwarnings('ignore', '.*use `CSVLogger` as the default.*')
-    callbacks = [MLFlowSystemMonitorCallback()]
+    callbacks = []
+
+    # Only add MLFlow system monitor if tracking is enabled and logger is available
+    if mlflow_config.track and logger is not None:
+        callbacks.append(MLFlowSystemMonitorCallback())
 
     if train_cfg.early_stopping:
         callbacks.append(

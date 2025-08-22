@@ -143,7 +143,7 @@ def test_train_on_graph_clf_task(
         task_cfg=graph_clf_task_cfg,
         dim_out=1,  # 1 for binary classification
     ).to(DEVICE)
-    train(model_module, data_module, graph_clf_train_cfg, mlflow_cfg)
+    train(model_module, data_module, graph_clf_train_cfg, mlflow_cfg, logger=None)
     rm_dir_if_exists("tests/data/brca-test/processed")
 
 
@@ -159,7 +159,7 @@ def test_clustering_task(
         task_cfg=clustering_task_cfg,
     ).to(DEVICE)
 
-    train(model_module, data_module, clustering_train_cfg, mlflow_cfg)
+    train(model_module, data_module, clustering_train_cfg, mlflow_cfg, logger=None)
 
 
 def test_train_on_node_clf_task(
@@ -176,4 +176,4 @@ def test_train_on_node_clf_task(
         dim_out=node_clf_task_cfg.num_classes,
     ).to(DEVICE)
 
-    train(model_module, data_module, node_clf_train_cfg, mlflow_cfg)
+    train(model_module, data_module, node_clf_train_cfg, mlflow_cfg, logger=None)
