@@ -200,16 +200,8 @@ def log_experiment_config_as_artifact(
         config_dict: Configuration dictionary to log
         filename: Name for the artifact file (default: "experiment_config.yaml")
     """
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-        yaml.dump(config_dict, f, default_flow_style=False)
-        temp_path = f.name
-
-    try:
-        # Create the desired filename by renaming the temp file
-        config_path = Path(temp_path).parent / filename
-        Path(temp_path).rename(config_path)
+    with tempfile.TemporaryDirectory(delete=True) as d:
+        config_path = str(Path(d) / filename)
+        with open(config_path, "w") as f:
+            yaml.dump(config_dict, f, default_flow_style=False)
         mlflow_logger.experiment.log_artifact(mlflow_logger.run_id, str(config_path))
-    finally:
-        # Clean up the renamed file
-        if config_path.exists():
-            config_path.unlink()
