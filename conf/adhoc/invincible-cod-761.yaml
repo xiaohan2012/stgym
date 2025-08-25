@@ -1,0 +1,57 @@
+data_loader:
+  batch_size: 32
+  device: cuda:0
+  graph_const: radius
+  knn_k: 30
+  num_workers: 0
+  radius_ratio: 0.1
+  split:
+    test_ratio: 0.15
+    train_ratio: 0.7
+    val_ratio: 0.15
+group_id: 9
+model:
+  global_pooling: max
+  mem:
+    inplace: false
+  mp_layers:
+  - act: relu
+    bn_eps: 1.0e-05
+    bn_momentum: 0.1
+    dim_inner: 128
+    dropout: 0.0
+    has_bias: false
+    l2norm: false
+    layer_type: ginconv
+    normalize_adj: false
+    pooling:
+      n_clusters: 10
+      type: mincut
+    readout: mean
+    use_batchnorm: true
+  post_mp_layer:
+    act: relu
+    bn_eps: 1.0e-05
+    bn_momentum: 0.1
+    dims:
+    - 64
+    - 6
+    dropout: 0.0
+    has_bias: false
+    l2norm: false
+    use_batchnorm: true
+task:
+  dataset_name: mouse-preoptic
+  num_classes: 6
+  type: graph-classification
+train:
+  early_stopping: null
+  lr_schedule:
+    max_epoch: 200
+    type: null
+  max_epoch: 200
+  optim:
+    base_lr: 0.01
+    momentum: 0.9
+    optimizer: adam
+    weight_decay: 0.0005
