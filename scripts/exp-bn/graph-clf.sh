@@ -6,4 +6,4 @@ time python run_rct.py \
        resource=gpu-2 \
        sample_size=100 \
        design_space.train.max_epoch=200 \
-       mlflow.experiment_name=graph-clf-aug-13-2025
+       mlflow.experiment_name=graph-clf-aug-26-2025
