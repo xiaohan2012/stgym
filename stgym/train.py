@@ -45,6 +45,7 @@ def train(
             EarlyStopping(
                 monitor=train_cfg.early_stopping.metric,
                 mode=train_cfg.early_stopping.mode,
+                patience=train_cfg.early_stopping.patience,
             )
         )
     # if logger:

@@ -170,6 +170,7 @@ class TrainConfig(BaseModel):
     class EarlyStoppingConfig(BaseModel):
         metric: str
         mode: str = "min"
+        patience: int = 3
 
     optim: OptimizerConfig = OptimizerConfig()
     lr_schedule: LRScheduleConfig = LRScheduleConfig()
@@ -179,7 +180,7 @@ class TrainConfig(BaseModel):
     devices: str | int = "auto"
 
     early_stopping: EarlyStoppingConfig = EarlyStoppingConfig(
-        metric="val_loss", mode="min"
+        metric="val_loss", mode="min", patience=10
     )
     enable_float32_matmul_precision: bool = True
 
