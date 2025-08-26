@@ -52,7 +52,6 @@ def run_exp(exp_cfg: ExperimentConfig, mlflow_cfg: MLFlowConfig):
             "enable_progress_bar": False,
             "enable_model_summary": False,
             "enable_checkpointing": False,
-            "devices": "auto",  # this is important to utilitze multiple GPUs, since in train.py, we set devices to `1``
         },
         logger=logger,
     )
