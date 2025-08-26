@@ -5,7 +5,7 @@ from stgym.config_schema import ExperimentConfig, MLFlowConfig
 from stgym.data_loader import STDataModule
 from stgym.tl_model import STGymModule
 from stgym.train import train
-from stgym.utils import log_experiment_config_as_artifact
+from stgym.utils import flatten_dict, log_experiment_config_as_artifact
 
 
 def run_exp(exp_cfg: ExperimentConfig, mlflow_cfg: MLFlowConfig):
@@ -40,6 +40,17 @@ def run_exp(exp_cfg: ExperimentConfig, mlflow_cfg: MLFlowConfig):
 
     if logger is not None and mlflow_cfg.track:
         log_experiment_config_as_artifact(logger, exp_cfg.model_dump())
+
+        # Log dataloader config as hyperparameters
+        dataloader_params = flatten_dict(
+            {
+                "data_loader": exp_cfg.data_loader.model_dump(),
+                "model": exp_cfg.model_cfg.model_dump(),
+                "train": exp_cfg.train_cfg.model_dump(),
+            },
+            separator="/",
+        )
+        logger.experiment.log_params(logger.run_id, dataloader_params)
 
     try:
         train(

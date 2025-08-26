@@ -26,7 +26,7 @@ from stgym.config_schema import (
 from stgym.loss import compute_classification_loss
 from stgym.model import STClusteringModel, STGraphClassifier, STNodeClassifier
 from stgym.optimizer import create_optimizer_from_cfg, create_scheduler
-from stgym.utils import collapse_ptr_list, flatten_dict
+from stgym.utils import collapse_ptr_list
 
 # from torch_geometric.graphgym.loss import compute_loss
 # from torch_geometric.graphgym.models.gnn import GNN
@@ -59,7 +59,6 @@ class STGymModule(pl.LightningModule):
         dim_out: int = None,
     ):
         super().__init__()
-        self.my_hparams = model_cfg.model_dump() | train_cfg.model_dump()
         self.train_cfg = train_cfg
         self.task_cfg = task_cfg
         if task_cfg.type == "graph-classification":
@@ -79,8 +78,7 @@ class STGymModule(pl.LightningModule):
 
     def on_fit_start(self):
         # Perform any setup actions here
-        hprams_flattened = flatten_dict(self.my_hparams, separator="/")
-        self.logger.log_hyperparams(hprams_flattened)
+        pass
 
     def forward(self, *args, **kwargs):
         return self.model(*args, **kwargs)
