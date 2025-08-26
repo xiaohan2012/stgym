@@ -1,5 +1,6 @@
 from stgym.config_schema import (
     DataLoaderConfig,
+    ExperimentConfig,
     LRScheduleConfig,
     MessagePassingConfig,
     MLFlowConfig,
@@ -13,6 +14,7 @@ from stgym.data_loader import STDataModule
 from stgym.data_loader.ds_info import get_info
 from stgym.tl_model import STGymModule
 from stgym.train import train
+from stgym.utils import log_params_and_config_in_mlflow
 
 model_cfg = NodeClassifierModelConfig(
     # message passing layers
@@ -24,10 +26,10 @@ model_cfg = NodeClassifierModelConfig(
 )
 
 
-# ds_name = "mouse-spleen"
+ds_name = "mouse-spleen"
 # ds_name = "human-intestine"
 # ds_name = "human-lung"
-ds_name = "breast-cancer"
+# ds_name = "breast-cancer"
 
 task_cfg = TaskConfig(
     dataset_name=ds_name,
@@ -42,10 +44,10 @@ train_cfg = TrainConfig(
 )
 
 
-data_cfg = DataLoaderConfig(batch_size=8)
+dl_cfg = DataLoaderConfig(batch_size=8)
 
 
-data_module = STDataModule(task_cfg, data_cfg)
+data_module = STDataModule(task_cfg, dl_cfg)
 model_module = STGymModule(
     dim_in=data_module.num_features,
     dim_out=task_cfg.num_classes,
@@ -59,12 +61,16 @@ print(model_module.model)
 mlflow_cfg = MLFlowConfig(
     track=True, tracking_uri="http://127.0.0.1:5000", experiment_name="node-clf-demo"
 )
-
-
+logger = mlflow_cfg.create_tl_logger()
+exp_cfg = ExperimentConfig(
+    task=task_cfg, data_loader=dl_cfg, model=model_cfg, train=train_cfg
+)
+log_params_and_config_in_mlflow(exp_cfg, logger)
 train(
     model_module,
     data_module,
     train_cfg,
     mlflow_cfg,
     tl_train_config={"log_every_n_steps": 10},
+    logger=logger,
 )

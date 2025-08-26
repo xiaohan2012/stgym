@@ -2,6 +2,7 @@
 
 from stgym.config_schema import (
     DataLoaderConfig,
+    ExperimentConfig,
     GraphClassifierModelConfig,
     LRScheduleConfig,
     MessagePassingConfig,
@@ -16,6 +17,7 @@ from stgym.data_loader import STDataModule
 from stgym.data_loader.ds_info import get_info
 from stgym.tl_model import STGymModule
 from stgym.train import train
+from stgym.utils import log_params_and_config_in_mlflow
 
 model_cfg = GraphClassifierModelConfig(
     # message passing layers
@@ -55,7 +57,7 @@ dl_cfg = DataLoaderConfig(batch_size=16)
 mlflow_cfg = MLFlowConfig(
     track=True, tracking_uri="http://127.0.0.1:5000", experiment_name="train-demo"
 )
-
+logger = mlflow_cfg.create_tl_logger()
 data_module = STDataModule(task_cfg, dl_cfg)
 model_module = STGymModule(
     dim_in=data_module.num_features,
@@ -68,6 +70,10 @@ model_module = STGymModule(
 )
 print(model_module)
 
+exp_cfg = ExperimentConfig(
+    task=task_cfg, data_loader=dl_cfg, model=model_cfg, train=train_cfg
+)
+log_params_and_config_in_mlflow(exp_cfg, logger)
 
 train(
     model_module,
@@ -75,4 +81,5 @@ train(
     train_cfg,
     mlflow_cfg,
     tl_train_config={"log_every_n_steps": 10},
+    logger=logger,
 )

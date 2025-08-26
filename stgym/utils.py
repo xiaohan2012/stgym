@@ -205,3 +205,22 @@ def log_experiment_config_as_artifact(
         with open(config_path, "w") as f:
             yaml.dump(config_dict, f, default_flow_style=False)
         mlflow_logger.experiment.log_artifact(mlflow_logger.run_id, str(config_path))
+
+
+def log_params_and_config_in_mlflow(
+    exp_cfg: "ExperimentConfig", logger: MLFlowLogger
+) -> None:
+    """Log params and exp config in MLFlow."""
+    log_experiment_config_as_artifact(logger, exp_cfg.model_dump())
+
+    # Log dataloader config as hyperparameters
+    params = flatten_dict(
+        {
+            "data_loader": exp_cfg.data_loader.model_dump(),
+            "model": exp_cfg.model.model_dump(),
+            "train": exp_cfg.train.model_dump(),
+        },
+        separator="/",
+    )
+    logger.log_hyperparams(params)
+    # logger.experiment.log_hyperparams(logger.run_id, params)
