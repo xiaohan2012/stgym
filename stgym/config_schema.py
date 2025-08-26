@@ -178,7 +178,9 @@ class TrainConfig(BaseModel):
         "auto"  # setting to 'auto' is important to parallelize multiple experiment trials in ray across multiple GPUs
     )
 
-    early_stopping: Optional[EarlyStoppingConfig] = None
+    early_stopping: Optional[EarlyStoppingConfig] = EarlyStoppingConfig(
+        metric="val_loss", mode="min"
+    )
     enable_float32_matmul_precision: bool = True
 
     @model_validator(mode="after")
