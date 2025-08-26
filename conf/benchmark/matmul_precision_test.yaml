@@ -47,9 +47,9 @@ task:
 train:
   early_stopping: null
   lr_schedule:
-    max_epoch: 20
+    max_epoch: 10
     type: null
-  max_epoch: 20
+  max_epoch: 10
   optim:
     base_lr: 0.01
     momentum: 0.9
