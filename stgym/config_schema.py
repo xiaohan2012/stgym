@@ -42,7 +42,7 @@ class LayerConfig(BaseModel):
 
     dim_inner: PositiveInt = 256
 
-    act: Optional[ActivationType] = "prelu"
+    act: ActivationType | None = "prelu"
 
     use_batchnorm: bool = True
     bn_eps: PositiveFloat = 1e-5
@@ -68,7 +68,7 @@ class MessagePassingConfig(LayerConfig):
 
     pooling: Optional[PoolingConfig] = None
 
-    readout: Optional[GlobalPoolingType] = "mean"
+    readout: GlobalPoolingType | None = "mean"
 
     @property
     def has_pooling(self):
@@ -98,7 +98,7 @@ class MemoryConfig(BaseModel):
 
 
 class InterLayerConfig(BaseModel):
-    stage_type: Optional[StageType] = "skipconcat"
+    stage_type: StageType | None = "skipconcat"
 
 
 class LRScheduleConfig(BaseModel):
@@ -120,7 +120,7 @@ class GraphClassifierModelConfig(BaseModel):
     post_mp_layer: PostMPConfig
 
     # misc
-    mem: Optional[MemoryConfig] = MemoryConfig(inplace=False)
+    mem: MemoryConfig = MemoryConfig(inplace=False)
 
 
 class ClusteringModelConfig(BaseModel):
@@ -128,7 +128,7 @@ class ClusteringModelConfig(BaseModel):
     mp_layers: list[MessagePassingConfig]
 
     # misc
-    mem: Optional[MemoryConfig] = MemoryConfig(inplace=False)
+    mem: MemoryConfig = MemoryConfig(inplace=False)
 
 
 class NodeClassifierModelConfig(BaseModel):
@@ -137,7 +137,7 @@ class NodeClassifierModelConfig(BaseModel):
     post_mp_layer: PostMPConfig
 
     # misc
-    mem: Optional[MemoryConfig] = MemoryConfig(inplace=False)
+    mem: MemoryConfig = MemoryConfig(inplace=False)
 
 
 class DataLoaderConfig(BaseModel):
@@ -153,17 +153,17 @@ class DataLoaderConfig(BaseModel):
             return self
 
     graph_const: GraphConstructionApproach = "knn"
-    knn_k: Optional[PositiveInt] = 10
-    radius_ratio: Optional[PositiveFloat] = 0.1
+    knn_k: PositiveInt = 10
+    radius_ratio: PositiveFloat = 0.1
 
-    batch_size: Optional[PositiveInt] = 64
-    num_workers: Optional[int] = 0  # does not suppot num_workers > 0 yet
+    batch_size: PositiveInt = 64
+    num_workers: int = 0  # does not suppot num_workers > 0 yet
 
-    split: Optional[DataSplitConfig] = DataSplitConfig(
+    split: DataSplitConfig = DataSplitConfig(
         train_ratio=0.7, val_ratio=0.15, test_ratio=0.15
     )
 
-    device: Optional[str] = "cpu" if not torch.cuda.is_available() else "cuda:0"
+    device: str = "cpu" if not torch.cuda.is_available() else "cuda:0"
 
 
 class TrainConfig(BaseModel):
@@ -171,14 +171,14 @@ class TrainConfig(BaseModel):
         metric: str
         mode: str = "min"
 
-    optim: Optional[OptimizerConfig] = OptimizerConfig()
-    lr_schedule: Optional[LRScheduleConfig] = LRScheduleConfig()
+    optim: OptimizerConfig = OptimizerConfig()
+    lr_schedule: LRScheduleConfig = LRScheduleConfig()
     max_epoch: PositiveInt
-    devices: Optional[str | int] = (
-        "auto"  # setting to 'auto' is important to parallelize multiple experiment trials in ray across multiple GPUs
-    )
 
-    early_stopping: Optional[EarlyStoppingConfig] = EarlyStoppingConfig(
+    # setting to 'auto' is important to parallelize multiple experiment trials in ray across multiple GPUs
+    devices: str | int = "auto"
+
+    early_stopping: EarlyStoppingConfig = EarlyStoppingConfig(
         metric="val_loss", mode="min"
     )
     enable_float32_matmul_precision: bool = True
@@ -192,7 +192,7 @@ class TrainConfig(BaseModel):
 class TaskConfig(BaseModel):
     dataset_name: str
     type: TaskType
-    num_classes: Optional[int] = None
+    num_classes: int = None
 
     @model_validator(mode="after")
     def validate_num_classes(self) -> Self:
@@ -222,9 +222,9 @@ class ExperimentConfig(BaseModel):
 
 
 class MLFlowConfig(BaseModel, YamlLoaderMixin):
-    track: Optional[bool] = True
-    tracking_uri: Optional[HttpUrl] = "http://127.0.0.1:8080"
-    experiment_name: Optional[str] = Field(default="test", min_length=1)
+    track: bool = True
+    tracking_uri: HttpUrl = "http://127.0.0.1:8080"
+    experiment_name: str = Field(default="test", min_length=1)
     run_name: Optional[str] = None
     tags: Optional[dict[str, str]] = None
 
@@ -244,5 +244,5 @@ class MLFlowConfig(BaseModel, YamlLoaderMixin):
 class ResourceConfig(BaseModel, YamlLoaderMixin):
     num_cpus: Optional[PositiveInt] = None
     num_gpus: Optional[NonNegativeInt] = None
-    num_cpus_per_trial: Optional[PositiveFloat] = 1.0
-    num_gpus_per_trial: Optional[NonNegativeFloat] = 0.25
+    num_cpus_per_trial: PositiveFloat = 1.0
+    num_gpus_per_trial: NonNegativeFloat = 0.25
