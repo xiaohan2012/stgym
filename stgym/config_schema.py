@@ -174,6 +174,7 @@ class TrainConfig(BaseModel):
     optim: Optional[OptimizerConfig] = OptimizerConfig()
     lr_schedule: Optional[LRScheduleConfig] = LRScheduleConfig()
     max_epoch: PositiveInt
+    devices: Optional[str | int] = "auto"
 
     early_stopping: Optional[EarlyStoppingConfig] = None
 

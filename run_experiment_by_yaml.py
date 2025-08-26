@@ -59,10 +59,10 @@ def main():
     # Override device based on CUDA availability
     if torch.cuda.is_available():
         exp_cfg.data_loader.device = "cuda:0"
-        logger.info("CUDA available - using GPU (cuda:0)")
+        logger.info("CUDA available - using GPU (auto)")
     else:
         exp_cfg.data_loader.device = "cpu"
-        logger.info("CUDA not available - using CPU")
+        logger.info("CUDA not available - using CPU (1 device)")
 
     # Setup MLFlow configuration
     mlflow_cfg = MLFlowConfig(
