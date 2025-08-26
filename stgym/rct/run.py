@@ -41,19 +41,25 @@ def run_exp(exp_cfg: ExperimentConfig, mlflow_cfg: MLFlowConfig):
     if logger is not None and mlflow_cfg.track:
         log_experiment_config_as_artifact(logger, exp_cfg.model_dump())
 
-    train(
-        model_module,
-        data_module,
-        exp_cfg.train,
-        mlflow_cfg,
-        tl_train_config={
-            "log_every_n_steps": 10,
-            # simplify the logging
-            "enable_progress_bar": False,
-            "enable_model_summary": False,
-            "enable_checkpointing": False,
-        },
-        logger=logger,
-    )
+    try:
+        train(
+            model_module,
+            data_module,
+            exp_cfg.train,
+            mlflow_cfg,
+            tl_train_config={
+                "log_every_n_steps": 10,
+                # simplify the logging
+                "enable_progress_bar": False,
+                "enable_model_summary": False,
+                "enable_checkpointing": False,
+            },
+            logger=logger,
+        )
+    except Exception as e:
+        error_msg = f"Training failed: {e}"
+        logz_logger.error(error_msg)
+        if logger is not None:
+            logger.experiment.log_text(logger.run_id, error_msg, "training_error.txt")
 
     return True
