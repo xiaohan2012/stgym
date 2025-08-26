@@ -174,7 +174,9 @@ class TrainConfig(BaseModel):
     optim: Optional[OptimizerConfig] = OptimizerConfig()
     lr_schedule: Optional[LRScheduleConfig] = LRScheduleConfig()
     max_epoch: PositiveInt
-    devices: Optional[str | int] = "auto"
+    devices: Optional[str | int] = (
+        "auto"  # setting to 'auto' is important to parallelize multiple experiment trials in ray across multiple GPUs
+    )
 
     early_stopping: Optional[EarlyStoppingConfig] = None
 
