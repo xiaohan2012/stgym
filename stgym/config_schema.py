@@ -179,6 +179,7 @@ class TrainConfig(BaseModel):
     )
 
     early_stopping: Optional[EarlyStoppingConfig] = None
+    enable_float32_matmul_precision: bool = True
 
     @model_validator(mode="after")
     def override_scheduler_properties(self) -> Self:

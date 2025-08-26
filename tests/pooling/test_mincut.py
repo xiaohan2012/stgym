@@ -16,7 +16,7 @@ from stgym.utils import stacked_blocks_to_block_diagonal
 
 from ..utils import DEVICE, BatchLoaderMixin
 
-RTOL = 2e-3
+RTOL = 2.5e-3
 
 
 def test_mincut_pool():

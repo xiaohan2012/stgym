@@ -28,6 +28,12 @@ def train(
         tl_train_config (dict, optional): Additional configuration to tl.Trainer
     """
     # warnings.filterwarnings('ignore', '.*use `CSVLogger` as the default.*')
+
+    # Configure float32 matmul precision when GPU is available
+    use_gpu = torch.cuda.is_available()
+    if use_gpu and train_cfg.enable_float32_matmul_precision:
+        torch.set_float32_matmul_precision("medium")
+
     callbacks = []
 
     # Only add MLFlow system monitor if tracking is enabled and logger is available

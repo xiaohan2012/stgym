@@ -44,6 +44,11 @@ def main():
         "--no-tracking", action="store_true", help="Disable MLFlow tracking"
     )
     parser.add_argument("--run-name", type=str, help="MLFlow run name (optional)")
+    parser.add_argument(
+        "--disable-float32-matmul",
+        action="store_true",
+        help="Disable float32 matmul precision optimization (default: enabled for GPU)",
+    )
 
     args = parser.parse_args()
 
@@ -56,11 +61,21 @@ def main():
     logger.info(f"Loading experiment configuration from: {args.config_path}")
     exp_cfg = load_yaml_config(args.config_path)
 
+    # Override float32 matmul precision setting if disabled via command line
+    if args.disable_float32_matmul:
+        exp_cfg.train.enable_float32_matmul_precision = False
+
     # Override device based on CUDA availability
     if torch.cuda.is_available():
         exp_cfg.data_loader.device = "cuda:0"
         exp_cfg.train.devices = 1
         logger.info("CUDA available - using GPU (auto)")
+
+        # Enable float32 matmul precision optimization for GPU training
+        if exp_cfg.train.enable_float32_matmul_precision:
+            logger.info("Float32 matmul precision optimization enabled")
+        else:
+            logger.info("Float32 matmul precision optimization disabled")
     else:
         exp_cfg.data_loader.device = "cpu"
         logger.info("CUDA not available - using CPU (1 device)")
