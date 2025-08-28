@@ -5,7 +5,7 @@ model:
   layer_type: ["gcnconv", "ginconv", "sageconv"]
   dim_inner: [16, 32, 64, 128]
   act: ['prelu', 'relu']
-  use_batchnorm: true
+  use_batchnorm: [true, false]
   pooling:
     type:
       - dmon
