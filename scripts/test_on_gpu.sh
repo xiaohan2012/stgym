@@ -1,7 +1,7 @@
 #! /bin/bash
 
 time python run_rct.py \
-       +exp=bn \
+       +exp=hpooling \
        design_space=graph_clf \
        resource=gpu-2 \
        sample_size=10 \
