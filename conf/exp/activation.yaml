@@ -1,0 +1,7 @@
+# @package _global_
+
+design_dimension: model.act
+design_choices: ['prelu', 'relu']
+
+mlflow:
+  experiment_name: activation
