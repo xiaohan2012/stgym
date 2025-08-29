@@ -4,7 +4,7 @@ model:
   normalize_adj: [false, true]
   layer_type: ["gcnconv", "ginconv", "sageconv"]
   dim_inner: [16, 32, 64, 128]
-  act: ['prelu', 'relu']
+  act: ['prelu', 'relu', 'swish']
   use_batchnorm: [true, false]
   pooling:
     type:
