@@ -1,0 +1,7 @@
+# @package _global_
+
+design_dimension: data_loader.knn_k
+design_choices: [10, 20, 30]
+
+mlflow:
+  experiment_name: knn
