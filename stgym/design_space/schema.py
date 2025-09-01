@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import BaseModel, PositiveFloat, PositiveInt
+from pydantic import BaseModel, PositiveFloat, PositiveInt, field_validator
 
 from stgym.config_schema import (
     ActivationType,
@@ -56,8 +56,25 @@ class TrainSpace(ModelWithZip):
 
 class DataLoaderSpace(ModelWithZip):
     graph_const: GraphConstructionApproach | list[GraphConstructionApproach]
-    knn_k: PositiveInt | list[PositiveInt]
+    knn_k: PositiveInt | list[PositiveInt] | None
+    radius_ratio: PositiveFloat | list[PositiveFloat] | None
     batch_size: PositiveInt | list[PositiveInt]
+
+    @field_validator("radius_ratio")
+    @classmethod
+    def validate_radius_ratio(cls, v):
+        if v is None:
+            return v
+
+        def validate_single_value(value):
+            if not (0 < value < 1):
+                raise ValueError("radius_ratio must be in the range (0, 1)")
+            return value
+
+        if isinstance(v, list):
+            return [validate_single_value(item) for item in v]
+        else:
+            return validate_single_value(v)
 
 
 class TaskSpace(ModelWithZip):

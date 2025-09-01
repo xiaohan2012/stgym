@@ -41,7 +41,8 @@ def generate_experiment(
 
 
 def sample_across_dimensions(
-    space: ModelSpace | TrainSpace | TaskSpace, seed: int | np.int_ = None
+    space: ModelSpace | TrainSpace | TaskSpace | DataLoaderSpace,
+    seed: int | np.int_ = None,
 ):
     random.seed(int(seed) if seed is not None else None)
     ret = {}
@@ -130,8 +131,20 @@ def generate_data_loader_config(
     space: DataLoaderSpace, k: int = 1, seed: int = None
 ) -> list[DataLoaderConfig]:
     ret = []
+    random.seed(seed)
     seeds = rand_ints(k, seed=seed)
     for i in range(k):
-        values = sample_across_dimensions(space, seed=seeds[i])
+        # conditional sample knn_k or radius_ratio depending on the value of graph_const
+        graph_const = random.choice(space.graph_const)
+        # print("graph_const: {}".format(graph_const))
+        space_cp = space.model_copy()
+        if graph_const == "knn":
+            space_cp.graph_const = "knn"
+            space_cp.radius_ratio = None
+        else:
+            space_cp.graph_const = "radius"
+            space_cp.knn_k = None
+        # print("space_cp: {}".format(space_cp))
+        values = sample_across_dimensions(space_cp, seed=seeds[i])
         ret.append(DataLoaderConfig(**values))
     return ret

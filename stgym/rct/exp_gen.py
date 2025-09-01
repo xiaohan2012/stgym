@@ -12,6 +12,11 @@ def generate_experiment_configs(
     sample_size: int,
     random_seed: int = None,
 ) -> list[ExperimentConfig]:
+    print(
+        "design_space_template.model_dump(): {}".format(
+            design_space_template.model_dump()
+        )
+    )
     if _.has(design_space_template.model_dump(), design_dimension):
         exp_cfgs_by_design_choice = [
             generate_experiment(

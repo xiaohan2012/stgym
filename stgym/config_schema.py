@@ -153,8 +153,8 @@ class DataLoaderConfig(BaseModel):
             return self
 
     graph_const: GraphConstructionApproach = "knn"
-    knn_k: PositiveInt = 10
-    radius_ratio: PositiveFloat = 0.1
+    knn_k: PositiveInt | None = 10
+    radius_ratio: PositiveFloat | None = 0.1
 
     batch_size: PositiveInt = 64
     num_workers: int = 0  # does not suppot num_workers > 0 yet

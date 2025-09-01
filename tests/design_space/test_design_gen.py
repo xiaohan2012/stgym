@@ -1,3 +1,4 @@
+import pydash as _
 import pytest
 
 from stgym.config_schema import (
@@ -17,7 +18,7 @@ from stgym.design_space.design_gen import (
     generate_train_config,
     sample_across_dimensions,
 )
-from stgym.design_space.schema import DesignSpace, ModelSpace
+from stgym.design_space.schema import DataLoaderSpace, DesignSpace, ModelSpace
 from stgym.utils import load_yaml
 
 from ..utils import RANDOM_SEEDS
@@ -100,6 +101,31 @@ class TestSampleAcrossDimensions:
         design = sample_across_dimensions(self.space, seed=seed)
         same_design = sample_across_dimensions(self.space, seed=seed)
         assert design == same_design
+
+
+class TestGenerateDataLoaderConfig:
+    @property
+    def space(self):
+        return DataLoaderSpace(
+            graph_const=["knn", "radius"],
+            knn_k=[1, 2],
+            radius_ratio=[0.1, 0.2],
+            batch_size=[8, 16],
+        )
+
+    @pytest.mark.parametrize("seed", RANDOM_SEEDS)
+    def test_basic(self, seed: int):
+        design = generate_data_loader_config(self.space, k=1, seed=seed)[0]
+        if design.graph_const == "knn":
+            assert design.radius_ratio is None
+            assert design.knn_k in (1, 2)
+        else:
+            assert design.knn_k is None
+            assert design.radius_ratio in (0.1, 0.2)
+
+    def test_both_graph_const_are_covered(self):
+        designs = generate_data_loader_config(self.space, k=10, seed=42)
+        assert len(_.uniq(_.map_(designs, "graph_const"))) == 2
 
 
 class TestGenerateDesign:

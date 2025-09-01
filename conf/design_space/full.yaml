@@ -27,5 +27,5 @@ train:
 data_loader:
   graph_const: ['knn', 'radius']
   knn_k: [10, 20, 30]
-  radius_ratio: [1, 2.5, 5]
+  radius_ratio: [0.01, 0.025, 0.05]
   batch_size: [8, 16, 32]
