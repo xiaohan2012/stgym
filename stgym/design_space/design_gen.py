@@ -144,7 +144,6 @@ def generate_data_loader_config(
         else:
             space_cp.graph_const = "radius"
             space_cp.knn_k = None
-        # print("space_cp: {}".format(space_cp))
         values = sample_across_dimensions(space_cp, seed=seeds[i])
         ret.append(DataLoaderConfig(**values))
     return ret

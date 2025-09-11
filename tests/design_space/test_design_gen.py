@@ -104,24 +104,28 @@ class TestSampleAcrossDimensions:
 
 
 class TestGenerateDataLoaderConfig:
+    knn_k_choices = (1, 2)
+    radius_ratio_choices = (0.1, 0.2)
+
     @property
     def space(self):
         return DataLoaderSpace(
             graph_const=["knn", "radius"],
-            knn_k=[1, 2],
-            radius_ratio=[0.1, 0.2],
+            knn_k=self.knn_k_choices,
+            radius_ratio=self.radius_ratio_choices,
             batch_size=[8, 16],
         )
 
     @pytest.mark.parametrize("seed", RANDOM_SEEDS)
     def test_basic(self, seed: int):
+        """That knn_k/radius_ratio params are conditional on the choice of graph_const."""
         design = generate_data_loader_config(self.space, k=1, seed=seed)[0]
         if design.graph_const == "knn":
             assert design.radius_ratio is None
-            assert design.knn_k in (1, 2)
+            assert design.knn_k in self.knn_k_choices
         else:
             assert design.knn_k is None
-            assert design.radius_ratio in (0.1, 0.2)
+            assert design.radius_ratio in self.radius_ratio_choices
 
     def test_both_graph_const_are_covered(self):
         designs = generate_data_loader_config(self.space, k=10, seed=42)
