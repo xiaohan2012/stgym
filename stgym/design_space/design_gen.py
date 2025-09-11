@@ -135,8 +135,10 @@ def generate_data_loader_config(
     seeds = rand_ints(k, seed=seed)
     for i in range(k):
         # conditional sample knn_k or radius_ratio depending on the value of graph_const
-        graph_const = random.choice(space.graph_const)
-        # print("graph_const: {}".format(graph_const))
+        if isinstance(space.graph_const, (list, tuple)):
+            graph_const = random.choice(space.graph_const)
+        else:
+            graph_const = space.graph_const
         space_cp = space.model_copy()
         if graph_const == "knn":
             space_cp.graph_const = "knn"

@@ -127,6 +127,18 @@ class TestGenerateDataLoaderConfig:
             assert design.knn_k is None
             assert design.radius_ratio in self.radius_ratio_choices
 
+    @pytest.mark.parametrize("graph_const", ["knn", ("knn",), ["knn"]])
+    @pytest.mark.parametrize("seed", RANDOM_SEEDS)
+    def test_single_graph_const(self, graph_const, seed: int):
+        """If knn is used, not radius should be sampled."""
+        space = self.space
+        space.graph_const = graph_const
+        design = generate_data_loader_config(space, k=1, seed=seed)[0]
+
+        assert design.graph_const == "knn"
+        assert design.radius_ratio is None
+        assert design.knn_k in self.knn_k_choices
+
     def test_both_graph_const_are_covered(self):
         designs = generate_data_loader_config(self.space, k=10, seed=42)
         assert len(_.uniq(_.map_(designs, "graph_const"))) == 2

@@ -7,4 +7,4 @@ time python run_rct.py \
        sample_size=100 \
        design_space.train.max_epoch=200 \
        design_space.data_loader.graph_const=knn \
-       mlflow.experiment_name=graph-clf-knn-aug-29-2025
+       mlflow.experiment_name=graph-clf-knn-sep-11-2025
