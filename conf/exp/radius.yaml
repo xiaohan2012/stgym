@@ -1,7 +1,7 @@
 # @package _global_
 
 design_dimension: data_loader.radius_ratio
-design_choices: [1, 2.5, 5]
+design_choices: [0.05, 0.075, 0.1]
 
 mlflow:
   experiment_name: radius

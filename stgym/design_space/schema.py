@@ -57,7 +57,7 @@ class TrainSpace(ModelWithZip):
 class DataLoaderSpace(ModelWithZip):
     graph_const: GraphConstructionApproach | list[GraphConstructionApproach]
     knn_k: PositiveInt | list[PositiveInt] | None
-    radius_ratio: PositiveFloat | list[PositiveFloat] | None
+    radius_ratio: float | list[float] | None = None
     batch_size: PositiveInt | list[PositiveInt]
 
     @field_validator("radius_ratio")
