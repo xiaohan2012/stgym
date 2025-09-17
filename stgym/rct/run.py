@@ -2,7 +2,7 @@ from logzero import logger as logz_logger
 from omegaconf import OmegaConf
 
 from stgym.config_schema import ExperimentConfig, MLFlowConfig
-from stgym.data_loader import STDataModule
+from stgym.data_loader import STDataModule, STKfoldDataModule
 from stgym.tl_model import STGymModule
 from stgym.train import train
 from stgym.utils import log_params_and_config_in_mlflow
@@ -10,7 +10,12 @@ from stgym.utils import log_params_and_config_in_mlflow
 
 def run_exp(exp_cfg: ExperimentConfig, mlflow_cfg: MLFlowConfig):
     logz_logger.debug(OmegaConf.to_yaml(exp_cfg.model_dump()))
-    data_module = STDataModule(exp_cfg.task, exp_cfg.data_loader)
+    use_kfold_cv = exp_cfg.data_loader.eval_mode == "cross-val"
+
+    if use_kfold_cv:
+        data_module = STKfoldDataModule(exp_cfg.task, exp_cfg.data_loader)
+    else:
+        data_module = STDataModule(exp_cfg.task, exp_cfg.data_loader)
 
     if exp_cfg.task.type in ("node-classification", "graph-classification"):
         dim_out = exp_cfg.task.num_classes
@@ -40,21 +45,40 @@ def run_exp(exp_cfg: ExperimentConfig, mlflow_cfg: MLFlowConfig):
 
     if logger is not None and mlflow_cfg.track:
         log_params_and_config_in_mlflow(exp_cfg, logger)
+
     try:
-        train(
-            model_module,
-            data_module,
-            exp_cfg.train,
-            mlflow_cfg,
-            tl_train_config={
-                "log_every_n_steps": 10,
-                # simplify the logging
-                "enable_progress_bar": False,
-                "enable_model_summary": False,
-                "enable_checkpointing": False,
-            },
-            logger=logger,
-        )
+        if use_kfold_cv:
+            for fold in range(exp_cfg.data_loader.kfold):
+                data_module.create_loader_at_fold(fold)
+                train(
+                    model_module,
+                    data_module,
+                    exp_cfg.train,
+                    mlflow_cfg,
+                    tl_train_config={
+                        "log_every_n_steps": 10,
+                        # simplify the logging
+                        "enable_progress_bar": False,
+                        "enable_model_summary": False,
+                        "enable_checkpointing": False,
+                    },
+                    logger=logger,
+                )
+        else:
+            train(
+                model_module,
+                data_module,
+                exp_cfg.train,
+                mlflow_cfg,
+                tl_train_config={
+                    "log_every_n_steps": 10,
+                    # simplify the logging
+                    "enable_progress_bar": False,
+                    "enable_model_summary": False,
+                    "enable_checkpointing": False,
+                },
+                logger=logger,
+            )
     except Exception as e:
         error_msg = f"Training failed: {e}"
         logz_logger.error(error_msg)

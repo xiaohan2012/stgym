@@ -3,12 +3,11 @@ import torch_geometric.transforms as T
 from logzero import logger
 from torch.utils.data import DataLoader, random_split
 from torch_geometric.data.lightning.datamodule import LightningDataModule
-from torch_geometric.loader import DataLoader
 
 from stgym.config_schema import DataLoaderConfig, TaskConfig
 from stgym.data_loader.brca import BRCADataset
 from stgym.data_loader.breast_cancer import BreastCancerDataset
-from stgym.data_loader.ds_info import get_all_ds_names, get_info  # noqa
+from stgym.data_loader.ds_info import get_info  # noqa
 from stgym.data_loader.human_crc import HumanCRCDataset
 from stgym.data_loader.human_intestine import HumanIntestineDataset
 from stgym.data_loader.human_lung import HumanLungDataset
@@ -95,7 +94,38 @@ def create_loader(
     return train_loader, val_loader, test_loader
 
 
-class STDataModule(LightningDataModule):
+def create_kfold_loader(ds, cfg: DataLoaderConfig, k: int):
+    """Create data loader with kfold split."""
+    # raise NotImplementedError()
+    assert isinstance(
+        cfg.split, DataLoaderConfig.KFoldSplitConfig
+    ), f"Wrong split type {type(cfg.split)}"
+    num_folds = cfg.split.num_folds
+    assert 0 <= k < num_folds, f"{k} not in range: [0, {num_folds})"
+
+
+class STDataModuleBase(LightningDataModule):
+    @property
+    def num_features(self):
+        assert hasattr(self, "ds")
+        return self.ds.data.x.shape[1]
+
+    def train_dataloader(self) -> DataLoader:
+        assert hasattr(self, "loaders")
+        return self.loaders[0]
+
+    def val_dataloader(self) -> DataLoader:
+        assert hasattr(self, "loaders")
+        # better way would be to test after fit.
+        # First call trainer.fit(...) then trainer.test(...)
+        return self.loaders[1]
+
+    def test_dataloader(self) -> DataLoader:
+        assert hasattr(self, "loaders")
+        return self.loaders[2]
+
+
+class STDataModule(STDataModuleBase):
     r"""A :class:`pytorch_lightning.LightningDataModule` for handling data
     loading routines.
 
@@ -108,6 +138,18 @@ class STDataModule(LightningDataModule):
         self.ds = load_dataset(task_cfg, dl_cfg).to(dl_cfg.device)
         self.loaders = create_loader(self.ds, dl_cfg)
         super().__init__(has_val=True, has_test=True)
+
+
+class STKfoldDataModule(LightningDataModule):
+    """Data module supporing k-fold cross validation."""
+
+    def __init__(self, task_cfg: TaskConfig, dl_cfg: DataLoaderConfig):
+        self.ds = load_dataset(task_cfg, dl_cfg).to(dl_cfg.device)
+        self.dl_cfg = dl_cfg
+        super().__init__(has_val=True, has_test=True)
+
+    def create_loader_at_fold(self, k: int):
+        self.loaders = create_kfold_loader(self.ds, self.dl_cfg, k=k)
 
     @property
     def num_features(self):
