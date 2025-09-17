@@ -142,6 +142,8 @@ class NodeClassifierModelConfig(BaseModel):
 
 class DataLoaderConfig(BaseModel):
     class DataSplitConfig(BaseModel):
+        """Config for train/val/test split."""
+
         train_ratio: PositiveFloat
         val_ratio: PositiveFloat
         test_ratio: PositiveFloat
@@ -152,6 +154,11 @@ class DataLoaderConfig(BaseModel):
                 raise ValueError("train/val/test ratios do not sum up to 1")
             return self
 
+    class KFoldSplitConfig(BaseModel):
+        """Config for k-fold split."""
+
+        num_folds: PositiveInt = Field(default=5, gt=2)
+
     graph_const: GraphConstructionApproach = "knn"
     knn_k: PositiveInt | None = 10
     radius_ratio: float | None = Field(default=0.1, gt=0, lt=1)
@@ -159,11 +166,16 @@ class DataLoaderConfig(BaseModel):
     batch_size: PositiveInt = 64
     num_workers: int = 0  # does not suppot num_workers > 0 yet
 
-    split: DataSplitConfig = DataSplitConfig(
+    split: DataSplitConfig | KFoldSplitConfig = DataSplitConfig(
         train_ratio=0.7, val_ratio=0.15, test_ratio=0.15
     )
 
     device: str = "cpu" if not torch.cuda.is_available() else "cuda:0"
+
+    @property
+    def use_kfold_split(self) -> bool:
+        """return true of kfold split is used"""
+        return hasattr(self.split, "num_folds")
 
 
 class TrainConfig(BaseModel):

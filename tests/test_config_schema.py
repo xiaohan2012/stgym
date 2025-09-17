@@ -1,6 +1,12 @@
 from pytorch_lightning.loggers import MLFlowLogger
 
-from stgym.config_schema import LayerConfig, MLFlowConfig, PostMPConfig, TrainConfig
+from stgym.config_schema import (
+    DataLoaderConfig,
+    LayerConfig,
+    MLFlowConfig,
+    PostMPConfig,
+    TrainConfig,
+)
 
 
 class TestPostMPConfig:
@@ -41,3 +47,14 @@ def test_mlflow_config_create_tl_logger():
 
     # Should return None
     assert logger_disabled is None
+
+
+class TestDataLoaderConfig:
+    def test_use_kfold_split(self):
+        cfg = DataLoaderConfig(split=dict(num_folds=10))
+        assert cfg.use_kfold_split
+
+        cfg = DataLoaderConfig(
+            split=dict(train_ratio=0.7, val_ratio=0.15, test_ratio=0.15)
+        )
+        assert not cfg.use_kfold_split
