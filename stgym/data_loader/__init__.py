@@ -97,7 +97,7 @@ def create_loader(
 
 class STDataModule(LightningDataModule):
     r"""A :class:`pytorch_lightning.LightningDataModule` for handling data
-    loading routines in GraphGym.
+    loading routines.
 
     This class provides data loaders for training, validation, and testing, and
     can be accessed through the :meth:`train_dataloader`,
