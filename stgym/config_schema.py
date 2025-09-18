@@ -233,6 +233,11 @@ class ExperimentConfig(BaseModel):
     train: TrainConfig
     group_id: Optional[int] = None
 
+    @model_validator
+    def check_early_stopping_when_kfold_split_is_used(self):
+        """Early stopping metric should contain Kfold split"""
+        raise NotImplementedError
+
 
 class MLFlowConfig(BaseModel, YamlLoaderMixin):
     track: bool = True

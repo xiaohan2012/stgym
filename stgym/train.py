@@ -6,13 +6,13 @@ from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 
 from stgym.callbacks import MLFlowSystemMonitorCallback
 from stgym.config_schema import MLFlowConfig, TrainConfig
-from stgym.data_loader import STDataModule
+from stgym.data_loader import STDataModule, STKfoldDataModule
 from stgym.tl_model import STGymModule
 
 
 def train(
     model: STGymModule,
-    datamodule: STDataModule,
+    datamodule: STDataModule | STKfoldDataModule,
     train_cfg: TrainConfig,
     mlflow_config: MLFlowConfig,
     tl_train_config: Optional[dict[str, any]] = None,

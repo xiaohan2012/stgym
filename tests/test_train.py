@@ -15,7 +15,7 @@ from stgym.config_schema import (
     TaskConfig,
     TrainConfig,
 )
-from stgym.data_loader import STDataModule
+from stgym.data_loader import STDataModule, STKfoldDataModule
 from stgym.tl_model import STGymModule
 from stgym.train import train
 from stgym.utils import rm_dir_if_exists
@@ -103,7 +103,16 @@ def node_clf_train_cfg():
 
 @pytest.fixture
 def dl_cfg():
-    return DataLoaderConfig(batch_size=8)
+    cfg = DataLoaderConfig(batch_size=8)
+    cfg.split = DataLoaderConfig.DataSplitConfig()
+    return cfg
+
+
+@pytest.fixture
+def kfold_dl_cfg():
+    cfg = DataLoaderConfig(batch_size=8)
+    cfg.split = DataLoaderConfig.KFoldSplitConfig(num_folds=3)
+    return cfg
 
 
 @pytest.fixture
@@ -177,3 +186,39 @@ def test_train_on_node_clf_task(
     ).to(DEVICE)
 
     train(model_module, data_module, node_clf_train_cfg, mlflow_cfg, logger=None)
+
+
+class TestUsingKfoldData:
+    def test_graph_clf_task_basic_functionality(
+        self,
+        graph_clf_task_cfg,
+        kfold_dl_cfg,
+        graph_clf_model_cfg,
+        graph_clf_train_cfg,
+        mlflow_cfg,
+    ):
+        """for graph classification task"""
+        split_index = 1
+        data_module = STKfoldDataModule(graph_clf_task_cfg, kfold_dl_cfg)
+        data_module.create_loader_at_fold(split_index)
+        model_module = STGymModule(
+            dim_in=data_module.num_features,
+            model_cfg=graph_clf_model_cfg,
+            train_cfg=graph_clf_train_cfg,
+            task_cfg=graph_clf_task_cfg,
+            dim_out=1,  # 1 for binary classification
+        ).to(DEVICE)
+        model_module.set_kfold_split_index(split_index)
+        train(model_module, data_module, graph_clf_train_cfg, mlflow_cfg, logger=None)
+        rm_dir_if_exists("tests/data/brca-test/processed")
+
+    # @patch("STGymModule.log")
+    # def test_log_args(
+    #     self,
+    #     graph_clf_task_cfg,
+    #     kfold_dl_cfg,
+    #     graph_clf_model_cfg,
+    #     graph_clf_train_cfg,
+    #     mlflow_cfg,
+    # ):
+    #     """test that the 1st argument (key name) to self.log correctly containts the split index info"""

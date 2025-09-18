@@ -10,7 +10,7 @@ from stgym.utils import log_params_and_config_in_mlflow
 
 def run_exp(exp_cfg: ExperimentConfig, mlflow_cfg: MLFlowConfig):
     logz_logger.debug(OmegaConf.to_yaml(exp_cfg.model_dump()))
-    use_kfold_cv = exp_cfg.data_loader.eval_mode == "cross-val"
+    use_kfold_cv = exp_cfg.data_loader.use_kfold_split
 
     if use_kfold_cv:
         data_module = STKfoldDataModule(exp_cfg.task, exp_cfg.data_loader)

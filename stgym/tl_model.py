@@ -74,10 +74,23 @@ class STGymModule(pl.LightningModule):
         self.val_step_outputs = []
         self.test_step_outputs = []
 
+        self.kfold_split_index = None
         # self.save_hyperparameters()  # do not use this, as it records the pydantic models directly
 
+    def set_kfold_split_index(self, split_index: int):
+        self.kfold_split_index = split_index
+
+    @property
+    def use_kfold_split(self) -> bool:
+        return self.kfold_split_index is not None
+
+    def prefix_log_key(self, key: str) -> str:
+        """Prefix log key by split info if needed."""
+        if self.use_kfold_split:
+            return f"split_{self.kfold_split_index}_{key}"
+        return key
+
     def on_fit_start(self):
-        # Perform any setup actions here
         pass
 
     def forward(self, *args, **kwargs):
@@ -157,13 +170,13 @@ class STGymModule(pl.LightningModule):
 
     def training_step(self, batch: Data, *args, **kwargs):
         output = self._shared_step(batch, split=Split.train)
-        self.log("train_loss", output["loss"], prog_bar=True)
+        self.log(self.prefix_log_key("train_loss"), output["loss"], prog_bar=True)
         return output
 
     def validation_step(self, batch: Data, *args, **kwargs):
         output = self._shared_step(batch, split=Split.val)
         self.val_step_outputs.append(output)
-        self.log("val_loss", output["loss"], prog_bar=True)
+        self.log(self.prefix_log_key("val_loss"), output["loss"], prog_bar=True)
         return output
 
     def test_step(self, batch: Data, *args, **kwargs):
@@ -202,7 +215,7 @@ class STGymModule(pl.LightningModule):
                 )
             else:
                 roc_auc = roc_auc_score(true, pred)
-            self.log(f"{split}_roc_auc", roc_auc, prog_bar=True)
+            self.log(self.prefix_log_key(f"{split}_roc_auc"), roc_auc, prog_bar=True)
         elif self.task_cfg.type == "node-clustering":
             true, pred, ptr_batch = self._extract_pred_and_test_from_step_outputs(
                 split=split
@@ -220,14 +233,22 @@ class STGymModule(pl.LightningModule):
                         true[start:end], pred[start:end, :].argmax(axis=1)
                     )
                 )
-            self.log(f"{split}_nmi", np.mean(nmi_scores), prog_bar=True)
-            self.log(f"{split}_ari", np.mean(ari_scores), prog_bar=True)
+            self.log(
+                self.prefix_log_key(f"{split}_nmi"), np.mean(nmi_scores), prog_bar=True
+            )
+            self.log(
+                self.prefix_log_key(f"{split}_ari"), np.mean(ari_scores), prog_bar=True
+            )
         elif self.task_cfg.type == "node-classification":
             true, pred = self._extract_pred_and_test_from_step_outputs(split=split)
             acc = accuracy_score(true, pred.argmax(axis=1))
             micro_f1_score = f1_score(true, pred.argmax(axis=1), average="micro")
-            self.log(f"{split}_accuracy", acc, prog_bar=True)
-            self.log(f"{split}_micro_f1_score", micro_f1_score, prog_bar=True)
+            self.log(self.prefix_log_key(f"{split}_accuracy"), acc, prog_bar=True)
+            self.log(
+                self.prefix_log_key(f"{split}_micro_f1_score"),
+                micro_f1_score,
+                prog_bar=True,
+            )
 
         getattr(self, f"{split}_step_outputs").clear()
 
