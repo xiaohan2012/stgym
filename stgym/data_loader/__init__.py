@@ -1,8 +1,11 @@
+import numpy as np
 import torch
 import torch_geometric.transforms as T
 from logzero import logger
-from torch.utils.data import DataLoader, random_split
+from sklearn.model_selection import KFold
+from torch.utils.data import Subset, random_split
 from torch_geometric.data.lightning.datamodule import LightningDataModule
+from torch_geometric.loader import DataLoader
 
 from stgym.config_schema import DataLoaderConfig, TaskConfig
 from stgym.data_loader.brca import BRCADataset
@@ -95,13 +98,39 @@ def create_loader(
 
 
 def create_kfold_loader(ds, cfg: DataLoaderConfig, k: int):
-    """Create data loader with kfold split."""
-    # raise NotImplementedError()
+    """Create data loader with kfold split at fold k."""
     assert isinstance(
         cfg.split, DataLoaderConfig.KFoldSplitConfig
     ), f"Wrong split type {type(cfg.split)}"
     num_folds = cfg.split.num_folds
     assert 0 <= k < num_folds, f"{k} not in range: [0, {num_folds})"
+
+    # Create KFold splitter
+    kfold = KFold(n_splits=num_folds, shuffle=True, random_state=42)
+
+    # Get train/val splits for fold k
+    indices = np.arange(len(ds))
+    fold_splits = list(kfold.split(indices))
+    train_indices, val_indices = fold_splits[k]
+
+    # Create datasets using Subset
+    train_ds = Subset(ds, train_indices.tolist())
+    val_ds = test_ds = Subset(
+        ds, val_indices.tolist()
+    )  # test data same as val for k-fold CV
+
+    # Create DataLoaders with same parameters as create_loader
+    train_loader = DataLoader(
+        train_ds, batch_size=cfg.batch_size, shuffle=True, num_workers=cfg.num_workers
+    )
+    val_loader = DataLoader(
+        val_ds, batch_size=cfg.batch_size, shuffle=False, num_workers=cfg.num_workers
+    )
+    test_loader = DataLoader(
+        test_ds, batch_size=cfg.batch_size, shuffle=False, num_workers=cfg.num_workers
+    )
+
+    return train_loader, val_loader, test_loader
 
 
 class STDataModuleBase(LightningDataModule):
