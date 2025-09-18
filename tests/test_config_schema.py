@@ -1,3 +1,5 @@
+import pytest
+from pydantic import ValidationError
 from pytorch_lightning.loggers import MLFlowLogger
 
 from stgym.config_schema import (
@@ -58,3 +60,22 @@ class TestDataLoaderConfig:
             split=dict(train_ratio=0.7, val_ratio=0.15, test_ratio=0.15)
         )
         assert not cfg.use_kfold_split
+
+    def test_validation(self):
+        # Test valid split_index (should not raise)
+        cfg = DataLoaderConfig(split=dict(num_folds=5, split_index=0))
+        assert cfg.split.split_index == 0
+
+        cfg = DataLoaderConfig(split=dict(num_folds=5, split_index=4))
+        assert cfg.split.split_index == 4
+
+        # Test invalid split_index (should raise ValidationError)
+        with pytest.raises(
+            ValidationError, match="split_index \\(5\\) must be in range \\[0, 5\\)"
+        ):
+            DataLoaderConfig(split=dict(num_folds=5, split_index=5))
+
+        with pytest.raises(
+            ValidationError, match="split_index \\(10\\) must be in range \\[0, 3\\)"
+        ):
+            DataLoaderConfig(split=dict(num_folds=3, split_index=10))

@@ -158,6 +158,15 @@ class DataLoaderConfig(BaseModel):
         """Config for k-fold split."""
 
         num_folds: PositiveInt = Field(default=5, gt=2)
+        split_index: NonNegativeInt
+
+        @model_validator(mode="after")
+        def validate_split_index_range(self) -> "KFoldSplitConfig":
+            if self.split_index >= self.num_folds:
+                raise ValueError(
+                    f"split_index ({self.split_index}) must be in range [0, {self.num_folds})"
+                )
+            return self
 
     graph_const: GraphConstructionApproach = "knn"
     knn_k: PositiveInt | None = 10
@@ -233,7 +242,7 @@ class ExperimentConfig(BaseModel):
     train: TrainConfig
     group_id: Optional[int] = None
 
-    @model_validator
+    @model_validator(mode="after")
     def check_early_stopping_when_kfold_split_is_used(self):
         """Early stopping metric should contain Kfold split"""
         raise NotImplementedError
