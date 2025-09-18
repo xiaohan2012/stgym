@@ -169,7 +169,7 @@ class STDataModule(STDataModuleBase):
         super().__init__(has_val=True, has_test=True)
 
 
-class STKfoldDataModule(LightningDataModule):
+class STKfoldDataModule(STDataModuleBase):
     """Data module supporing k-fold cross validation."""
 
     def __init__(self, task_cfg: TaskConfig, dl_cfg: DataLoaderConfig):
@@ -179,18 +179,3 @@ class STKfoldDataModule(LightningDataModule):
 
     def create_loader_at_fold(self, k: int):
         self.loaders = create_kfold_loader(self.ds, self.dl_cfg, k=k)
-
-    @property
-    def num_features(self):
-        return self.ds.data.x.shape[1]
-
-    def train_dataloader(self) -> DataLoader:
-        return self.loaders[0]
-
-    def val_dataloader(self) -> DataLoader:
-        # better way would be to test after fit.
-        # First call trainer.fit(...) then trainer.test(...)
-        return self.loaders[1]
-
-    def test_dataloader(self) -> DataLoader:
-        return self.loaders[2]

@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader
 from stgym.config_schema import DataLoaderConfig, TaskConfig
 from stgym.data_loader import (
     STDataModule,
+    STKfoldDataModule,
     create_kfold_loader,
     create_loader,
     load_dataset,
@@ -102,6 +103,28 @@ def test_tl_module_init(mock_task_cfg, mock_dl_cfg):
     assert isinstance(mod.train_dataloader(), DataLoader)
     assert isinstance(mod.val_dataloader(), DataLoader)
     assert isinstance(mod.test_dataloader(), DataLoader)
+
+
+class TestSTKfoldDataModule:
+    num_folds = 3
+
+    @pytest.mark.parametrize("k", [0, 1, 2])
+    def test_basic(self, mock_task_cfg, mock_dl_cfg, k):
+        mod = STKfoldDataModule(mock_task_cfg, mock_dl_cfg)
+        mock_dl_cfg.split = DataLoaderConfig.KFoldSplitConfig(num_folds=self.num_folds)
+        mod.create_loader_at_fold(k)
+        assert isinstance(mod.train_dataloader(), DataLoader)
+        assert isinstance(mod.val_dataloader(), DataLoader)
+        assert isinstance(mod.test_dataloader(), DataLoader)
+
+    @pytest.mark.parametrize("k", [-1, 3, 100])
+    def test_k_out_of_range(self, mock_task_cfg, mock_dl_cfg, k):
+        """Test that invalid fold indices raise appropriate errors."""
+        mock_dl_cfg.split = DataLoaderConfig.KFoldSplitConfig(num_folds=self.num_folds)
+        mod = STKfoldDataModule(mock_task_cfg, mock_dl_cfg)
+
+        with pytest.raises(AssertionError, match="not in range"):
+            mod.create_loader_at_fold(k=k)
 
 
 def teardown_module(module):
