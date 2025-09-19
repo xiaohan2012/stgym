@@ -79,6 +79,7 @@ def graph_clf_train_cfg():
         lr_schedule=LRScheduleConfig(type=None),
         max_epoch=10,
         early_stopping={"metric": "val_roc_auc", "mode": "max"},
+        devices=0,  # to avoid ddp trainig in unittests on cuda devices
     )
 
 
