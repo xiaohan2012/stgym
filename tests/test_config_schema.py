@@ -57,7 +57,7 @@ def test_mlflow_config_create_tl_logger():
 
 class TestDataLoaderConfig:
     def test_use_kfold_split(self):
-        cfg = DataLoaderConfig(split=dict(num_folds=10))
+        cfg = DataLoaderConfig(split=dict(num_folds=10, split_index=0))
         assert cfg.use_kfold_split
 
         cfg = DataLoaderConfig(
@@ -67,22 +67,32 @@ class TestDataLoaderConfig:
 
     def test_validation(self):
         # Test valid split_index (should not raise)
-        cfg = DataLoaderConfig(split=dict(num_folds=5, split_index=0))
+        cfg = DataLoaderConfig(
+            split=DataLoaderConfig.KFoldSplitConfig(num_folds=5, split_index=0)
+        )
         assert cfg.split.split_index == 0
 
-        cfg = DataLoaderConfig(split=dict(num_folds=5, split_index=4))
+        cfg = DataLoaderConfig(
+            split=DataLoaderConfig.KFoldSplitConfig(num_folds=5, split_index=4)
+        )
         assert cfg.split.split_index == 4
 
         # Test invalid split_index (should raise ValidationError)
         with pytest.raises(
             ValidationError, match="split_index \\(5\\) must be in range \\[0, 5\\)"
         ):
-            DataLoaderConfig(split=dict(num_folds=5, split_index=5))
+            # this does not trigger validation logic
+            # DataLoaderConfig(split=dict(num_folds=5, split_index=5))
+            DataLoaderConfig(
+                split=DataLoaderConfig.KFoldSplitConfig(num_folds=5, split_index=5)
+            )
 
         with pytest.raises(
             ValidationError, match="split_index \\(10\\) must be in range \\[0, 3\\)"
         ):
-            DataLoaderConfig(split=dict(num_folds=3, split_index=10))
+            DataLoaderConfig(
+                split=DataLoaderConfig.KFoldSplitConfig(num_folds=3, split_index=10)
+            )
 
 
 class TestearlyStoppingModificationLogic:
