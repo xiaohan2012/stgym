@@ -22,5 +22,6 @@ def get_info(ds):
     }
 
 
+cols = ["name", "size", "n_feats", "n_classes", "task_type"]
 ds_df = pd.DataFrame([get_info(ds) for ds in ds_list])
-print(ds_df.sort_values(by="task_type").to_markdown(index=None))
+print(ds_df.sort_values(by="task_type")[cols].to_markdown(index=None))
