@@ -38,6 +38,11 @@ Examples:
 
 ## Common Development Commands
 
+### Activating virtual enviroment
+
+```bash
+pyenv activate stgym
+```
 
 ### Running Single Experiments
 
@@ -55,13 +60,13 @@ python run_rct.py +exp=<experiment> design_space=<space> resource=<resource> sam
 
 Run all tests:
 ```bash
-python -m pytest tests/ -v
+pytest tests/ -v
 ```
 
 Run specific test modules:
 ```bash
-python -m pytest tests/test_train.py -v
-python -m pytest tests/test_config_schema.py -v
+pytest tests/test_train.py -v
+pytest tests/test_config_schema.py -v
 ```
 
 Quick CPU test (limited epochs):
