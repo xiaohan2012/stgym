@@ -243,9 +243,11 @@ class ExperimentConfig(BaseModel):
     group_id: Optional[int] = None
 
     @model_validator(mode="after")
-    def check_early_stopping_when_kfold_split_is_used(self):
+    def modify_early_stopping_metric_when_kfold_split_is_used(self):
         """Early stopping metric should contain Kfold split"""
-        raise NotImplementedError
+        if self.data_loader.use_kfold_split:
+            self.train.early_stopping.metric = f"split_{self.data_loader.split.split_index}_{self.train.early_stopping.metric}"
+        return self
 
 
 class MLFlowConfig(BaseModel, YamlLoaderMixin):

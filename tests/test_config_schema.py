@@ -4,9 +4,13 @@ from pytorch_lightning.loggers import MLFlowLogger
 
 from stgym.config_schema import (
     DataLoaderConfig,
+    ExperimentConfig,
+    GraphClassifierModelConfig,
     LayerConfig,
+    MessagePassingConfig,
     MLFlowConfig,
     PostMPConfig,
+    TaskConfig,
     TrainConfig,
 )
 
@@ -79,3 +83,39 @@ class TestDataLoaderConfig:
             ValidationError, match="split_index \\(10\\) must be in range \\[0, 3\\)"
         ):
             DataLoaderConfig(split=dict(num_folds=3, split_index=10))
+
+
+class TestearlyStoppingModificationLogic:
+    """Test ExperimentConfig.modify_early_stopping_metric_when_kfold_split_is_used."""
+
+    def create_exp_config(self, data_loader_cfg: DataLoaderConfig):
+        return ExperimentConfig(
+            task=TaskConfig(
+                dataset_name="test", type="graph-classification", num_classes=2
+            ),
+            data_loader=data_loader_cfg,
+            model=GraphClassifierModelConfig(
+                mp_layers=[MessagePassingConfig(layer_type="gcnconv")],
+                post_mp_layer=PostMPConfig(dims=[10]),
+            ),
+            train=TrainConfig(max_epoch=100),
+        )
+
+    def test_modification_fired(self):
+        # Test with kfold split - metric should be modified
+        exp_config = self.create_exp_config(
+            DataLoaderConfig(split=dict(num_folds=5, split_index=2))
+        )
+
+        # Check that early stopping metric was modified to include split index
+        assert exp_config.train.early_stopping.metric == "split_2_val_loss"
+
+    def test_modification_silent(self):
+        # Test with regular split - metric should not be modified
+        exp_config_regular = self.create_exp_config(
+            DataLoaderConfig(
+                split=dict(train_ratio=0.7, val_ratio=0.15, test_ratio=0.15)
+            )
+        )
+        # Check that early stopping metric was not modified
+        assert exp_config_regular.train.early_stopping.metric == "val_loss"
