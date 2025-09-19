@@ -21,7 +21,13 @@ from stgym.tl_model import STGymModule
 from stgym.train import train
 from stgym.utils import rm_dir_if_exists
 
-DEVICE = "cpu" if not torch.cuda.is_available() else "cuda:0"
+# device to store tensors on
+TORCH_DEVICE = "cpu" if not torch.cuda.is_available() else "cuda:0"
+
+# devices passed to torch lightening Trainer
+PL_TRAIN_DEVICES = (
+    "auto" if TORCH_DEVICE == "cpu" else [0]
+)  # to avoid DDP trainig in unittests on CUDA devices
 
 
 @pytest.fixture
@@ -79,9 +85,7 @@ def graph_clf_train_cfg():
         lr_schedule=LRScheduleConfig(type=None),
         max_epoch=10,
         early_stopping={"metric": "val_roc_auc", "mode": "max"},
-        devices=(
-            "auto" if DEVICE == "cpu" else [0]
-        ),  # to avoid DDP trainig in unittests on CUDA devices
+        devices=PL_TRAIN_DEVICES,
     )
 
 
@@ -92,6 +96,7 @@ def clustering_train_cfg():
         lr_schedule=LRScheduleConfig(type=None),
         max_epoch=10,
         early_stopping={"metric": "val_nmi", "mode": "max"},
+        devices=PL_TRAIN_DEVICES,
     )
 
 
@@ -102,6 +107,7 @@ def node_clf_train_cfg():
         lr_schedule=LRScheduleConfig(type=None),
         max_epoch=10,
         early_stopping={"metric": "val_accuracy", "mode": "max"},
+        devices=PL_TRAIN_DEVICES,
     )
 
 
@@ -156,7 +162,7 @@ def test_train_on_graph_clf_task(
         task_cfg=graph_clf_task_cfg,
         dl_cfg=dl_cfg,
         dim_out=1,  # 1 for binary classification
-    ).to(DEVICE)
+    ).to(TORCH_DEVICE)
     train(model_module, data_module, graph_clf_train_cfg, mlflow_cfg, logger=None)
     rm_dir_if_exists("tests/data/brca-test/processed")
 
@@ -172,7 +178,7 @@ def test_clustering_task(
         train_cfg=clustering_train_cfg,
         task_cfg=clustering_task_cfg,
         dl_cfg=dl_cfg,
-    ).to(DEVICE)
+    ).to(TORCH_DEVICE)
 
     train(model_module, data_module, clustering_train_cfg, mlflow_cfg, logger=None)
     rm_dir_if_exists("tests/data/human-crc-test/processed")
@@ -191,7 +197,7 @@ def test_train_on_node_clf_task(
         task_cfg=node_clf_task_cfg,
         dl_cfg=dl_cfg,
         dim_out=node_clf_task_cfg.num_classes,
-    ).to(DEVICE)
+    ).to(TORCH_DEVICE)
 
     train(model_module, data_module, node_clf_train_cfg, mlflow_cfg, logger=None)
     rm_dir_if_exists("tests/data/human-crc-test/processed")
@@ -223,6 +229,6 @@ class TestUsingKfoldData:
             task_cfg=graph_clf_task_cfg,
             dl_cfg=kfold_dl_cfg,
             dim_out=1,  # 1 for binary classification
-        ).to(DEVICE)
+        ).to(TORCH_DEVICE)
         train(model_module, data_module, graph_clf_train_cfg, mlflow_cfg, logger=None)
         rm_dir_if_exists("tests/data/brca-test/processed")
