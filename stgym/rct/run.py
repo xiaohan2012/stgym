@@ -12,26 +12,25 @@ def run_exp(exp_cfg: ExperimentConfig, mlflow_cfg: MLFlowConfig):
     logz_logger.debug(OmegaConf.to_yaml(exp_cfg.model_dump()))
     use_kfold_cv = exp_cfg.data_loader.use_kfold_split
 
-    if use_kfold_cv:
-        data_module = STKfoldDataModule(exp_cfg.task, exp_cfg.data_loader)
-    else:
+    if not use_kfold_cv:
         data_module = STDataModule(exp_cfg.task, exp_cfg.data_loader)
 
-    if exp_cfg.task.type in ("node-classification", "graph-classification"):
-        dim_out = exp_cfg.task.num_classes
-        if dim_out == 2:
-            dim_out -= 1  # for binary classification, output dim being 1 is enough
-    else:
-        # for clustering, dim_out is specified by the pooling operation
-        dim_out = None
+        if exp_cfg.task.type in ("node-classification", "graph-classification"):
+            dim_out = exp_cfg.task.num_classes
+            if dim_out == 2:
+                dim_out -= 1  # for binary classification, output dim being 1 is enough
+        else:
+            # for clustering, dim_out is specified by the pooling operation
+            dim_out = None
 
-    model_module = STGymModule(
-        dim_in=data_module.num_features,
-        dim_out=dim_out,
-        model_cfg=exp_cfg.model,
-        train_cfg=exp_cfg.train,
-        task_cfg=exp_cfg.task,
-    )
+        model_module = STGymModule(
+            dim_in=data_module.num_features,
+            dim_out=dim_out,
+            model_cfg=exp_cfg.model,
+            train_cfg=exp_cfg.train,
+            task_cfg=exp_cfg.task,
+            dl_cfg=exp_cfg.data_loader,
+        )
 
     if exp_cfg.group_id is not None:
         mlflow_cfg = mlflow_cfg.model_copy()
@@ -48,11 +47,39 @@ def run_exp(exp_cfg: ExperimentConfig, mlflow_cfg: MLFlowConfig):
 
     try:
         if use_kfold_cv:
-            for fold in range(exp_cfg.data_loader.kfold):
-                data_module.create_loader_at_fold(fold)
+            for fold in range(exp_cfg.data_loader.split.num_folds):
+                # Create fold-specific data loader config
+                fold_dl_cfg = exp_cfg.data_loader.model_copy()
+                fold_dl_cfg.split = exp_cfg.data_loader.split.model_copy()
+                fold_dl_cfg.split.split_index = fold
+
+                # Create data module for this fold
+                fold_data_module = STKfoldDataModule(exp_cfg.task, fold_dl_cfg)
+
+                # Determine output dimensions
+                if exp_cfg.task.type in ("node-classification", "graph-classification"):
+                    dim_out = exp_cfg.task.num_classes
+                    if dim_out == 2:
+                        dim_out -= (
+                            1  # for binary classification, output dim being 1 is enough
+                        )
+                else:
+                    # for clustering, dim_out is specified by the pooling operation
+                    dim_out = None
+
+                # Create model module for this fold
+                fold_model_module = STGymModule(
+                    dim_in=fold_data_module.num_features,
+                    dim_out=dim_out,
+                    model_cfg=exp_cfg.model,
+                    train_cfg=exp_cfg.train,
+                    task_cfg=exp_cfg.task,
+                    dl_cfg=fold_dl_cfg,
+                )
+
                 train(
-                    model_module,
-                    data_module,
+                    fold_model_module,
+                    fold_data_module,
                     exp_cfg.train,
                     mlflow_cfg,
                     tl_train_config={
