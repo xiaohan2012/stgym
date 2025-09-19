@@ -144,9 +144,9 @@ class DataLoaderConfig(BaseModel):
     class DataSplitConfig(BaseModel):
         """Config for train/val/test split."""
 
-        train_ratio: PositiveFloat
-        val_ratio: PositiveFloat
-        test_ratio: PositiveFloat
+        train_ratio: PositiveFloat = 0.7
+        val_ratio: PositiveFloat = 0.1
+        test_ratio: PositiveFloat = 0.2
 
         @model_validator(mode="after")
         def ratios_should_sum_to_one(self) -> "LayerConfig":

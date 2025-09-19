@@ -18,6 +18,7 @@ from torch_geometric.data import Data
 
 from stgym.config_schema import (
     ClusteringModelConfig,
+    DataLoaderConfig,
     GraphClassifierModelConfig,
     NodeClassifierModelConfig,
     TaskConfig,
@@ -56,6 +57,7 @@ class STGymModule(pl.LightningModule):
         ),
         train_cfg: TrainConfig,
         task_cfg: TaskConfig,
+        dl_cfg: DataLoaderConfig,
         dim_out: int = None,
     ):
         super().__init__()
@@ -74,11 +76,11 @@ class STGymModule(pl.LightningModule):
         self.val_step_outputs = []
         self.test_step_outputs = []
 
-        self.kfold_split_index = None
+        # has integer value only if kfold split is used
+        self.kfold_split_index = (
+            dl_cfg.split.split_index if dl_cfg.use_kfold_split else None
+        )
         # self.save_hyperparameters()  # do not use this, as it records the pydantic models directly
-
-    def set_kfold_split_index(self, split_index: int):
-        self.kfold_split_index = split_index
 
     @property
     def use_kfold_split(self) -> bool:

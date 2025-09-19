@@ -4,6 +4,7 @@ import torch
 from stgym.config_schema import (
     ClusteringModelConfig,
     DataLoaderConfig,
+    ExperimentConfig,
     GraphClassifierModelConfig,
     LRScheduleConfig,
     MessagePassingConfig,
@@ -111,7 +112,7 @@ def dl_cfg():
 @pytest.fixture
 def kfold_dl_cfg():
     cfg = DataLoaderConfig(batch_size=8)
-    cfg.split = DataLoaderConfig.KFoldSplitConfig(num_folds=3)
+    cfg.split = DataLoaderConfig.KFoldSplitConfig(num_folds=3, split_index=0)
     return cfg
 
 
@@ -150,6 +151,7 @@ def test_train_on_graph_clf_task(
         model_cfg=graph_clf_model_cfg,
         train_cfg=graph_clf_train_cfg,
         task_cfg=graph_clf_task_cfg,
+        dl_cfg=dl_cfg,
         dim_out=1,  # 1 for binary classification
     ).to(DEVICE)
     train(model_module, data_module, graph_clf_train_cfg, mlflow_cfg, logger=None)
@@ -166,9 +168,11 @@ def test_clustering_task(
         model_cfg=clustering_model_cfg,
         train_cfg=clustering_train_cfg,
         task_cfg=clustering_task_cfg,
+        dl_cfg=dl_cfg,
     ).to(DEVICE)
 
     train(model_module, data_module, clustering_train_cfg, mlflow_cfg, logger=None)
+    rm_dir_if_exists("tests/data/human-crc-test/processed")
 
 
 def test_train_on_node_clf_task(
@@ -182,10 +186,12 @@ def test_train_on_node_clf_task(
         model_cfg=node_clf_model_cfg,
         train_cfg=node_clf_train_cfg,
         task_cfg=node_clf_task_cfg,
+        dl_cfg=dl_cfg,
         dim_out=node_clf_task_cfg.num_classes,
     ).to(DEVICE)
 
     train(model_module, data_module, node_clf_train_cfg, mlflow_cfg, logger=None)
+    rm_dir_if_exists("tests/data/human-crc-test/processed")
 
 
 class TestUsingKfoldData:
@@ -198,27 +204,22 @@ class TestUsingKfoldData:
         mlflow_cfg,
     ):
         """for graph classification task"""
-        split_index = 1
+        # trigger the model_validator logic
+        # kind of a hack
+        ExperimentConfig(
+            task=graph_clf_task_cfg,
+            data_loader=kfold_dl_cfg,
+            model=graph_clf_model_cfg,
+            train=graph_clf_train_cfg,
+        )
         data_module = STKfoldDataModule(graph_clf_task_cfg, kfold_dl_cfg)
-        data_module.create_loader_at_fold(split_index)
         model_module = STGymModule(
             dim_in=data_module.num_features,
             model_cfg=graph_clf_model_cfg,
             train_cfg=graph_clf_train_cfg,
             task_cfg=graph_clf_task_cfg,
+            dl_cfg=kfold_dl_cfg,
             dim_out=1,  # 1 for binary classification
         ).to(DEVICE)
-        model_module.set_kfold_split_index(split_index)
         train(model_module, data_module, graph_clf_train_cfg, mlflow_cfg, logger=None)
         rm_dir_if_exists("tests/data/brca-test/processed")
-
-    # @patch("STGymModule.log")
-    # def test_log_args(
-    #     self,
-    #     graph_clf_task_cfg,
-    #     kfold_dl_cfg,
-    #     graph_clf_model_cfg,
-    #     graph_clf_train_cfg,
-    #     mlflow_cfg,
-    # ):
-    #     """test that the 1st argument (key name) to self.log correctly containts the split index info"""
