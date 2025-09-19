@@ -97,13 +97,15 @@ def create_loader(
     return train_loader, val_loader, test_loader
 
 
-def create_kfold_loader(ds, cfg: DataLoaderConfig, k: int):
+def create_kfold_loader(ds, cfg: DataLoaderConfig):
     """Create data loader with kfold split at fold k."""
     assert isinstance(
         cfg.split, DataLoaderConfig.KFoldSplitConfig
     ), f"Wrong split type {type(cfg.split)}"
+    k = cfg.split.split_index
+    # do validation
+    DataLoaderConfig.KFoldSplitConfig.model_validate(cfg.split.model_dump())
     num_folds = cfg.split.num_folds
-    assert 0 <= k < num_folds, f"{k} not in range: [0, {num_folds})"
 
     # Create KFold splitter
     kfold = KFold(n_splits=num_folds, shuffle=True, random_state=42)
@@ -174,8 +176,5 @@ class STKfoldDataModule(STDataModuleBase):
 
     def __init__(self, task_cfg: TaskConfig, dl_cfg: DataLoaderConfig):
         self.ds = load_dataset(task_cfg, dl_cfg).to(dl_cfg.device)
-        self.dl_cfg = dl_cfg
+        self.loaders = create_kfold_loader(self.ds, dl_cfg)
         super().__init__(has_val=True, has_test=True)
-
-    def create_loader_at_fold(self, k: int):
-        self.loaders = create_kfold_loader(self.ds, self.dl_cfg, k=k)

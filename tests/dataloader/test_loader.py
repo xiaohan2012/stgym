@@ -47,12 +47,16 @@ def test_create_loader(mock_task_cfg, mock_dl_cfg):
 
 def test_create_kfold_loader(mock_task_cfg, mock_dl_cfg):
     # Use 2 folds for simple validation
-    mock_dl_cfg.split = DataLoaderConfig.KFoldSplitConfig(num_folds=2)
+    mock_dl_cfg_0, mock_dl_cfg_1 = mock_dl_cfg.model_copy(
+        deep=True
+    ), mock_dl_cfg.model_copy(deep=True)
+    mock_dl_cfg_0.split = DataLoaderConfig.KFoldSplitConfig(num_folds=2, split_index=0)
+    mock_dl_cfg_1.split = DataLoaderConfig.KFoldSplitConfig(num_folds=2, split_index=1)
     dataset = load_dataset(mock_task_cfg, mock_dl_cfg)
 
     # Get loaders for both folds
-    loaders_at_fold_0 = create_kfold_loader(dataset, mock_dl_cfg, k=0)
-    loaders_at_fold_1 = create_kfold_loader(dataset, mock_dl_cfg, k=1)
+    loaders_at_fold_0 = create_kfold_loader(dataset, mock_dl_cfg_0)
+    loaders_at_fold_1 = create_kfold_loader(dataset, mock_dl_cfg_1)
 
     # Extract datasets for easier comparison
     train_0, val_0, test_0 = loaders_at_fold_0
@@ -110,21 +114,13 @@ class TestSTKfoldDataModule:
 
     @pytest.mark.parametrize("k", [0, 1, 2])
     def test_basic(self, mock_task_cfg, mock_dl_cfg, k):
+        mock_dl_cfg.split = DataLoaderConfig.KFoldSplitConfig(
+            num_folds=self.num_folds, split_index=k
+        )
         mod = STKfoldDataModule(mock_task_cfg, mock_dl_cfg)
-        mock_dl_cfg.split = DataLoaderConfig.KFoldSplitConfig(num_folds=self.num_folds)
-        mod.create_loader_at_fold(k)
         assert isinstance(mod.train_dataloader(), DataLoader)
         assert isinstance(mod.val_dataloader(), DataLoader)
         assert isinstance(mod.test_dataloader(), DataLoader)
-
-    @pytest.mark.parametrize("k", [-1, 3, 100])
-    def test_k_out_of_range(self, mock_task_cfg, mock_dl_cfg, k):
-        """Test that invalid fold indices raise appropriate errors."""
-        mock_dl_cfg.split = DataLoaderConfig.KFoldSplitConfig(num_folds=self.num_folds)
-        mod = STKfoldDataModule(mock_task_cfg, mock_dl_cfg)
-
-        with pytest.raises(AssertionError, match="not in range"):
-            mod.create_loader_at_fold(k=k)
 
 
 def teardown_module(module):
