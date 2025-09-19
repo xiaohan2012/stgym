@@ -198,7 +198,7 @@ class TrainConfig(BaseModel):
     max_epoch: PositiveInt
 
     # setting to 'auto' is important to parallelize multiple experiment trials in ray across multiple GPUs
-    devices: str | int = "auto"
+    devices: str | NonNegativeInt | list[NonNegativeInt] = "auto"
 
     early_stopping: EarlyStoppingConfig = EarlyStoppingConfig(
         metric="val_loss", mode="min", patience=10
