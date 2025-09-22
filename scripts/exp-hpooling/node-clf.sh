@@ -6,4 +6,4 @@ time python run_rct.py \
        resource=gpu-2 \
        sample_size=100 \
        design_space.train.max_epoch=200 \
-       mlflow.experiment_name=node-clf-hpooling-sep-16-2025
+       mlflow.experiment_name=node-clf-hpooling-$(date +%m-%d-%Y)
