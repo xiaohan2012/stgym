@@ -261,18 +261,27 @@ class TestRunExp:
 
         assert result is True
 
+    @pytest.mark.parametrize(
+        "mock_target,exception_msg",
+        [
+            ("stgym.rct.run.train", "Training failed"),
+            ("stgym.rct.run.STDataModule", "Data loading failed"),
+        ],
+    )
     @patch("stgym.rct.run.logz_logger")
     def test_error_handling(
         self,
         mock_logger,
         mlflow_config,
+        mock_target,
+        exception_msg,
     ):
-        """Test error handling during training"""
+        """Test error handling during training and data loading"""
         exp_cfg = self._create_experiment_config("graph_clf")
 
-        # Mock train to raise an exception
-        with patch("stgym.rct.run.train") as mock_train:
-            mock_train.side_effect = RuntimeError("Training failed")
+        # Mock the specified target to raise an exception
+        with patch(mock_target) as mock_component:
+            mock_component.side_effect = RuntimeError(exception_msg)
 
             result = run_exp(exp_cfg, mlflow_config)
 
@@ -281,4 +290,4 @@ class TestRunExp:
             # Error should be logged
             mock_logger.error.assert_called_once()
             error_call = mock_logger.error.call_args[0][0]
-            assert "Training failed" in error_call
+            assert exception_msg in error_call
