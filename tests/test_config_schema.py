@@ -12,6 +12,7 @@ from stgym.config_schema import (
     PostMPConfig,
     TaskConfig,
     TrainConfig,
+    dataset_eval_mode,
 )
 
 
@@ -129,3 +130,22 @@ class TestearlyStoppingModificationLogic:
         )
         # Check that early stopping metric was not modified
         assert exp_config_regular.train.early_stopping.metric == "val_loss"
+
+
+class TestExperimentConfig:
+    @pytest.mark.parametrize("ds_name", list(dataset_eval_mode.keys()))
+    def test_override_eval_mode(self, ds_name: str):
+        cfg = ExperimentConfig(
+            task=TaskConfig(
+                dataset_name=ds_name,
+                type="node-classification",
+                num_classes=2,
+            ),
+            data_loader=DataLoaderConfig(split=DataLoaderConfig.DataSplitConfig()),
+            model=GraphClassifierModelConfig(
+                mp_layers=[MessagePassingConfig(layer_type="gcnconv")],
+                post_mp_layer=PostMPConfig(dims=[10]),
+            ),
+            train=TrainConfig(max_epoch=100),
+        )
+        assert cfg.data_loader.split == dataset_eval_mode[ds_name]

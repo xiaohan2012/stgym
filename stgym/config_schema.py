@@ -4,6 +4,7 @@ import pydash as _
 import torch
 from pydantic import (
     BaseModel,
+    ConfigDict,
     Field,
     HttpUrl,
     NonNegativeFloat,
@@ -16,6 +17,7 @@ from pydantic.json_schema import SkipJsonSchema
 from pytorch_lightning.loggers import MLFlowLogger
 from typing_extensions import Self
 
+# from stgym.data_loader.const import DatasetName
 from stgym.utils import YamlLoaderMixin
 
 ActivationType = Literal["prelu", "relu", "swish"]
@@ -158,7 +160,7 @@ class DataLoaderConfig(BaseModel):
         """Config for k-fold split."""
 
         num_folds: PositiveInt = Field(default=5, gt=2)
-        split_index: NonNegativeInt
+        split_index: NonNegativeInt = 0
 
         @model_validator(mode="after")
         def validate_split_index_range(self) -> "KFoldSplitConfig":
@@ -184,7 +186,7 @@ class DataLoaderConfig(BaseModel):
     @property
     def use_kfold_split(self) -> bool:
         """return true of kfold split is used"""
-        return hasattr(self.split, "num_folds")
+        return isinstance(self.split, DataLoaderConfig.KFoldSplitConfig)
 
 
 class TrainConfig(BaseModel):
@@ -233,7 +235,16 @@ class DataConfig(BaseModel):
         test_ratio: PositiveFloat
 
 
+dataset_eval_mode = {
+    "human-intestine": DataLoaderConfig.KFoldSplitConfig(
+        num_folds=8
+    ),  # since there are only 8 data points
+}
+
+
 class ExperimentConfig(BaseModel):
+    model_config = ConfigDict(validate_assignment=True)
+
     task: TaskConfig
     data_loader: DataLoaderConfig
     model: (
@@ -243,10 +254,17 @@ class ExperimentConfig(BaseModel):
     group_id: Optional[int] = None
 
     @model_validator(mode="after")
-    def modify_early_stopping_metric_when_kfold_split_is_used(self):
+    def modify_early_stopping_metric_when_kfold_split_is_used(self) -> Self:
         """Early stopping metric should contain Kfold split"""
         if self.data_loader.use_kfold_split:
             self.train.early_stopping.metric = f"split_{self.data_loader.split.split_index}_{self.train.early_stopping.metric}"
+        return self
+
+    @model_validator(mode="after")
+    def override_eval_mode(self) -> Self:
+        """Override evaluation mode for certain dataset"""
+        if self.task.dataset_name in dataset_eval_mode:
+            self.data_loader.split = dataset_eval_mode[self.task.dataset_name]
         return self
 
 
