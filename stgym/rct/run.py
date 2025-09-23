@@ -1,3 +1,5 @@
+import traceback
+
 from logzero import logger as logz_logger
 from omegaconf import OmegaConf
 
@@ -50,6 +52,7 @@ def run_exp(exp_cfg: ExperimentConfig, mlflow_cfg: MLFlowConfig):
 
     try:
         if not use_kfold_cv:
+            logz_logger.info("Evaluation mode: train/validation/test split.")
             # regular train/val/test split
             data_module = STDataModule(exp_cfg.task, exp_cfg.data_loader)
             model_module = STGymModule(
@@ -69,12 +72,14 @@ def run_exp(exp_cfg: ExperimentConfig, mlflow_cfg: MLFlowConfig):
                 logger=logger,
             )
         else:
+            logz_logger.info("Evaluation mode: k-fold cross validation.")
             # k-fold split
             for fold in range(exp_cfg.data_loader.split.num_folds):
-                # Create fold-specific data loader config
+                exp_cfg.data_loader.split.split_index = fold
+                # trigger model validation and post-processing logic
+                exp_cfg = exp_cfg.validate()
+
                 fold_dl_cfg = exp_cfg.data_loader.model_copy()
-                fold_dl_cfg.split = exp_cfg.data_loader.split.model_copy()
-                fold_dl_cfg.split.split_index = fold
 
                 # Create data module for this fold
                 fold_data_module = STKfoldDataModule(exp_cfg.task, fold_dl_cfg)
@@ -101,6 +106,7 @@ def run_exp(exp_cfg: ExperimentConfig, mlflow_cfg: MLFlowConfig):
     except Exception as e:
         error_msg = f"Training failed: {e}"
         logz_logger.error(error_msg)
+        traceback.print_exc()
         if logger is not None:
             logger.experiment.log_text(logger.run_id, error_msg, "training_error.txt")
 

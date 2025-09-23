@@ -121,6 +121,11 @@ class TestearlyStoppingModificationLogic:
         # Check that early stopping metric was modified to include split index
         assert exp_config.train.early_stopping.metric == "split_2_val_loss"
 
+        # fire again
+        exp_config.data_loader.split.split_index = 3
+        exp_config = exp_config.validate()
+        assert exp_config.train.early_stopping.metric == "split_3_val_loss"
+
     def test_modification_silent(self):
         # Test with regular split - metric should not be modified
         exp_config_regular = self.create_exp_config(

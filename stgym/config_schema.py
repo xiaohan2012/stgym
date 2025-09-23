@@ -1,3 +1,4 @@
+import re
 from typing import Literal, Optional
 
 import pydash as _
@@ -32,6 +33,14 @@ PostMPLayerType = Literal["mlp", "linear"]
 GraphConstructionApproach = Literal["knn", "radius"]
 TaskType = Literal["node-classification", "graph-classification", "node-clustering"]
 EvalMetric = Literal["pr-auc", "roc-auc", "accuracy", "nmi"]
+
+
+class MyBaseModel(BaseModel):
+    model_config = ConfigDict(validate_assignment=True)
+
+    def validate(self) -> Self:
+        """validate the model again."""
+        return self.__class__.model_validate(self.model_dump())
 
 
 class PoolingConfig(BaseModel):
@@ -242,9 +251,7 @@ dataset_eval_mode = {
 }
 
 
-class ExperimentConfig(BaseModel):
-    model_config = ConfigDict(validate_assignment=True)
-
+class ExperimentConfig(MyBaseModel):
     task: TaskConfig
     data_loader: DataLoaderConfig
     model: (
@@ -257,7 +264,15 @@ class ExperimentConfig(BaseModel):
     def modify_early_stopping_metric_when_kfold_split_is_used(self) -> Self:
         """Early stopping metric should contain Kfold split"""
         if self.data_loader.use_kfold_split:
-            self.train.early_stopping.metric = f"split_{self.data_loader.split.split_index}_{self.train.early_stopping.metric}"
+            metric = (
+                re.sub(r"split_\d+_", "", self.train.early_stopping.metric)
+                if self.train.early_stopping.metric.startswith("split")
+                else self.train.early_stopping.metric
+            )
+
+            self.train.early_stopping.metric = (
+                f"split_{self.data_loader.split.split_index}_{metric}"
+            )
         return self
 
     @model_validator(mode="after")
