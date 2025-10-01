@@ -11,6 +11,7 @@ from stgym.config_schema import DataLoaderConfig, TaskConfig
 from stgym.data_loader.brca import BRCADataset
 from stgym.data_loader.breast_cancer import BreastCancerDataset
 from stgym.data_loader.cellcontrast_breast import CellcontrastBreastDataset
+from stgym.data_loader.charville import CharvilleDataset
 from stgym.data_loader.colorectal_cancer import ColorectalCancerDataset
 from stgym.data_loader.ds_info import get_all_ds_names, get_info  # noqa
 from stgym.data_loader.human_crc import HumanCRCDataset
@@ -42,6 +43,8 @@ def get_dataset_class(ds_name: str):
         return HumanLungDataset
     elif ds_name == "colorectal-cancer":
         return ColorectalCancerDataset
+    elif ds_name == "charville":
+        return CharvilleDataset
     else:
         raise NotImplementedError(f"{ds_name} is not available yet.")
 
