@@ -10,6 +10,7 @@ from torch_geometric.loader import DataLoader
 from stgym.config_schema import DataLoaderConfig, TaskConfig
 from stgym.data_loader.brca import BRCADataset
 from stgym.data_loader.breast_cancer import BreastCancerDataset
+from stgym.data_loader.colorectal_cancer import ColorectalCancerDataset
 from stgym.data_loader.ds_info import get_all_ds_names, get_info  # noqa
 from stgym.data_loader.human_crc import HumanCRCDataset
 from stgym.data_loader.human_intestine import HumanIntestineDataset
@@ -36,6 +37,8 @@ def get_dataset_class(ds_name: str):
         return HumanIntestineDataset
     elif ds_name == "human-lung":
         return HumanLungDataset
+    elif ds_name == "colorectal-cancer":
+        return ColorectalCancerDataset
     else:
         raise NotImplementedError(f"{ds_name} is not available yet.")
 

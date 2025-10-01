@@ -69,6 +69,14 @@ __data__ = {
         "data_source_url": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE190094",
         "used_in_paper": "High-resolution Slide-seqV2 spatial transcriptomics enables discovery of disease-specific cell neighborhoods and pathways",
     },
+    DatasetName.colorectal_cancer: {
+        "min_span": 23.90913963317871,
+        "max_span": 25.46361541748047,
+        "num_classes": 38,
+        "task_type": "node-classification",
+        "data_source_url": "https://zenodo.org/records/15042463",
+        "used_in_paper": "High-definition spatial transcriptomic profiling of immune cell populations in colorectal cancer",
+    },
 }
 
 

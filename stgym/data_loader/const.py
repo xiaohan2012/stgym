@@ -11,3 +11,4 @@ class DatasetName:
     human_lung = "human-lung"
     breast_cancer = "breast-cancer"
     mouse_kidney = "mouse-kidney"
+    colorectal_cancer = "colorectal-cancer"
