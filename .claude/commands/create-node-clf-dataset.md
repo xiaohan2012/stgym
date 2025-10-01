@@ -26,6 +26,7 @@ Columns encode the following information:
 - The CSV file path and dataset name will be specified in later instructions.
   - Ask me if they're not provided
 - Data folder is at `{PROJECT_ROOT}/data/{dataset_name}`
+  - If you're under a git worktree, make sure the data is copied to the main worktree
 
 ## Step 1: select the relevant columns
 
