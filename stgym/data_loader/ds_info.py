@@ -70,8 +70,8 @@ __data__ = {
         "used_in_paper": "High-resolution Slide-seqV2 spatial transcriptomics enables discovery of disease-specific cell neighborhoods and pathways",
     },
     DatasetName.cellcontrast_breast: {
-        "min_span": 16.34262733088118,
-        "max_span": 16.953102237662257,
+        "min_span": 16.074260711669922,
+        "max_span": 16.33220672607422,
         "num_classes": 8,
         "task_type": "node-classification",
         "data_source_url": "https://cellxgene.cziscience.com/collections/4195ab4c-20bd-4cd3-8b3d-65601277e731",
