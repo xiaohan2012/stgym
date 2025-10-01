@@ -19,6 +19,7 @@ from stgym.data_loader.human_lung import HumanLungDataset
 from stgym.data_loader.mouse_kidney import MouseKidneyDataset
 from stgym.data_loader.mouse_preoptic import MousePreopticDataset
 from stgym.data_loader.mouse_spleen import MouseSpleenDataset
+from stgym.data_loader.upmc import UpmcDataset
 
 
 def get_dataset_class(ds_name: str):
@@ -42,6 +43,8 @@ def get_dataset_class(ds_name: str):
         return HumanLungDataset
     elif ds_name == "colorectal-cancer":
         return ColorectalCancerDataset
+    elif ds_name == "upmc":
+        return UpmcDataset
     else:
         raise NotImplementedError(f"{ds_name} is not available yet.")
 

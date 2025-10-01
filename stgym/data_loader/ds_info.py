@@ -85,6 +85,14 @@ __data__ = {
         "data_source_url": "https://zenodo.org/records/15042463",
         "used_in_paper": "High-definition spatial transcriptomic profiling of immune cell populations in colorectal cancer",
     },
+    DatasetName.upmc: {
+        "min_span": 2003.0,
+        "max_span": 3019.0,
+        "num_classes": 17,
+        "task_type": "node-classification",
+        "data_source_url": "",
+        "used_in_paper": "",
+    },
 }
 
 
