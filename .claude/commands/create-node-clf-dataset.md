@@ -64,6 +64,11 @@ Refer to the unit tests under `./tests/dataloader/test_*.py`.
 2. update `get_dataset_class` in `stgym/data_loader/__init__.py`
 3. add the dataset info in `stgym/data_loader/ds_info.py`
 
+Remarks:
+
+- to obtain the `min_span` and `max_span` info for this new dataset, use the script get_pos_maxpsan.py
+- to obtain `num_classes`, load the dataset to inspect
+
 # Further information about the dataset
 
 #$ARGUMENTS
