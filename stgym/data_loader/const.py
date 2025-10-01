@@ -14,3 +14,4 @@ class DatasetName:
     cellcontrast_breast = "cellcontrast-breast"
     colorectal_cancer = "colorectal-cancer"
     upmc = "upmc"
+    charville = "charville"

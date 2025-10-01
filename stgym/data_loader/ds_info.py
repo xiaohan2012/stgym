@@ -93,6 +93,14 @@ __data__ = {
         "data_source_url": "",
         "used_in_paper": "",
     },
+    DatasetName.charville: {
+        "min_span": 1459.0,
+        "max_span": 1912.0,
+        "num_classes": 15,
+        "task_type": "node-classification",
+        "data_source_url": "https://gitlab.com/enable-medicine-public/space-gm/-/tree/main/data/voronoi?ref_type=heads",
+        "used_in_paper": "Annotation of spatially resolved single-cell data with STELLAR",
+    },
 }
 
 
