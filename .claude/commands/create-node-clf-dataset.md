@@ -58,6 +58,12 @@ For example:
 
 Refer to the unit tests under `./tests/dataloader/test_*.py`.
 
+## Step 4: update other relevant files
+
+1. add the new dataset name in `stgym/data_loader/const.py`
+2. update `get_dataset_class` in `stgym/data_loader/__init__.py`
+3. add the dataset info in `stgym/data_loader/ds_info.py`
+
 # Further information about the dataset
 
 #$ARGUMENTS
