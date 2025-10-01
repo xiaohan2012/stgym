@@ -41,7 +41,7 @@ __data__ = {
         "min_span": 9070.0,
         "max_span": 9406.0,
         "num_classes": 21,
-        "task_type": "node-classificatioin",
+        "task_type": "node-classification",
         "data_source_url": "https://datadryad.org/landing/show?id=doi%3A10.5061%2Fdryad.g4f4qrfrc",
         "used_in_paper": "Annotation of spatially resolved single-cell data with STELLAR",
     },
@@ -49,7 +49,7 @@ __data__ = {
         "min_span": 13.316166877746582,
         "max_span": 37.27265167236328,
         "num_classes": 48,  # there are a few cell types with very few occurrences
-        "task_type": "node-classificatioin",
+        "task_type": "node-classification",
         "data_source_url": "https://www.lungmap.net/dataset/?experiment_id=LMEX0000004396&view=downloads",
         "used_in_paper": "The human body at cellular resolution: the NIH Human Biomolecular Atlas Program",
     },
