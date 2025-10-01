@@ -60,7 +60,7 @@ def sample_across_dimensions(
     else:
         ret = {}
 
-    remaining_fields = _.pull_all(_.keys(space.__fields__), zipped_fields + ["zip_"])
+    remaining_fields = _.pull_all(_.keys(space.model_fields), zipped_fields + ["zip_"])
 
     for dimension in remaining_fields:
         val = getattr(space, dimension)
