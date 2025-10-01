@@ -12,3 +12,4 @@ class DatasetName:
     breast_cancer = "breast-cancer"
     mouse_kidney = "mouse-kidney"
     cellcontrast_breast = "cellcontrast-breast"
+    colorectal_cancer = "colorectal-cancer"

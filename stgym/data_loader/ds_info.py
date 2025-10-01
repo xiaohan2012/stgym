@@ -77,6 +77,14 @@ __data__ = {
         "data_source_url": "https://cellxgene.cziscience.com/collections/4195ab4c-20bd-4cd3-8b3d-65601277e731",
         "used_in_paper": "CellContrast: Reconstructing spatial relationships in single-cell RNA sequencing data via deep contrastive learning",
     },
+    DatasetName.colorectal_cancer: {
+        "min_span": 23.90913963317871,
+        "max_span": 25.46361541748047,
+        "num_classes": 38,
+        "task_type": "node-classification",
+        "data_source_url": "https://zenodo.org/records/15042463",
+        "used_in_paper": "High-definition spatial transcriptomic profiling of immune cell populations in colorectal cancer",
+    },
 }
 
 
