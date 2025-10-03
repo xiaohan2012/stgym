@@ -9,6 +9,7 @@ from torch_geometric.loader import DataLoader
 
 from stgym.config_schema import DataLoaderConfig, TaskConfig
 from stgym.data_loader.brca import BRCADataset
+from stgym.data_loader.brca_grade import BRCAGradeDataset
 from stgym.data_loader.breast_cancer import BreastCancerDataset
 from stgym.data_loader.cellcontrast_breast import CellcontrastBreastDataset
 from stgym.data_loader.charville import CharvilleDataset
@@ -48,6 +49,8 @@ def get_dataset_class(ds_name: str):
         return UpmcDataset
     elif ds_name == "charville":
         return CharvilleDataset
+    elif ds_name in ("brca-grade", "brca-grade-test"):
+        return BRCAGradeDataset
     else:
         raise NotImplementedError(f"{ds_name} is not available yet.")
 
