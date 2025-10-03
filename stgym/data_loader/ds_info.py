@@ -12,6 +12,14 @@ __data__ = {
         "data_source_url": "https://zenodo.org/records/6376767",
         "used_in_paper": "Unsupervised discovery of tissue architecture in multiplexed imaging",
     },
+    DatasetName.brca_ptnm_m: {
+        "min_span": 297.6280212402344,
+        "max_span": 1018.4807739257812,
+        "num_classes": 2,
+        "task_type": "graph-classification",
+        "data_source_url": "https://zenodo.org/records/6376767",
+        "used_in_paper": "Unsupervised discovery of tissue architecture in multiplexed imaging",
+    },
     DatasetName.human_crc: {
         "min_span": 795.0,
         "max_span": 1919.0,

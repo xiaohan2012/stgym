@@ -9,6 +9,7 @@ from torch_geometric.loader import DataLoader
 
 from stgym.config_schema import DataLoaderConfig, TaskConfig
 from stgym.data_loader.brca import BRCADataset
+from stgym.data_loader.brca_ptnm_m import BRCAPTNMMDataset
 from stgym.data_loader.breast_cancer import BreastCancerDataset
 from stgym.data_loader.cellcontrast_breast import CellcontrastBreastDataset
 from stgym.data_loader.charville import CharvilleDataset
@@ -26,6 +27,8 @@ from stgym.data_loader.upmc import UpmcDataset
 def get_dataset_class(ds_name: str):
     if ds_name in ("brca", "brca-test"):
         return BRCADataset
+    elif ds_name in ("brca-ptnm-m", "brca-ptnm-m-test"):
+        return BRCAPTNMMDataset
     elif ds_name == "breast-cancer":
         return BreastCancerDataset
     elif ds_name in ("cellcontrast-breast", "cellcontrast-breast-test"):

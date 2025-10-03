@@ -4,6 +4,7 @@ from dataclasses import dataclass
 @dataclass(frozen=True)
 class DatasetName:
     brca = "brca"
+    brca_ptnm_m = "brca-ptnm-m"
     human_crc = "human-crc"
     mouse_spleen = "mouse-spleen"
     mouse_preoptic = "mouse-preoptic"
