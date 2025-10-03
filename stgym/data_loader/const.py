@@ -16,3 +16,4 @@ class DatasetName:
     colorectal_cancer = "colorectal-cancer"
     upmc = "upmc"
     charville = "charville"
+    brca_grade = "brca-grade"

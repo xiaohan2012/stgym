@@ -109,6 +109,14 @@ __data__ = {
         "data_source_url": "https://gitlab.com/enable-medicine-public/space-gm/-/tree/main/data/voronoi?ref_type=heads",
         "used_in_paper": "Annotation of spatially resolved single-cell data with STELLAR",
     },
+    DatasetName.brca_grade: {
+        "min_span": 297.6280212402344,
+        "max_span": 1018.4807739257812,
+        "num_classes": 3,
+        "task_type": "graph-classification",
+        "data_source_url": "https://zenodo.org/records/6376767",
+        "used_in_paper": "Unsupervised discovery of tissue architecture in multiplexed imaging",
+    },
 }
 
 
