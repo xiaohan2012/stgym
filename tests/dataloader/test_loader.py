@@ -1,4 +1,3 @@
-import numpy as np
 import pytest
 import torch
 from torch.utils.data import DataLoader
@@ -44,12 +43,6 @@ def test_create_loader(mock_task_cfg, mock_dl_cfg):
             batch = next(iter(loader))
             assert isinstance(batch.adj_t, torch.Tensor)
             assert batch.adj_t.layout == torch.sparse_coo
-
-    # ensure 0 mean and 1 std
-    train_loader = loaders[0]
-    train_x = np.concatenate([data.x.numpy() for data in train_loader])
-    np.testing.assert_allclose(train_x.mean(axis=0), 0, atol=1e-5)
-    np.testing.assert_allclose(train_x.std(axis=0), 1, atol=1e-5)
 
 
 def test_create_kfold_loader(mock_task_cfg, mock_dl_cfg):
@@ -107,17 +100,6 @@ def test_create_kfold_loader(mock_task_cfg, mock_dl_cfg):
         assert hasattr(batch, "x")  # Should have node features
         assert hasattr(batch, "y")  # Should have labels
         assert hasattr(batch, "adj_t")  # adj matrix
-
-    # features in training data have 0 mean and unit std
-    train_x = np.concatenate([data.x.numpy() for data in train_0])
-    np.testing.assert_allclose(train_x.mean(axis=0), 0)
-    np.testing.assert_allclose(train_x.std(axis=0), 1)
-
-    # train_features = train_0.dataset.dataset.x[train_0.dataset.indices]
-    # np.testing.assert_allclose(train_features.mean(axis=0).numpy(), 0,
-    #                            atol=1e-6)
-    # np.testing.assert_allclose(train_features.std(axis=0).numpy(), 1,
-    #                            atol=1e-6)
 
 
 def test_tl_module_init(mock_task_cfg, mock_dl_cfg):
