@@ -3,7 +3,9 @@ import torch
 import torch_geometric.transforms as T
 from logzero import logger
 from sklearn.model_selection import KFold
+from sklearn.preprocessing import StandardScaler
 from torch.utils.data import Subset, random_split
+from torch_geometric.data import InMemoryDataset
 from torch_geometric.data.lightning.datamodule import LightningDataModule
 from torch_geometric.loader import DataLoader
 
@@ -101,6 +103,10 @@ def create_loader(
     train_ds, val_ds, test_ds = random_split(
         ds, lengths=[cfg.split.train_ratio, cfg.split.val_ratio, cfg.split.test_ratio]
     )
+
+    # Apply standardization
+    _apply_standardization(train_ds, val_ds, test_ds)
+
     train_loader = DataLoader(
         train_ds, batch_size=cfg.batch_size, shuffle=True, num_workers=cfg.num_workers
     )
@@ -139,6 +145,9 @@ def create_kfold_loader(ds, cfg: DataLoaderConfig):
         ds, val_indices.tolist()
     )  # test data same as val for k-fold CV
 
+    # Apply standardization
+    _apply_standardization(train_ds, val_ds, test_ds)
+
     # Create DataLoaders with same parameters as create_loader
     train_loader = DataLoader(
         train_ds, batch_size=cfg.batch_size, shuffle=True, num_workers=cfg.num_workers
@@ -151,6 +160,55 @@ def create_kfold_loader(ds, cfg: DataLoaderConfig):
     )
 
     return train_loader, val_loader, test_loader
+
+
+def _apply_standardization(
+    train_ds: InMemoryDataset, val_ds: InMemoryDataset, test_ds: InMemoryDataset
+) -> None:
+    """Apply feature standardization using sklearn StandardScaler.
+
+    Fits the scaler on training data and applies the same transformation
+    to validation and test data to prevent data leakage.
+    """
+
+    # Get training features directly from dataset using subset indices
+    train_features = train_ds.dataset[train_ds.indices].x
+
+    # Fit scaler on training features
+    scaler = StandardScaler()
+    scaler.fit(train_features.numpy())
+
+    # Transform all datasets
+    _transform_dataset_features(train_ds, scaler)
+    print(
+        "train_ds.x.mean(axis=0): {}".format(
+            train_ds.dataset[train_ds.indices].x.mean(axis=0)
+        )
+    )
+    print(
+        "train_ds.x.std(axis=0): {}".format(
+            train_ds.dataset[train_ds.indices].x.std(axis=0)
+        )
+    )
+    # _transform_dataset_features(val_ds, scaler)
+    # _transform_dataset_features(test_ds, scaler)
+
+
+def _transform_dataset_features(
+    ds_subset: InMemoryDataset, scaler: StandardScaler
+) -> None:
+    """Transform features in a dataset using a fitted scaler.
+
+    This modifies the data in place."""
+    # Get features for this subset and transform them
+    subset_features = ds_subset.dataset[ds_subset.indices]._data.x
+    x_normalized = scaler.transform(subset_features.numpy())
+
+    # Update the original dataset features for this subset
+    # note: it is important to work on _data attribute in order to modify the internal data in place
+    ds_subset.dataset[ds_subset.indices]._data.x = torch.tensor(
+        x_normalized, dtype=subset_features.dtype
+    )
 
 
 class STDataModuleBase(LightningDataModule):
