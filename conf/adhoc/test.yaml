@@ -45,11 +45,10 @@ task:
   num_classes: 2
   type: graph-classification
 train:
-  early_stopping: null
   lr_schedule:
-    max_epoch: 200
+    max_epoch: 100
     type: null
-  max_epoch: 200
+  max_epoch: 5
   optim:
     base_lr: 0.1
     momentum: 0.9

@@ -13,6 +13,11 @@ from omegaconf import OmegaConf
 
 from stgym.config_schema import ExperimentConfig, MLFlowConfig
 from stgym.rct.run import run_exp
+from stgym.utils import (
+    export_memory_snapshot,
+    start_record_memory_history,
+    stop_record_memory_history,
+)
 
 
 def load_yaml_config(yaml_path: str) -> ExperimentConfig:
@@ -94,8 +99,11 @@ def main():
 
     # Run experiment
     logger.info("Starting experiment...")
-    success = run_exp(exp_cfg, mlflow_cfg)
 
+    start_record_memory_history()
+    success = run_exp(exp_cfg, mlflow_cfg)
+    stop_record_memory_history()
+    export_memory_snapshot()
     if success:
         logger.info("Experiment completed successfully!")
     else:
