@@ -252,6 +252,7 @@ def stop_record_memory_history() -> None:
         return
 
     logger.info("Stopping snapshot record_memory_history")
+    torch.cuda.synchronize()
     torch.cuda.memory._record_memory_history(enabled=None)
 
 

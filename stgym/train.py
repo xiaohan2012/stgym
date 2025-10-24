@@ -4,7 +4,12 @@ import pytorch_lightning as pl
 import torch
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 
-from stgym.callbacks import MLFlowSystemMonitorCallback
+from stgym.callbacks import (
+    DataTransferProfilerCallback,
+    MemoryProfilerAtBatchCallback,
+    MemoryProfilerCallback,
+    MLFlowSystemMonitorCallback,
+)
 from stgym.config_schema import MLFlowConfig, TrainConfig
 from stgym.data_loader import STDataModule, STKfoldDataModule
 from stgym.tl_model import STGymModule
@@ -27,6 +32,7 @@ def train(
             (default: :obj:`True`)
         tl_train_config (dict, optional): Additional configuration to tl.Trainer
     """
+    print("model.device", model.device)
     # warnings.filterwarnings('ignore', '.*use `CSVLogger` as the default.*')
 
     # Configure float32 matmul precision when GPU is available
@@ -39,6 +45,10 @@ def train(
     # Only add MLFlow system monitor if tracking is enabled and logger is available
     if mlflow_config.track and logger is not None:
         callbacks.append(MLFlowSystemMonitorCallback())
+
+    callbacks.append(MemoryProfilerCallback())
+    callbacks.append(DataTransferProfilerCallback(profile_batch=1))
+    callbacks.append(MemoryProfilerAtBatchCallback(profile_batch=1))
 
     if train_cfg.early_stopping:
         callbacks.append(
@@ -65,6 +75,7 @@ def train(
         # 'mps' not supporting some sparse operations, therefore shouldn't be used
         accelerator="cpu" if not torch.cuda.is_available() else "gpu",
         logger=logger,
+        profiler="pytorch"
     )
 
     # make a forward pass to initialize the model
