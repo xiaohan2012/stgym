@@ -27,7 +27,7 @@ from stgym.config_schema import (
 from stgym.loss import compute_classification_loss
 from stgym.model import STClusteringModel, STGraphClassifier, STNodeClassifier
 from stgym.optimizer import create_optimizer_from_cfg, create_scheduler
-from stgym.utils import collapse_ptr_list
+from stgym.utils import collapse_ptr_list, get_cuda_memory_usage
 
 # from torch_geometric.graphgym.loss import compute_loss
 # from torch_geometric.graphgym.models.gnn import GNN
@@ -171,6 +171,7 @@ class STGymModule(pl.LightningModule):
             raise NotImplementedError
 
     def training_step(self, batch: Data, *args, **kwargs):
+        print(f"Train step batch size (in MB): {get_cuda_memory_usage(batch):.2f}")
         output = self._shared_step(batch, split=Split.train)
         self.log(self.prefix_log_key("train_loss"), output["loss"], prog_bar=True)
         return output

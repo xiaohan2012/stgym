@@ -272,3 +272,16 @@ def export_memory_snapshot() -> None:
     except Exception as e:
         logger.error(f"Failed to capture memory snapshot {e}")
         return
+
+
+def get_cuda_memory_usage(data: Data) -> float:
+    """Get GPU memory usage for Data object."""
+    if not torch.cuda.is_available():
+        return 0
+
+    total_bytes = 0
+    for key, item in data:
+        if torch.is_tensor(item) and item.is_cuda:
+            total_bytes += item.element_size() * item.nelement()
+
+    return total_bytes / (1024 * 1024)
