@@ -65,6 +65,7 @@ def train(
         # 'mps' not supporting some sparse operations, therefore shouldn't be used
         accelerator="cpu" if not torch.cuda.is_available() else "gpu",
         logger=logger,
+        profiler="pytorch"
     )
 
     # make a forward pass to initialize the model
