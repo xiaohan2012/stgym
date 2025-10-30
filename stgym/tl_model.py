@@ -172,13 +172,23 @@ class STGymModule(pl.LightningModule):
 
     def training_step(self, batch: Data, *args, **kwargs):
         output = self._shared_step(batch, split=Split.train)
-        self.log(self.prefix_log_key("train_loss"), output["loss"], prog_bar=True)
+        self.log(
+            self.prefix_log_key("train_loss"),
+            output["loss"],
+            prog_bar=True,
+            batch_size=len(batch),
+        )
         return output
 
     def validation_step(self, batch: Data, *args, **kwargs):
         output = self._shared_step(batch, split=Split.val)
         self.val_step_outputs.append(output)
-        self.log(self.prefix_log_key("val_loss"), output["loss"], prog_bar=True)
+        self.log(
+            self.prefix_log_key("val_loss"),
+            output["loss"],
+            prog_bar=True,
+            batch_size=len(batch),
+        )
         return output
 
     def test_step(self, batch: Data, *args, **kwargs):
