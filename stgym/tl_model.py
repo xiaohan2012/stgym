@@ -205,12 +205,12 @@ class STGymModule(pl.LightningModule):
         else:
             raise ValueError(split)
 
-        true = torch.cat([output["true"].cpu() for output in outputs])
-        pred = torch.cat([output["pred_score"].cpu() for output in outputs])
+        true = torch.cat([output["true"] for output in outputs])
+        pred = torch.cat([output["pred_score"] for output in outputs])
         if "ptr" not in outputs[0]:
             return true, pred
         else:
-            ptr = collapse_ptr_list(_.map_(outputs, lambda x: x["ptr"].cpu()))
+            ptr = collapse_ptr_list(_.map_(outputs, lambda x: x["ptr"]))
             return true, pred, ptr
 
     def _shared_epoch_end(self, split: Split):
@@ -220,18 +220,19 @@ class STGymModule(pl.LightningModule):
             if self.task_cfg.num_classes > 2:
                 # multi-classs
                 roc_auc = roc_auc_score(
-                    true,
-                    F.softmax(pred, dim=1).numpy(),
+                    true.cpu(),
+                    F.softmax(pred, dim=1).numpy().cpu(),
                     multi_class="ovo",  # Han: ovr does not work for incomplete label values (typically in small batches and num_classes is not small)
                     labels=list(range(self.task_cfg.num_classes)),
                 )
             else:
-                roc_auc = roc_auc_score(true, pred)
+                roc_auc = roc_auc_score(true.cpu(), pred.cpu())
             self.log(self.prefix_log_key(f"{split}_roc_auc"), roc_auc, prog_bar=True)
         elif self.task_cfg.type == "node-clustering":
             true, pred, ptr_batch = self._extract_pred_and_test_from_step_outputs(
                 split=split
             )
+            true, pred, ptr_batch = true.cpu(), pred.cpu(), ptr_batch.cpu()
             nmi_scores = []
             ari_scores = []
             for start, end in zip(ptr_batch[:-1], ptr_batch[1:]):
@@ -253,8 +254,10 @@ class STGymModule(pl.LightningModule):
             )
         elif self.task_cfg.type == "node-classification":
             true, pred = self._extract_pred_and_test_from_step_outputs(split=split)
-            acc = accuracy_score(true, pred.argmax(axis=1))
-            micro_f1_score = f1_score(true, pred.argmax(axis=1), average="micro")
+            pred_argmax = pred.argmax(axis=1).cpu()
+            true = true.cpu()
+            acc = accuracy_score(true, pred_argmax)
+            micro_f1_score = f1_score(true, pred_argmax, average="micro")
             self.log(self.prefix_log_key(f"{split}_accuracy"), acc, prog_bar=True)
             self.log(
                 self.prefix_log_key(f"{split}_micro_f1_score"),
