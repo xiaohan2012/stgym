@@ -64,7 +64,19 @@ def batch2ptr(batch: torch.Tensor) -> torch.Tensor:
         raise ValueError(
             "The batch contains zero-frequency element, consider making this function more robust (refer to the unit tests)"
         )
-    return torch.concat([torch.tensor([0]).to(device), freq.cumsum(dim=0)])
+    # return torch.concat([torch.tensor([0], device=device), freq.cumsum(dim=0)])
+
+    # --- Efficient Implementation ---
+
+    # 1. Pre-allocate the output 'ptr' tensor.
+    #    It needs to be size N+1 (where N = freq.shape[0]).
+    #    We match freq's dtype (torch.long) and device.
+    ptr = torch.zeros(freq.shape[0] + 1, device=device, dtype=freq.dtype)
+
+    # 2. Compute the cumulative sum directly into the slice `ptr[1:]`.
+    #    This avoids any intermediate allocations or copies.
+    torch.cumsum(freq, dim=0, out=ptr[1:])
+    return ptr
 
 
 def hsplit_and_vstack(A: torch.Tensor, chunk_size: int) -> torch.Tensor:
