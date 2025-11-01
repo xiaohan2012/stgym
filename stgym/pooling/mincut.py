@@ -153,7 +153,7 @@ class MincutPoolingLayer(torch.nn.Module):
             batch.x, batch.adj_t, batch.batch, s
         )
 
-        batch.x = F.selu(out_x)  # apply selu activation function
+        batch.x = F.selu(out_x, inplace=True)  # apply selu activation function
         batch.adj_t = out_adj
         batch.batch = out_batch
         batch.ptr = batch2ptr(batch.batch)

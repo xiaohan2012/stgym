@@ -140,7 +140,7 @@ class DMoNPoolingLayer(torch.nn.Module):
         s = self.linear(batch.x)
         # s = torch.softmax(s, dim=-1)
         x_bd = stacked_blocks_to_block_diagonal(batch.x, batch.ptr)
-        out_x = F.selu(s.T @ x_bd)  # S x (B x D)
+        out_x = F.selu(s.T @ x_bd, inplace=True)  # S x (B x D)
 
         out_x = hsplit_and_vstack(out_x, chunk_size=batch.x.shape[1])  # (SxB) x D
 

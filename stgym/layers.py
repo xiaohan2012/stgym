@@ -139,7 +139,9 @@ class GeneralLayer(torch.nn.Module):
                 )
             )
         if layer_config.has_act:
-            layer_wrapper.append(get_activation_function(layer_config.act))
+            layer_wrapper.append(
+                get_activation_function(layer_config.act, inplace=mem_config.inplace)
+            )
 
         if self.should_apply_pooling(layer_config):
             self.pooling_layer = get_pooling_class(layer_config.pooling.type)(
