@@ -102,26 +102,14 @@ def create_loader(
         ds, lengths=[cfg.split.train_ratio, cfg.split.val_ratio, cfg.split.test_ratio]
     )
     train_loader = DataLoader(
-        train_ds,
-        batch_size=cfg.batch_size,
-        shuffle=True,
-        num_workers=cfg.num_workers,
-        persistent_workers=True,
+        train_ds, batch_size=cfg.batch_size, shuffle=True, num_workers=cfg.num_workers
     )
     # val/test data is in one batch
     val_loader = DataLoader(
-        val_ds,
-        batch_size=cfg.batch_size,
-        shuffle=False,
-        num_workers=cfg.num_workers,
-        persistent_workers=True,
+        val_ds, batch_size=cfg.batch_size, shuffle=False, num_workers=cfg.num_workers
     )
     test_loader = DataLoader(
-        test_ds,
-        batch_size=cfg.batch_size,
-        shuffle=False,
-        num_workers=cfg.num_workers,
-        persistent_workers=True,
+        test_ds, batch_size=cfg.batch_size, shuffle=False, num_workers=cfg.num_workers
     )
 
     return train_loader, val_loader, test_loader

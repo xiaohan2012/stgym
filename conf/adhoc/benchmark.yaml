@@ -3,7 +3,7 @@ data_loader:
   device: cuda:0
   graph_const: radius
   knn_k: null
-  num_workers: 5
+  num_workers: 0
   radius_ratio: 0.0001  # 0.075
   split:
     test_ratio: 0.15
