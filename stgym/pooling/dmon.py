@@ -78,7 +78,7 @@ def dmon_pool(adj: torch.Tensor, batch: torch.Tensor, s: torch.Tensor) -> torch.
 
     # -----------------------------
     # cluster loss (collapse regularization)
-    sqrt_K = torch.sqrt(torch.tensor(K, device=device))
+    sqrt_K = torch.tensor(K, device=device, dtype=torch.float).sqrt()
 
     # cluster_size = C_bd.sum(axis=0).to_dense().reshape((B, K))  # B x K
     # Han: converting C_bd to dense to temporarily address RuntimeError: expand is unsupported for Sparse tensors
@@ -97,7 +97,7 @@ def dmon_pool(adj: torch.Tensor, batch: torch.Tensor, s: torch.Tensor) -> torch.
     CC_batch = torch.arange(0, B, device=device).repeat_interleave(K)
     CC_norm = torch.sqrt(
         scatter_sum(
-            CC.pow(2).sum(axis=1).to_dense(),
+            CC.pow(2).sum(axis=1),
             index=CC_batch,
         )
     )
@@ -110,21 +110,21 @@ def dmon_pool(adj: torch.Tensor, batch: torch.Tensor, s: torch.Tensor) -> torch.
 
     # construct the I_k matrix of shape [KxB, KxB], further divided by sqrt(K)
     I_div_k = torch.sparse_coo_tensor(
-        diagonal_indices, torch.Tensor(1 / sqrt_K).repeat(K * B)
+        diagonal_indices, torch.full((K * B,), 1.0, device=device) / sqrt_K
     )
 
     # compute the norm of the block diagonal over graph batches
     ortho_loss = (
-        scatter_sum(
-            (CC @ CC_normalizer - I_div_k).pow(2).sum(axis=1).to_dense(), CC_batch
-        )
+        scatter_sum((CC @ CC_normalizer - I_div_k).pow(2).sum(axis=1), CC_batch)
         .sqrt()
         .mean()
     )
     # normalize the out_adj
     out_adj = mask_diagonal_sp(out_adj)
     d = torch.einsum("ij->i", out_adj).to_dense().sqrt() + 1e-12
-    d_norm = torch.sparse_coo_tensor(diagonal_indices, (1 / d), requires_grad=False)
+    d_norm = torch.sparse_coo_tensor(
+        diagonal_indices, (1 / d), requires_grad=False, device=device
+    )
     out_adj_normalized = d_norm @ out_adj @ d_norm
     return out_adj_normalized, spectral_loss, cluster_loss, ortho_loss, CC_batch
 
