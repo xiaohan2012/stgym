@@ -4,7 +4,7 @@ import pytorch_lightning as pl
 import torch
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 
-from stgym.callbacks import MLFlowSystemMonitorCallback
+from stgym.callbacks import MLFlowSystemMonitorCallback, TotalTimeTracker
 from stgym.config_schema import MLFlowConfig, TrainConfig
 from stgym.data_loader import STDataModule, STKfoldDataModule
 from stgym.tl_model import STGymModule
@@ -36,6 +36,9 @@ def train(
 
     callbacks = []
 
+    # Add lightweight time tracker for performance monitoring
+    callbacks.append(TotalTimeTracker())
+
     # Only add MLFlow system monitor if tracking is enabled and logger is available
     if mlflow_config.track and logger is not None:
         callbacks.append(MLFlowSystemMonitorCallback())
@@ -65,7 +68,7 @@ def train(
         # 'mps' not supporting some sparse operations, therefore shouldn't be used
         accelerator="cpu" if not torch.cuda.is_available() else "gpu",
         logger=logger,
-        profiler="pytorch"
+        profiler=None  # Disabled for reduced overhead, using LightweightTimeTracker instead
     )
 
     # make a forward pass to initialize the model
