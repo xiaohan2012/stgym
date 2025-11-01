@@ -64,6 +64,7 @@ def mincut_pool(
     # mincut loss
     mincut_normalizer = C_bd.T @ d_diag @ C_bd
 
+    # torch.sparse.trace does not exist yet
     mincut_loss = -torch.trace(C_bd.T @ adj @ C_bd.to_dense()) / torch.trace(
         mincut_normalizer.to_dense()
     )
@@ -80,7 +81,7 @@ def mincut_pool(
     CC_batch = torch.arange(0, B, device=device).repeat_interleave(K)
     CC_norm = torch.sqrt(
         scatter_sum(
-            CC.pow(2).sum(axis=1).to_dense(),
+            CC.pow(2).sum(axis=1),
             index=CC_batch,
         )
     )
@@ -100,9 +101,7 @@ def mincut_pool(
 
     # compute the norm of the block diagonal over graph batches
     ortho_loss = (
-        scatter_sum(
-            (CC @ CC_normalizer - I_div_k).pow(2).sum(axis=1).to_dense(), CC_batch
-        )
+        scatter_sum((CC @ CC_normalizer - I_div_k).pow(2).sum(axis=1), CC_batch)
         .sqrt()
         .mean()
     )
@@ -110,7 +109,9 @@ def mincut_pool(
     # normalize the output adjacency matrix
     out_adj = C_bd.T @ adj @ C_bd
     out_adj = mask_diagonal_sp(out_adj)
-    d = torch.einsum("ij->i", out_adj).to_dense().sqrt() + 1e-12
+    d = (
+        1e-12 + torch.einsum("ij->i", out_adj).sqrt().to_dense()
+    )  # 2nd operand is sparse
     d_norm = torch.sparse_coo_tensor(
         diagonal_indices, (1 / d), requires_grad=False  # , device=device
     )
