@@ -36,7 +36,7 @@ from stgym.utils import collapse_ptr_list
 
 # register_network('gnn', GNN)
 
-torch.autograd.set_detect_anomaly(True)
+# torch.autograd.set_detect_anomaly(True)
 
 
 @dataclass

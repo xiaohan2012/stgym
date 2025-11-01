@@ -88,7 +88,7 @@ def test_mincut_pool():
 
 class TestAutoGrad(BatchLoaderMixin):
     def test(self):
-        torch.autograd.set_detect_anomaly(True)
+        # torch.autograd.set_detect_anomaly(True)
         num_clusters = 2
 
         batch = self.load_batch()
