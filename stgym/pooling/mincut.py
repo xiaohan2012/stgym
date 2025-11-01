@@ -88,7 +88,6 @@ def mincut_pool(
         diagonal_indices,
         1 / CC_norm.repeat_interleave(K),
         requires_grad=True,
-        device=device,
     )
     # construct the I_k matrix of shape [KxB, KxB], further divided by sqrt(K)
     I_div_k = torch.sparse_coo_tensor(
@@ -97,7 +96,6 @@ def mincut_pool(
         torch.full(
             (K * B,), (1 / sqrt_K).item(), device=device, dtype=torch.float
         ),  # Gemini's advice
-        device=device,
     )
 
     # compute the norm of the block diagonal over graph batches
@@ -114,18 +112,7 @@ def mincut_pool(
     out_adj = mask_diagonal_sp(out_adj)
     d = torch.einsum("ij->i", out_adj).to_dense().sqrt() + 1e-12
     d_norm = torch.sparse_coo_tensor(
-        diagonal_indices, (1 / d), requires_grad=False, device=device
-    )
-    out_adj_normalized = d_norm @ out_adj @ d_norm
-
-    x_bd = stacked_blocks_to_block_diagonal(x, ptr)
-    out_x = hsplit_and_vstack(s.T @ x_bd, chunk_size=x.shape[1])  # (BxK) x D
-    # normalize the output adjacency matrix
-    out_adj = C_bd.T @ adj @ C_bd
-    out_adj = mask_diagonal_sp(out_adj)
-    d = torch.einsum("ij->i", out_adj).to_dense().sqrt() + 1e-12
-    d_norm = torch.sparse_coo_tensor(
-        diagonal_indices, (1 / d), requires_grad=False, device=device
+        diagonal_indices, (1 / d), requires_grad=False  # , device=device
     )
     out_adj_normalized = d_norm @ out_adj @ d_norm
 
