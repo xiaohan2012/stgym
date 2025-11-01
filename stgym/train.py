@@ -57,6 +57,10 @@ def train(
     #     ckpt_cbk = pl.callbacks.ModelCheckpoint(dirpath=get_ckpt_dir())
     #     callbacks.append(ckpt_cbk)
 
+    from pytorch_lightning.profiler import PyTorchProfiler
+
+    profiler = PyTorchProfiler()
+
     trainer_config = tl_train_config or {}
     trainer = pl.Trainer(
         **trainer_config,
@@ -68,7 +72,7 @@ def train(
         # 'mps' not supporting some sparse operations, therefore shouldn't be used
         accelerator="cpu" if not torch.cuda.is_available() else "gpu",
         logger=logger,
-        profiler=None  # Disabled for reduced overhead, using LightweightTimeTracker instead
+        profiler=profiler  # Disabled for reduced overhead, using LightweightTimeTracker instead
     )
 
     # make a forward pass to initialize the model
