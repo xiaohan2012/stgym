@@ -94,9 +94,11 @@ def mincut_pool(
     I_div_k = torch.sparse_coo_tensor(
         diagonal_indices,
         # torch.Tensor(1 / sqrt_K).repeat(K * B),
-        torch.full(
-            (K * B,), (1 / sqrt_K).item(), device=device, dtype=torch.float
-        ),  # Gemini's advice
+        # torch.full(
+        #     (K * B,), (1 / sqrt_K).item(), device=device, dtype=torch.float
+        # ),  # Gemini's advice
+        torch.full((K * B,), 1.0, device=device)
+        / sqrt_K,  # avoid using .item() which require synchronization
     )
 
     # compute the norm of the block diagonal over graph batches
