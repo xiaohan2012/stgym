@@ -50,15 +50,11 @@ class TotalTimeTracker(pl.Callback):
     ) -> None:
         self.epoch_start_time = time.perf_counter()
 
-    def on_train_epoch_end(
+    def on_validation_epoch_start(
         self, trainer: pl.Trainer, pl_module: pl.LightningModule
     ) -> None:
         if self.epoch_start_time:
             self.train_time += time.perf_counter() - self.epoch_start_time
-
-    def on_validation_epoch_start(
-        self, trainer: pl.Trainer, pl_module: pl.LightningModule
-    ) -> None:
         self.val_start_time = time.perf_counter()
 
     def on_validation_epoch_end(
