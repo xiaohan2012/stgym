@@ -33,16 +33,17 @@ def create_data_batch(
         batch_size=batch_size,
     )
 
-    batch = next(iter(dataloader))
+    batch = next(iter(dataloader)).to(device)
 
     adj = torch.zeros(
-        (num_nodes_per_graph * batch_size, num_nodes_per_graph * batch_size)
+        (num_nodes_per_graph * batch_size, num_nodes_per_graph * batch_size),
+        device=device,
     )
     adj[batch.edge_index[0], batch.edge_index[1]] = 1
     batch.adj_t = adj.to_sparse_coo()
     # graph-level labels
-    batch.y = torch.randint(0, 2, (batch_size,))
-    return batch.to(device)
+    batch.y = torch.randint(0, 2, (batch_size,), device=device)
+    return batch
 
 
 DEVICE = "cpu" if not torch.cuda.is_available() else "cuda:0"

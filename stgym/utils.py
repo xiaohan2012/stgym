@@ -32,11 +32,11 @@ def stacked_blocks_to_block_diagonal(
     b = ptr.shape[0] - 1
     n, k = A.shape
 
-    ind0 = torch.arange(n).repeat(k, 1).T.to(device)
-    ind1 = torch.arange(k).repeat(n, 1).to(device)
+    ind0 = torch.arange(n, device=device).repeat(k, 1).T
+    ind1 = torch.arange(k, device=device).repeat(n, 1)
 
     sizes = ptr[1:] - ptr[:-1]
-    ind0_offset = torch.arange(start=0, end=k * b, step=k).to(device)
+    ind0_offset = torch.arange(start=0, end=k * b, step=k, device=device)
     ind0_offset_expanded = (
         ind0_offset.repeat_interleave(repeats=sizes, dim=0).repeat(k, 1).T
     )
