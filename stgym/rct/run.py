@@ -32,6 +32,10 @@ TL_TRAIN_CFG = {
 
 
 def run_exp(exp_cfg: ExperimentConfig, mlflow_cfg: MLFlowConfig):
+    import torch.multiprocessing as mp
+
+    mp.set_start_method("spawn", force=True)
+
     logz_logger.debug(OmegaConf.to_yaml(exp_cfg.model_dump()))
     logger = mlflow_cfg.create_tl_logger()
 
