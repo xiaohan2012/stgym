@@ -12,7 +12,7 @@ data_loader:
 group_id: 97
 model:
   mem:
-    inplace: false
+    inplace: true
   mp_layers:
   - act: relu
     bn_eps: 1.0e-05
