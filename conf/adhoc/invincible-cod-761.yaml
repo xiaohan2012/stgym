@@ -45,7 +45,10 @@ task:
   num_classes: 6
   type: graph-classification
 train:
-  early_stopping: null
+  early_stopping:
+    metric: val_loss
+    mode: min
+    patience: 10
   lr_schedule:
     max_epoch: 200
     type: null
