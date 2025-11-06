@@ -42,15 +42,11 @@ def compute_dataset_statistics(
     )
 
     dl_cfg = DataLoaderConfig(
-        batch_size=32,  # Not used for statistics computation
         device="cpu",
         graph_const=graph_const,
         knn_k=knn_k,
         radius_ratio=radius_ratio,
         num_workers=0,
-        split=DataLoaderConfig.DataSplitConfig(
-            train_ratio=0.7, val_ratio=0.15, test_ratio=0.15
-        ),
     )
 
     # Use the function from mem_utils to compute statistics
