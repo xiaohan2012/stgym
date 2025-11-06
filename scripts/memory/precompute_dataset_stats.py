@@ -128,18 +128,12 @@ def main():
         print("Use --force to recompute or --validate to verify existing cache")
 
         # Load and display cached statistics
-        try:
-            stats = load_statistics_from_cache(cache_key, cache_dir)
-            print("\nCached statistics:")
-            print(f"  Features: {stats.num_features}")
-            print(f"  Graphs: {stats.num_graphs}")
-            print(f"  Avg nodes: {stats.avg_nodes:.1f}, Max nodes: {stats.max_nodes}")
-            print(f"  Avg edges: {stats.avg_edges:.1f}, Max edges: {stats.max_edges}")
-        except Exception as e:
-            print(f"Error loading cache: {e}")
-            sys.exit(1)
-
-        return
+        stats = load_statistics_from_cache(cache_key, cache_dir)
+        print("\nCached statistics:")
+        print(f"  Features: {stats.num_features}")
+        print(f"  Graphs: {stats.num_graphs}")
+        print(f"  Avg nodes: {stats.avg_nodes:.1f}, Max nodes: {stats.max_nodes}")
+        print(f"  Avg edges: {stats.avg_edges:.1f}, Max edges: {stats.max_edges}")
 
     # Compute statistics
     try:
