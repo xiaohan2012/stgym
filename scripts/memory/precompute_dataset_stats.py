@@ -16,6 +16,7 @@ import sys
 from pathlib import Path
 
 from stgym.cache import (
+    DatasetStatistics,
     generate_cache_key,
     get_cache_file_path,
     load_statistics_from_cache,
@@ -23,7 +24,7 @@ from stgym.cache import (
 )
 from stgym.config_schema import DataLoaderConfig, TaskConfig
 from stgym.data_loader.ds_info import get_all_ds_names, get_info
-from stgym.mem_utils import DatasetStatistics, compute_dataset_statistics_using_config
+from stgym.mem_utils import compute_dataset_statistics_using_config
 
 
 def compute_dataset_statistics(
