@@ -20,6 +20,7 @@ from typing import Any, Dict, Optional, Tuple
 import torch
 from pydantic import BaseModel, Field
 
+from stgym.cache import generate_cache_key, load_cached_statistics
 from stgym.config_schema import (
     ClusteringModelConfig,
     DataLoaderConfig,
@@ -110,8 +111,6 @@ def get_dataset_statistics(
     """
     if use_cache:
         # Import cache functions to avoid circular imports
-        from stgym.cache import generate_cache_key, load_cached_statistics
-
         # Generate cache key based on dataset and graph construction parameters
         cache_key = generate_cache_key(
             task_cfg.dataset_name, dl_cfg.graph_const, dl_cfg.knn_k, dl_cfg.radius_ratio
