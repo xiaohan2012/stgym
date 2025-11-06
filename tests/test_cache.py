@@ -1,10 +1,8 @@
 """Tests for stgym.cache module."""
 
 import json
-from dataclasses import asdict
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -41,17 +39,14 @@ class TestSaveStatisticsToCache:
             with open(cache_file) as f:
                 saved_data = json.load(f)
 
-            expected_data = asdict(self.mock_stats)
+            expected_data = self.mock_stats.model_dump()
             assert saved_data == expected_data
 
 
-@patch("stgym.cache.load_cached_statistics")
 class TestLoadStatisticsFromCache:
     """Test load_statistics_from_cache function."""
 
-    def test_raises_error_when_file_not_exists(
-        self, mock_load_cached: MagicMock
-    ) -> None:
+    def test_raises_error_when_file_not_exists(self) -> None:
         with TemporaryDirectory() as tmp_dir:
             cache_dir = Path(tmp_dir)
             cache_key = "nonexistent_dataset"
@@ -62,27 +57,18 @@ class TestLoadStatisticsFromCache:
             ):
                 load_statistics_from_cache(cache_key, cache_dir)
 
-            # Should not call load_cached_statistics since file doesn't exist
-            mock_load_cached.assert_not_called()
-
-    def test_raises_error_when_cache_corrupted(
-        self, mock_load_cached: MagicMock
-    ) -> None:
+    def test_raises_error_when_cache_corrupted(self) -> None:
         with TemporaryDirectory() as tmp_dir:
             cache_dir = Path(tmp_dir)
             cache_key = "corrupted_dataset"
             cache_file = cache_dir / f"{cache_key}.json"
 
-            # Create a dummy cache file
-            cache_file.touch()
-
-            # Mock load_cached_statistics to return None (indicating corruption)
-            mock_load_cached.return_value = None
+            # Create a corrupted cache file with invalid JSON
+            with open(cache_file, "w") as f:
+                f.write("invalid json content")
 
             with pytest.raises(
                 FileNotFoundError,
                 match=f"Cache file not found or corrupted: {cache_file}",
             ):
                 load_statistics_from_cache(cache_key, cache_dir)
-
-            mock_load_cached.assert_called_once_with(cache_key, cache_dir)

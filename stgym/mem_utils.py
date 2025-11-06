@@ -15,12 +15,10 @@ Features:
     - Uses cached dataset statistics when available for faster computation
 """
 
-import json
-from dataclasses import dataclass
-from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
 import torch
+from pydantic import BaseModel, Field
 
 from stgym.config_schema import (
     ClusteringModelConfig,
@@ -35,66 +33,17 @@ from stgym.data_loader.ds_info import get_info
 from stgym.model import STClusteringModel, STGraphClassifier, STNodeClassifier
 
 
-@dataclass
-class DatasetStatistics:
+class DatasetStatistics(BaseModel):
     """Statistics for memory estimation."""
 
-    num_features: int
-    avg_nodes: float
-    avg_edges: float
-    max_nodes: int
-    max_edges: int
-    num_graphs: int
+    model_config = {"extra": "ignore"}  # Ignore extra fields like cache_key
 
-
-def generate_cache_key(
-    dataset_name: str, graph_const: str, knn_k: int = None, radius_ratio: float = None
-) -> str:
-    """Generate a unique cache key for dataset configuration."""
-    if graph_const == "knn":
-        return f"{dataset_name}_knn_k{knn_k}"
-    elif graph_const == "radius":
-        return f"{dataset_name}_radius_r{radius_ratio}"
-    else:
-        raise ValueError(f"Unsupported graph construction method: {graph_const}")
-
-
-def load_cached_statistics(
-    cache_key: str, cache_dir: Path = None
-) -> Optional[DatasetStatistics]:
-    """Load dataset statistics from cache if available.
-
-    Args:
-        cache_key: Cache key for the dataset configuration
-        cache_dir: Cache directory path (defaults to ./data/dataset_stats_cache)
-
-    Returns:
-        DatasetStatistics, assuming cache exists
-    """
-    if cache_dir is None:
-        # Use absolute path relative to this file's directory
-        cache_dir = Path(__file__).parent.parent / "data" / "dataset_stats_cache"
-
-    cache_file = cache_dir / f"{cache_key}.json"
-
-    if not cache_file.exists():
-        return None
-
-    with open(cache_file) as f:
-        stats_dict = json.load(f)
-
-    # Filter out any non-DatasetStatistics fields (like cache_key)
-    valid_fields = {
-        "num_features",
-        "avg_nodes",
-        "avg_edges",
-        "max_nodes",
-        "max_edges",
-        "num_graphs",
-    }
-    filtered_dict = {k: v for k, v in stats_dict.items() if k in valid_fields}
-
-    return DatasetStatistics(**filtered_dict)
+    num_features: int = Field(gt=0, description="Number of features per node")
+    avg_nodes: float = Field(gt=0, description="Average number of nodes per graph")
+    avg_edges: float = Field(ge=0, description="Average number of edges per graph")
+    max_nodes: int = Field(gt=0, description="Maximum number of nodes in any graph")
+    max_edges: int = Field(ge=0, description="Maximum number of edges in any graph")
+    num_graphs: int = Field(gt=0, description="Total number of graphs in dataset")
 
 
 def compute_dataset_statistics_from_data(
@@ -160,6 +109,9 @@ def get_dataset_statistics(
         DatasetStatistics object with computed statistics
     """
     if use_cache:
+        # Import cache functions to avoid circular imports
+        from stgym.cache import generate_cache_key, load_cached_statistics
+
         # Generate cache key based on dataset and graph construction parameters
         cache_key = generate_cache_key(
             task_cfg.dataset_name, dl_cfg.graph_const, dl_cfg.knn_k, dl_cfg.radius_ratio
