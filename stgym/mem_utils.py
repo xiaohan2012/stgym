@@ -46,7 +46,7 @@ class DatasetStatistics(BaseModel):
     num_graphs: int = Field(gt=0, description="Total number of graphs in dataset")
 
 
-def compute_dataset_statistics_from_data(
+def compute_dataset_statistics_using_config(
     task_cfg: TaskConfig, dl_cfg: DataLoaderConfig
 ) -> DatasetStatistics:
     """Compute dataset statistics by loading and iterating through the dataset.
@@ -126,7 +126,7 @@ def get_dataset_statistics(
             print(f"⚠️  No cache found for {cache_key}, computing from data...")
 
     # Fallback to computing from data (original method)
-    return compute_dataset_statistics_from_data(task_cfg, dl_cfg)
+    return compute_dataset_statistics_using_config(task_cfg, dl_cfg)
 
 
 def estimate_batch_memory(

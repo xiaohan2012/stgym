@@ -16,17 +16,14 @@ import sys
 from pathlib import Path
 
 from stgym.cache import (
+    generate_cache_key,
     get_cache_file_path,
     load_statistics_from_cache,
     save_statistics_to_cache,
 )
 from stgym.config_schema import DataLoaderConfig, TaskConfig
 from stgym.data_loader.ds_info import get_all_ds_names, get_info
-from stgym.mem_utils import (
-    DatasetStatistics,
-    compute_dataset_statistics_from_data,
-    generate_cache_key,
-)
+from stgym.mem_utils import DatasetStatistics, compute_dataset_statistics_using_config
 
 
 def compute_dataset_statistics(
@@ -46,8 +43,8 @@ def compute_dataset_statistics(
         batch_size=32,  # Not used for statistics computation
         device="cpu",
         graph_const=graph_const,
-        knn_k=knn_k if graph_const == "knn" else 10,
-        radius_ratio=radius_ratio if graph_const == "radius" else 0.1,
+        knn_k=knn_k,
+        radius_ratio=radius_ratio,
         num_workers=0,
         split=DataLoaderConfig.DataSplitConfig(
             train_ratio=0.7, val_ratio=0.15, test_ratio=0.15
@@ -55,7 +52,7 @@ def compute_dataset_statistics(
     )
 
     # Use the function from mem_utils to compute statistics
-    return compute_dataset_statistics_from_data(task_cfg, dl_cfg)
+    return compute_dataset_statistics_using_config(task_cfg, dl_cfg)
 
 
 def main():
