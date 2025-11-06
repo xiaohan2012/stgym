@@ -18,9 +18,8 @@ Features:
 from typing import Any, Dict, Optional, Tuple
 
 import torch
-from pydantic import BaseModel, Field
 
-from stgym.cache import generate_cache_key, load_cached_statistics
+from stgym.cache import DatasetStatistics, generate_cache_key, load_cached_statistics
 from stgym.config_schema import (
     ClusteringModelConfig,
     DataLoaderConfig,
@@ -32,19 +31,6 @@ from stgym.config_schema import (
 from stgym.data_loader import load_dataset
 from stgym.data_loader.ds_info import get_info
 from stgym.model import STClusteringModel, STGraphClassifier, STNodeClassifier
-
-
-class DatasetStatistics(BaseModel):
-    """Statistics for memory estimation."""
-
-    model_config = {"extra": "ignore"}  # Ignore extra fields like cache_key
-
-    num_features: int = Field(gt=0, description="Number of features per node")
-    avg_nodes: float = Field(gt=0, description="Average number of nodes per graph")
-    avg_edges: float = Field(ge=0, description="Average number of edges per graph")
-    max_nodes: int = Field(gt=0, description="Maximum number of nodes in any graph")
-    max_edges: int = Field(ge=0, description="Maximum number of edges in any graph")
-    num_graphs: int = Field(gt=0, description="Total number of graphs in dataset")
 
 
 def compute_dataset_statistics_using_config(
@@ -72,7 +58,11 @@ def compute_dataset_statistics_using_config(
 
     for graph in dataset:
         num_nodes = graph.num_nodes
-        num_edges = graph.edge_index.shape[1] if hasattr(graph, "edge_index") else 0
+        num_edges = (
+            graph.edge_index.shape[1]
+            if hasattr(graph, "edge_index") and graph.edge_index is not None
+            else 0
+        )
 
         total_nodes += num_nodes
         total_edges += num_edges

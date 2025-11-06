@@ -8,7 +8,20 @@ import json
 from pathlib import Path
 from typing import Optional
 
-from stgym.mem_utils import DatasetStatistics
+from pydantic import BaseModel, Field
+
+
+class DatasetStatistics(BaseModel):
+    """Statistics for memory estimation."""
+
+    model_config = {"extra": "ignore"}  # Ignore extra fields like cache_key
+
+    num_features: int = Field(gt=0, description="Number of features per node")
+    avg_nodes: float = Field(gt=0, description="Average number of nodes per graph")
+    avg_edges: float = Field(ge=0, description="Average number of edges per graph")
+    max_nodes: int = Field(gt=0, description="Maximum number of nodes in any graph")
+    max_edges: int = Field(ge=0, description="Maximum number of edges in any graph")
+    num_graphs: int = Field(gt=0, description="Total number of graphs in dataset")
 
 
 def get_cache_file_path(cache_key: str, cache_dir: Path) -> Path:

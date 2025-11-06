@@ -6,8 +6,11 @@ from tempfile import TemporaryDirectory
 
 import pytest
 
-from stgym.cache import load_statistics_from_cache, save_statistics_to_cache
-from stgym.mem_utils import DatasetStatistics
+from stgym.cache import (
+    DatasetStatistics,
+    load_statistics_from_cache,
+    save_statistics_to_cache,
+)
 
 
 class TestSaveStatisticsToCache:
