@@ -10,3 +10,8 @@ task:
     - human-lung
     - breast-cancer
     - mouse-spleen
+    - human-intestine
+    - cellcontrast-breast
+    - colorectal-cancer
+    - upmc
+    - charville

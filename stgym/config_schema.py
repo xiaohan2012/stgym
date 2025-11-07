@@ -308,3 +308,4 @@ class ResourceConfig(BaseModel, YamlLoaderMixin):
     num_gpus: Optional[NonNegativeInt] = None
     num_cpus_per_trial: PositiveFloat = 1.0
     num_gpus_per_trial: NonNegativeFloat = 0.25
+    gpu_memory_gb: PositiveFloat = 24.0  # TODO: use torch.cuda.get_device_properties(0).total_memory / 1024**3

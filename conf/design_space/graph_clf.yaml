@@ -9,4 +9,6 @@ task:
   dataset_name:
     - brca
     - mouse-preoptic
-    # - mouse-kidney
+    - mouse-kidney
+    - brca-ptnm-m
+    - brca-grade
