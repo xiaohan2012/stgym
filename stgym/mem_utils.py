@@ -430,7 +430,7 @@ def estimate_memory_usage(
         task_cfg=task_cfg,
         num_features=dataset_stats.num_features,
         num_classes=num_classes,
-        device="cpu",  # Use CPU to avoid GPU memory allocation and cross-device data moving during estimation
+        device=dl_cfg.device,
     )
     model_time = time.perf_counter() - model_start
     _profiling_stats["model_construction_time"] += model_time
