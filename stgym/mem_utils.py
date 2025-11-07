@@ -329,7 +329,7 @@ def estimate_memory_usage(
         task_cfg=task_cfg,
         num_features=dataset_stats.num_features,
         num_classes=num_classes,
-        device="cpu",  # Use CPU to avoid GPU memory allocation and cross-device data moving during estimation
+        device=dl_cfg.device,
     )
 
     # Estimate optimizer memory
