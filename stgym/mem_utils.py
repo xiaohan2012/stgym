@@ -15,7 +15,6 @@ Features:
     - Uses cached dataset statistics when available for faster computation
 """
 
-import time
 from typing import Any, Dict, Optional, Tuple
 
 import torch
@@ -262,62 +261,6 @@ def get_actual_model_memory(
     return total_memory_bytes / (1024**3), param_count
 
 
-def print_profiling_summary():
-    """Print cumulative profiling statistics for estimate_memory_usage function."""
-    if _profiling_stats["total_calls"] == 0:
-        print("📊 No profiling data available")
-        return
-
-    total_calls = _profiling_stats["total_calls"]
-    total_time = _profiling_stats["total_time"]
-
-    print(f"\n📊 Memory Estimation Profiling Summary:")
-    print(f"   Total calls: {total_calls}")
-    print(f"   Total time: {total_time:.3f}s")
-    print(f"   Average time per call: {(total_time/total_calls)*1000:.2f}ms")
-    print(f"\n   Time breakdown (cumulative):")
-    print(
-        f"     Dataset statistics: {_profiling_stats['dataset_stats_time']:.3f}s ({_profiling_stats['dataset_stats_time']/total_time*100:.1f}%)"
-    )
-    print(
-        f"     Model construction: {_profiling_stats['model_construction_time']:.3f}s ({_profiling_stats['model_construction_time']/total_time*100:.1f}%)"
-    )
-    print(
-        f"     Dataset info lookup: {_profiling_stats['dataset_info_time']:.3f}s ({_profiling_stats['dataset_info_time']/total_time*100:.1f}%)"
-    )
-    print(
-        f"     Memory calculations: {_profiling_stats['calculations_time']:.3f}s ({_profiling_stats['calculations_time']/total_time*100:.1f}%)"
-    )
-
-    print(f"\n   Average time per operation:")
-    print(
-        f"     Dataset statistics: {(_profiling_stats['dataset_stats_time']/total_calls)*1000:.2f}ms"
-    )
-    print(
-        f"     Model construction: {(_profiling_stats['model_construction_time']/total_calls)*1000:.2f}ms"
-    )
-    print(
-        f"     Dataset info lookup: {(_profiling_stats['dataset_info_time']/total_calls)*1000:.2f}ms"
-    )
-    print(
-        f"     Memory calculations: {(_profiling_stats['calculations_time']/total_calls)*1000:.2f}ms"
-    )
-
-
-def reset_profiling_stats():
-    """Reset profiling statistics to start fresh measurement."""
-    global _profiling_stats
-    _profiling_stats = {
-        "total_calls": 0,
-        "total_time": 0.0,
-        "dataset_stats_time": 0.0,
-        "dataset_info_time": 0.0,
-        "model_construction_time": 0.0,
-        "calculations_time": 0.0,
-    }
-    print("🔄 Profiling statistics reset")
-
-
 def estimate_optimizer_memory(model_memory_gb: float, optimizer_type: str) -> float:
     """Estimate optimizer state memory in GB.
 
@@ -339,28 +282,15 @@ def estimate_optimizer_memory(model_memory_gb: float, optimizer_type: str) -> fl
         return model_memory_gb
 
 
-# Global profiling statistics
-_profiling_stats = {
-    "total_calls": 0,
-    "total_time": 0.0,
-    "dataset_stats_time": 0.0,
-    "dataset_info_time": 0.0,
-    "model_construction_time": 0.0,
-    "calculations_time": 0.0,
-}
-
-
 def estimate_memory_usage(
     exp_cfg: ExperimentConfig,
     use_conservative: bool = True,
-    enable_profiling: bool = True,
 ) -> Tuple[float, Dict[str, Any]]:
     """Estimate memory needed for experiment (CPU or GPU) with detailed breakdown.
 
     Args:
         exp_cfg: Experiment configuration (properly validated ExperimentConfig)
         use_conservative: If True, use conservative estimates (max values)
-        enable_profiling: If True, enable detailed timing profiling (default: True)
 
     Returns:
         Tuple of (total_memory_gb, breakdown_dict)
@@ -369,36 +299,16 @@ def estimate_memory_usage(
         Assumption: memory requirements are identical for CPU and GPU execution.
         Use for dynamic resource allocation on any device.
     """
-    start_time = time.perf_counter()
-
-    if enable_profiling:
-        _profiling_stats["total_calls"] += 1
-        print(
-            f"🔍 [PROFILE] Starting memory estimation (call #{_profiling_stats['total_calls']})..."
-        )
-
     # Extract configuration components (type-safe access)
-    config_start = time.perf_counter()
     model_cfg = exp_cfg.model
     train_cfg = exp_cfg.train
     dl_cfg = exp_cfg.data_loader
     task_cfg = exp_cfg.task
-    config_time = time.perf_counter() - config_start
-
-    if enable_profiling:
-        print(f"  📋 Config extraction: {config_time*1000:.2f}ms")
 
     # Get dataset statistics
-    dataset_start = time.perf_counter()
     dataset_stats = get_dataset_statistics(task_cfg, dl_cfg)
-    dataset_time = time.perf_counter() - dataset_start
-    _profiling_stats["dataset_stats_time"] += dataset_time
-
-    if enable_profiling:
-        print(f"  📊 Dataset statistics: {dataset_time*1000:.2f}ms")
 
     # Estimate batch memory
-    batch_start = time.perf_counter()
     batch_memory = estimate_batch_memory(
         batch_size=dl_cfg.batch_size,
         num_features=dataset_stats.num_features,
@@ -408,23 +318,12 @@ def estimate_memory_usage(
         max_nodes=dataset_stats.max_nodes,
         max_edges=dataset_stats.max_edges,
     )
-    batch_time = time.perf_counter() - batch_start
-
-    if enable_profiling:
-        print(f"  🔢 Batch memory calculation: {batch_time*1000:.2f}ms")
 
     # Get number of classes for model memory estimation
-    info_start = time.perf_counter()
     ds_info = get_info(task_cfg.dataset_name)
     num_classes = ds_info["num_classes"]
-    info_time = time.perf_counter() - info_start
-    _profiling_stats["dataset_info_time"] += info_time
-
-    if enable_profiling:
-        print(f"  ℹ️  Dataset info lookup: {info_time*1000:.2f}ms")
 
     # Get model memory using direct construction (fast and accurate)
-    model_start = time.perf_counter()
     model_memory, param_count = get_actual_model_memory(
         model_cfg=model_cfg,
         task_cfg=task_cfg,
@@ -432,14 +331,8 @@ def estimate_memory_usage(
         num_classes=num_classes,
         device="cpu",  # Use CPU to avoid GPU memory allocation and cross-device data moving during estimation
     )
-    model_time = time.perf_counter() - model_start
-    _profiling_stats["model_construction_time"] += model_time
-
-    if enable_profiling:
-        print(f"  🧠 Model construction: {model_time*1000:.2f}ms")
 
     # Estimate optimizer memory
-    calc_start = time.perf_counter()
     optimizer_type = (
         train_cfg.optim.optimizer
         if hasattr(train_cfg, "optim") and hasattr(train_cfg.optim, "optimizer")
@@ -458,11 +351,6 @@ def estimate_memory_usage(
     safety_margin_mult = 1.2 if use_conservative else 1.1
     safety_margin = base_memory * (safety_margin_mult - 1.0)
     total_memory = base_memory + safety_margin
-    calc_time = time.perf_counter() - calc_start
-    _profiling_stats["calculations_time"] += calc_time
-
-    if enable_profiling:
-        print(f"  ⚡ Memory calculations: {calc_time*1000:.2f}ms")
 
     breakdown = {
         "batch_memory_gb": batch_memory,
@@ -474,12 +362,5 @@ def estimate_memory_usage(
         "dataset_stats": dataset_stats,
         "model_param_count": param_count,
     }
-
-    total_time = time.perf_counter() - start_time
-    _profiling_stats["total_time"] += total_time
-
-    if enable_profiling:
-        print(f"  ⏱️  Total time: {total_time*1000:.2f}ms")
-        print(f"  💾 Estimated memory: {total_memory:.3f}GB")
 
     return total_memory, breakdown
