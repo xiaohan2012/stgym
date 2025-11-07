@@ -75,7 +75,6 @@ def main(cfg: DictConfig):
             num_cpus=res_cfg.num_cpus_per_trial, num_gpus=gpu_ratio
         )
         promises.append(run_exp_remote.remote(exp_cfg, mlflow_cfg))
-        promises.append(True)
     # Print summary
     total_exp = len(configs)
     exp_to_execute = len(promises)
