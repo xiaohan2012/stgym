@@ -1,0 +1,8 @@
+{
+  "num_features": 251,
+  "avg_nodes": 17663.0,
+  "avg_edges": 176630.0,
+  "max_nodes": 42624,
+  "max_edges": 426240,
+  "num_graphs": 8
+}

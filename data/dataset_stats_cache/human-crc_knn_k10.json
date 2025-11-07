@@ -1,0 +1,9 @@
+{
+  "num_features": 58,
+  "avg_nodes": 844.3954248366013,
+  "avg_edges": 8443.496732026144,
+  "max_nodes": 6544,
+  "max_edges": 65440,
+  "num_graphs": 306,
+  "cache_key": "human-crc_knn_k10"
+}
