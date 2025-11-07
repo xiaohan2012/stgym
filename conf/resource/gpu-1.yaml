@@ -1,4 +1,5 @@
 num_cpus: 10
 num_gpus: 1
 num_cpus_per_trial: 2.5
-num_gpus_per_trial: 0.20
+num_gpus_per_trial: 0.20  # TODO: set it to 'auto
+gpu_memory_gb: 24.0
