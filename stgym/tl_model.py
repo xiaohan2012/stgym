@@ -221,7 +221,7 @@ class STGymModule(pl.LightningModule):
                 # multi-classs
                 roc_auc = roc_auc_score(
                     true.cpu(),
-                    F.softmax(pred, dim=1).numpy().cpu(),
+                    F.softmax(pred, dim=1).cpu(),
                     multi_class="ovo",  # Han: ovr does not work for incomplete label values (typically in small batches and num_classes is not small)
                     labels=list(range(self.task_cfg.num_classes)),
                 )
