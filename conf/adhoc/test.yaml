@@ -1,6 +1,6 @@
 data_loader:
   batch_size: 32
-  device: cpu # cuda:0
+  device: cuda:0
   graph_const: knn
   knn_k: 10
   num_workers: 0
