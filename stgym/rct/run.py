@@ -25,8 +25,10 @@ def get_dim_out(task_cfg: TaskConfig) -> int | None:
 TL_TRAIN_CFG = {
     "log_every_n_steps": 5,
     # simplify the logging
-    "enable_progress_bar": True,
-    "enable_model_summary": True,
+    # "enable_progress_bar": True,
+    # "enable_model_summary": True,
+    "enable_progress_bar": False,
+    "enable_model_summary": False,
     "enable_checkpointing": False,
 }
 
