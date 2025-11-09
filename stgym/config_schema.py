@@ -1,8 +1,10 @@
 import re
+from pathlib import Path
 from typing import Literal, Optional
 
 import pydash as _
 import torch
+import yaml
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -282,6 +284,14 @@ class ExperimentConfig(MyBaseModel):
             self.data_loader.split = dataset_eval_mode[self.task.dataset_name]
         return self
 
+    @classmethod
+    def from_yaml(cls, path: Path | str) -> Self:
+        """Load experiment configuration from YAML file."""
+        with open(path) as f:
+            config_dict = yaml.safe_load(f)
+
+        return cls(**config_dict)
+
 
 class MLFlowConfig(BaseModel, YamlLoaderMixin):
     track: bool = True
@@ -308,4 +318,6 @@ class ResourceConfig(BaseModel, YamlLoaderMixin):
     num_gpus: Optional[NonNegativeInt] = None
     num_cpus_per_trial: PositiveFloat = 1.0
     num_gpus_per_trial: NonNegativeFloat = 0.25
-    gpu_memory_gb: PositiveFloat = 24.0  # TODO: use torch.cuda.get_device_properties(0).total_memory / 1024**3
+    gpu_memory_gb: PositiveFloat = (
+        24.0  # TODO: use torch.cuda.get_device_properties(0).total_memory / 1024**3
+    )
