@@ -93,7 +93,16 @@ class STGymModule(pl.LightningModule):
         return key
 
     def on_fit_start(self):
-        pass
+        # Log device information for consistency checking
+        model_device = next(self.parameters()).device
+        device_str = str(model_device)
+
+        # Log device as a hyperparameter to MLFlow
+        if hasattr(self.logger, "log_hyperparams") and self.logger is not None:
+            self.logger.log_hyperparams({"device": device_str})
+
+        # Also log as a metric for easier access
+        self.log("device_info", hash(device_str) % 1000, on_step=False, on_epoch=True)
 
     def forward(self, *args, **kwargs):
         return self.model(*args, **kwargs)
@@ -171,6 +180,23 @@ class STGymModule(pl.LightningModule):
             raise NotImplementedError
 
     def training_step(self, batch: Data, *args, **kwargs):
+        # Log batch device on first training step for consistency check
+        if not hasattr(self, "_device_logged"):
+            batch_device = str(batch.x.device)
+            model_device = str(next(self.parameters()).device)
+
+            # Log batch device as hyperparameter
+            if hasattr(self.logger, "log_hyperparams") and self.logger is not None:
+                self.logger.log_hyperparams(
+                    {
+                        "batch_device": batch_device,
+                        "model_device": model_device,
+                        "devices_match": str(batch_device == model_device),
+                    }
+                )
+
+            self._device_logged = True
+
         output = self._shared_step(batch, split=Split.train)
         self.log(
             self.prefix_log_key("train_loss"),
