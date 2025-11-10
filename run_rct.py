@@ -69,7 +69,7 @@ def main(cfg: DictConfig):
             skipped_exp += 1
             continue
 
-        print(f"Experiment {i+1}/{len(configs)}: estimated {gpu_ratio:.3f} GP(s)")
+        print(f"Experiment {i+1}/{len(configs)}: estimated {gpu_ratio:.3f} GPU")
 
         run_exp_remote = ray.remote(run_exp).options(
             num_cpus=res_cfg.num_cpus_per_trial, num_gpus=gpu_ratio
