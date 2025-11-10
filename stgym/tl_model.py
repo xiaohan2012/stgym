@@ -101,8 +101,8 @@ class STGymModule(pl.LightningModule):
         if hasattr(self.logger, "log_hyperparams") and self.logger is not None:
             self.logger.log_hyperparams({"device": device_str})
 
-        # Also log as a metric for easier access
-        self.log("device_info", hash(device_str) % 1000, on_step=False, on_epoch=True)
+        # # Also log as a metric for easier access
+        # self.log("device_info", hash(device_str) % 1000, on_step=False, on_epoch=True)
 
     def forward(self, *args, **kwargs):
         return self.model(*args, **kwargs)

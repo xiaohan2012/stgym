@@ -73,8 +73,11 @@ def main(cfg: DictConfig):
 
         print(f"Experiment {i+1}/{len(configs)}: estimated {gpu_ratio:.3f} GPU")
 
+        # run_exp_remote = ray.remote(run_exp).options(
+        #     num_cpus=res_cfg.num_cpus_per_trial, num_gpus=gpu_ratio
+        # )
         run_exp_remote = ray.remote(run_exp).options(
-            num_cpus=res_cfg.num_cpus_per_trial, num_gpus=gpu_ratio
+            num_cpus=res_cfg.num_cpus_per_trial, num_gpus=0.5
         )
         promises.append(run_exp_remote.remote(exp_cfg, mlflow_cfg))
         time.sleep(2)  # Prevent hard disk thrashing
