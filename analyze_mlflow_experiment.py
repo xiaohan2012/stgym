@@ -70,6 +70,8 @@ def analyze_experiment(
             batch_device = run.data.params.get("batch_device", "unknown")
             model_device = run.data.params.get("model_device", "unknown")
             devices_match = run.data.params.get("devices_match", "unknown")
+            # Extract data_loader device from flattened config
+            dataloader_device = run.data.params.get("data_loader/device", "unknown")
 
             devices.append(
                 {
@@ -77,6 +79,7 @@ def analyze_experiment(
                     "batch_device": batch_device,
                     "model_device": model_device,
                     "devices_match": devices_match,
+                    "dataloader_device": dataloader_device,
                 }
             )
             device_consistency.append(devices_match)
@@ -166,29 +169,58 @@ def print_results(results: dict):
     # Show device information
     print(f"\n💻 Device Information:")
     devices = results["devices"]
-    if devices and devices[0]["device"] != "unknown":
-        unique_devices = {d["device"] for d in devices if d["device"] != "unknown"}
+
+    # Check for data_loader device information
+    dataloader_devices = {
+        d["dataloader_device"] for d in devices if d["dataloader_device"] != "unknown"
+    }
+    if dataloader_devices:
+        print(f"   Data loader devices: {', '.join(sorted(dataloader_devices))}")
+
+    # Check for runtime device information
+    runtime_devices = {d["device"] for d in devices if d["device"] != "unknown"}
+    if runtime_devices:
+        print(f"   Runtime devices logged: {', '.join(sorted(runtime_devices))}")
+
+    # Show batch/model devices
+    batch_devices = {
+        d["batch_device"] for d in devices if d["batch_device"] != "unknown"
+    }
+    model_devices = {
+        d["model_device"] for d in devices if d["model_device"] != "unknown"
+    }
+
+    if batch_devices:
+        print(f"   Batch devices: {', '.join(sorted(batch_devices))}")
+    if model_devices:
+        print(f"   Model devices: {', '.join(sorted(model_devices))}")
+
+    # Check device consistency
+    consistency_counts = {}
+    for consistency in results["device_consistency"]:
+        consistency_counts[consistency] = consistency_counts.get(consistency, 0) + 1
+
+    if "True" in consistency_counts:
         print(
-            f"   Devices used: {', '.join(unique_devices) if unique_devices else 'Not logged'}"
+            f"   ✅ Runs with consistent device usage: {consistency_counts.get('True', 0)}"
+        )
+    if "False" in consistency_counts:
+        print(f"   ❌ Runs with device mismatch: {consistency_counts.get('False', 0)}")
+    if "unknown" in consistency_counts:
+        print(
+            f"   ❓ Runs with unknown device status: {consistency_counts.get('unknown', 0)}"
         )
 
-        # Check device consistency
-        consistency_counts = {}
-        for consistency in results["device_consistency"]:
-            consistency_counts[consistency] = consistency_counts.get(consistency, 0) + 1
-
-        if "True" in consistency_counts:
+    # Show detailed device breakdown if we have any device info
+    if dataloader_devices or runtime_devices or batch_devices or model_devices:
+        print(f"\n   📊 Detailed device breakdown:")
+        for i, device_info in enumerate(devices[:5]):  # Show first 5 runs
             print(
-                f"   ✅ Runs with consistent device usage: {consistency_counts.get('True', 0)}"
+                f"      Run {i+1}: dataloader={device_info['dataloader_device']}, "
+                f"batch={device_info['batch_device']}, model={device_info['model_device']}"
             )
-        if "False" in consistency_counts:
-            print(
-                f"   ❌ Runs with device mismatch: {consistency_counts.get('False', 0)}"
-            )
-        if "unknown" in consistency_counts:
-            print(
-                f"   ❓ Runs with unknown device status: {consistency_counts.get('unknown', 0)}"
-            )
+        if len(devices) > 5:
+            print(f"      ... and {len(devices)-5} more runs")
     else:
         print(f"   No device information logged")
 

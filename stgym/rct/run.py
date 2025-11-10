@@ -48,16 +48,22 @@ def run_exp(exp_cfg: ExperimentConfig, mlflow_cfg: MLFlowConfig):
             if gpu_ids:
                 # Use the first assigned GPU
                 device_id = gpu_ids[0]
-                cuda_device = f"cuda:{device_id}"
 
                 # Set CUDA_VISIBLE_DEVICES to restrict to assigned device
                 os.environ["CUDA_VISIBLE_DEVICES"] = str(device_id)
 
-                # Update experiment config to use consistent device
-                exp_cfg = exp_cfg.model_copy()
-                exp_cfg.data_loader.device = cuda_device
+                # After restricting CUDA_VISIBLE_DEVICES, Ray-assigned GPU becomes cuda:0
+                # from PyTorch's perspective (relative indexing)
+                relative_cuda_device = "cuda:0"
 
-                logz_logger.info(f"Using CUDA device: {cuda_device}")
+                # Update experiment config to use relative device
+                exp_cfg = exp_cfg.model_copy()
+                exp_cfg.data_loader.device = relative_cuda_device
+
+                logz_logger.info(
+                    f"Ray assigned GPU {device_id}, using relative device: {relative_cuda_device}"
+                )
+                logz_logger.info(f"CUDA_VISIBLE_DEVICES set to: {device_id}")
             else:
                 logz_logger.warning(
                     "No GPU assigned by Ray, falling back to default CUDA device"
