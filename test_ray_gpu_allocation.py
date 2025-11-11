@@ -42,8 +42,10 @@ def test_gpu_allocation_full(worker_id: int) -> dict:
         # Use the first assigned GPU
         device_id = ray_gpu_ids[0]
 
-        # Set CUDA_VISIBLE_DEVICES to restrict to assigned device
-        os.environ["CUDA_VISIBLE_DEVICES"] = str(device_id)
+        # there is no need to assign the environment variable
+        # ray handles it already
+        # os.environ["CUDA_VISIBLE_DEVICES"] = str(device_id)
+        print(os.environ["CUDA_VISIBLE_DEVICES"])
 
         # Check device count after restriction
         restricted_device_count = torch.cuda.device_count()
@@ -92,9 +94,11 @@ def test_gpu_allocation_half(worker_id: int) -> dict:
     if torch.cuda.is_available() and ray_gpu_ids:
         # Use the first assigned GPU
         device_id = ray_gpu_ids[0]
+        print(os.environ["CUDA_VISIBLE_DEVICES"])
 
-        # Set CUDA_VISIBLE_DEVICES to restrict to assigned device
-        os.environ["CUDA_VISIBLE_DEVICES"] = str(device_id)
+        # there is no need to assign the environment variable
+        # ray handles it already
+        # os.environ["CUDA_VISIBLE_DEVICES"] = str(device_id)
 
         # Check device count after restriction
         restricted_device_count = torch.cuda.device_count()
