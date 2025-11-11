@@ -22,7 +22,7 @@ from stgym.train import train
 from stgym.utils import rm_dir_if_exists
 
 # device to store tensors on
-TORCH_DEVICE = "cpu" if not torch.cuda.is_available() else "cuda:0"
+TORCH_DEVICE = "cpu" if not torch.cuda.is_available() else "cuda"
 
 # devices passed to torch lightening Trainer
 PL_TRAIN_DEVICES = (

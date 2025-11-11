@@ -122,7 +122,7 @@ def main():
 
     # Override device based on CUDA availability
     if torch.cuda.is_available():
-        exp_cfg.data_loader.device = "cuda:0"
+        exp_cfg.data_loader.device = "cuda"
         exp_cfg.train.devices = 1
         logger.info("CUDA available - using GPU")
     else:

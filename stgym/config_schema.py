@@ -192,7 +192,7 @@ class DataLoaderConfig(BaseModel):
         train_ratio=0.7, val_ratio=0.15, test_ratio=0.15
     )
 
-    device: str = "cpu" if not torch.cuda.is_available() else "cuda:0"
+    device: str = "cpu" if not torch.cuda.is_available() else "cuda"
 
     @property
     def use_kfold_split(self) -> bool:

@@ -21,7 +21,7 @@ from stgym.config_schema import (
 from stgym.rct.run import run_exp
 from stgym.utils import rm_dir_if_exists
 
-DEVICE = "cpu" if not torch.cuda.is_available() else "cuda:0"
+DEVICE = "cpu" if not torch.cuda.is_available() else "cuda"
 
 
 @pytest.fixture
