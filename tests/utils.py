@@ -46,7 +46,7 @@ def create_data_batch(
     return batch
 
 
-DEVICE = "cpu" if not torch.cuda.is_available() else "cuda:0"
+DEVICE = "cpu" if not torch.cuda.is_available() else "cuda"
 
 
 class BatchLoaderMixin:

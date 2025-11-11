@@ -61,21 +61,25 @@ def main(cfg: DictConfig):
     skipped_exp = 0
 
     for i, exp_cfg in enumerate(configs):
-        gpu_ratio = estimate_gpu_requirements(exp_cfg, gpu_memory_gb)
+        # Use configured GPU allocation instead of memory-based estimation
+        gpu_allocation = res_cfg.num_gpus_per_trial
 
-        if gpu_ratio > 1:
-            # Skip experiments that exceed GPU memory capacity
+        # Optional: Still check memory requirements for validation
+        estimated_gpu_ratio = estimate_gpu_requirements(exp_cfg, gpu_memory_gb)
+        if estimated_gpu_ratio > gpu_allocation:
             print(
-                f"Experiment {i+1}/{len(configs)}: SKIPPED - memory exceeds GPU capacity"
+                f"Experiment {i+1}/{len(configs)}: WARNING - estimated GPU requirement ({estimated_gpu_ratio:.3f}) "
+                f"exceeds allocated GPUs ({gpu_allocation:.3f})"
             )
-            skipped_exp += 1
-            continue
 
-        print(f"Experiment {i+1}/{len(configs)}: estimated {gpu_ratio:.3f} GP(s)")
+        print(f"Experiment {i+1}/{len(configs)}: using {gpu_allocation:.3f} GPU(s)")
 
         run_exp_remote = ray.remote(run_exp).options(
-            num_cpus=res_cfg.num_cpus_per_trial, num_gpus=gpu_ratio
+            num_cpus=res_cfg.num_cpus_per_trial, num_gpus=gpu_allocation
         )
+        # run_exp_remote = ray.remote(run_exp).options(
+        #     num_cpus=res_cfg.num_cpus_per_trial, num_gpus=0.5
+        # )
         promises.append(run_exp_remote.remote(exp_cfg, mlflow_cfg))
         time.sleep(2)  # Prevent hard disk thrashing
     # Print summary

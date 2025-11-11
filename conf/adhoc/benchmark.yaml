@@ -1,6 +1,6 @@
 data_loader:
   batch_size: 16
-  device: cuda:0
+  device: cuda
   graph_const: radius
   knn_k: null
   num_workers: 0

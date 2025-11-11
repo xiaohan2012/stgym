@@ -1,3 +1,4 @@
+import os
 import time
 from dataclasses import dataclass
 from typing import Any, Dict, Tuple
@@ -93,7 +94,13 @@ class STGymModule(pl.LightningModule):
         return key
 
     def on_fit_start(self):
-        pass
+        if hasattr(self.logger, "log_hyperparams") and self.logger is not None:
+            self.logger.log_hyperparams(
+                {
+                    "cuda_visible_devices": os.environ.get("CUDA_VISIBLE_DEVICES"),
+                    "model_device": str(next(self.parameters()).device),
+                }
+            )
 
     def forward(self, *args, **kwargs):
         return self.model(*args, **kwargs)
@@ -171,6 +178,8 @@ class STGymModule(pl.LightningModule):
             raise NotImplementedError
 
     def training_step(self, batch: Data, *args, **kwargs):
+        # Log batch device on first training step for consistency check
+
         output = self._shared_step(batch, split=Split.train)
         self.log(
             self.prefix_log_key("train_loss"),
