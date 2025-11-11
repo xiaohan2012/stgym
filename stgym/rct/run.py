@@ -1,8 +1,5 @@
-import os
 import traceback
 
-import ray
-import torch
 from logzero import logger as logz_logger
 from omegaconf import OmegaConf
 
@@ -39,33 +36,6 @@ TL_TRAIN_CFG = {
 def run_exp(exp_cfg: ExperimentConfig, mlflow_cfg: MLFlowConfig):
     logz_logger.debug(OmegaConf.to_yaml(exp_cfg.model_dump()))
     logger = mlflow_cfg.create_tl_logger()
-
-    # Ensure consistent CUDA device usage
-    if torch.cuda.is_available():
-        try:
-            # Get Ray-assigned GPU devices
-            gpu_ids = ray.get_gpu_ids()
-            if gpu_ids:
-                # Use the first assigned GPU
-                device_id = gpu_ids[0]
-                cuda_device = f"cuda:{device_id}"
-
-                # Set CUDA_VISIBLE_DEVICES to restrict to assigned device
-                os.environ["CUDA_VISIBLE_DEVICES"] = str(device_id)
-
-                # Update experiment config to use consistent device
-                exp_cfg = exp_cfg.model_copy()
-                exp_cfg.data_loader.device = cuda_device
-
-                logz_logger.info(f"Using CUDA device: {cuda_device}")
-            else:
-                logz_logger.warning(
-                    "No GPU assigned by Ray, falling back to default CUDA device"
-                )
-        except Exception as e:
-            logz_logger.warning(
-                f"Failed to set Ray GPU device: {e}, using default device"
-            )
 
     dim_out = get_dim_out(exp_cfg.task)
 
