@@ -53,7 +53,6 @@ def analyze_experiment(
         durations = []
         completed_runs = 0
         devices = []
-        device_consistency = []
 
         for run in runs:
             start_time = run.info.start_time / 1000  # Convert from ms to seconds
@@ -66,20 +65,17 @@ def analyze_experiment(
                 completed_runs += 1
 
             # Extract device information from run parameters
-            device_info = run.data.params.get("device", "unknown")
-            batch_device = run.data.params.get("batch_device", "unknown")
+            cuda_visible_devices = run.data.params.get(
+                "cuda_visible_devices", "unknown"
+            )
             model_device = run.data.params.get("model_device", "unknown")
-            devices_match = run.data.params.get("devices_match", "unknown")
 
             devices.append(
                 {
-                    "device": device_info,
-                    "batch_device": batch_device,
+                    "cuda_visible_devices": cuda_visible_devices,
                     "model_device": model_device,
-                    "devices_match": devices_match,
                 }
             )
-            device_consistency.append(devices_match)
 
         if not end_times:
             print("❌ No completed runs found (all runs may still be running)")
@@ -111,7 +107,6 @@ def analyze_experiment(
             "std_duration_minutes": std_duration / 60,
             "durations": durations,  # Individual run durations
             "devices": devices,  # Device information for each run
-            "device_consistency": device_consistency,  # Device consistency check
         }
 
         if completed_runs < len(runs):
@@ -166,31 +161,44 @@ def print_results(results: dict):
     # Show device information
     print(f"\n💻 Device Information:")
     devices = results["devices"]
-    if devices and devices[0]["device"] != "unknown":
-        unique_devices = {d["device"] for d in devices if d["device"] != "unknown"}
-        print(
-            f"   Devices used: {', '.join(unique_devices) if unique_devices else 'Not logged'}"
-        )
 
-        # Check device consistency
-        consistency_counts = {}
-        for consistency in results["device_consistency"]:
-            consistency_counts[consistency] = consistency_counts.get(consistency, 0) + 1
+    if devices:
+        # Extract unique values for each device parameter
+        cuda_visible_devices_set = {
+            d["cuda_visible_devices"]
+            for d in devices
+            if d["cuda_visible_devices"] != "unknown"
+        }
+        model_devices_set = {
+            d["model_device"] for d in devices if d["model_device"] != "unknown"
+        }
 
-        if "True" in consistency_counts:
+        if cuda_visible_devices_set:
             print(
-                f"   ✅ Runs with consistent device usage: {consistency_counts.get('True', 0)}"
+                f"   CUDA_VISIBLE_DEVICES: {', '.join(sorted(cuda_visible_devices_set))}"
             )
-        if "False" in consistency_counts:
-            print(
-                f"   ❌ Runs with device mismatch: {consistency_counts.get('False', 0)}"
-            )
-        if "unknown" in consistency_counts:
-            print(
-                f"   ❓ Runs with unknown device status: {consistency_counts.get('unknown', 0)}"
-            )
+        else:
+            print(f"   CUDA_VISIBLE_DEVICES: Not logged")
+
+        if model_devices_set:
+            print(f"   Model devices: {', '.join(sorted(model_devices_set))}")
+        else:
+            print(f"   Model devices: Not logged")
+
+        # Show detailed breakdown for first few runs
+        if any(
+            d["cuda_visible_devices"] != "unknown" or d["model_device"] != "unknown"
+            for d in devices
+        ):
+            print(f"\n   📊 Per-run device breakdown:")
+            for i, device_info in enumerate(devices[:5]):  # Show first 5 runs
+                cuda_vis = device_info["cuda_visible_devices"]
+                model_dev = device_info["model_device"]
+                print(f"      Run {i+1}: CUDA_VISIBLE={cuda_vis}, model={model_dev}")
+            if len(devices) > 5:
+                print(f"      ... and {len(devices)-5} more runs")
     else:
-        print(f"   No device information logged")
+        print(f"   No device information available")
 
 
 def main():
