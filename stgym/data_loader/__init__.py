@@ -186,17 +186,6 @@ class STDataModule(STDataModuleBase):
     def __init__(self, task_cfg: TaskConfig, dl_cfg: DataLoaderConfig):
         self.ds = load_dataset(task_cfg, dl_cfg).to(dl_cfg.device)
 
-        # Validate device consistency
-        if torch.cuda.is_available() and "cuda" in dl_cfg.device:
-            actual_device = str(self.ds.data.x.device)
-            expected_device = dl_cfg.device
-            if actual_device != expected_device:
-                logger.warning(
-                    f"Device mismatch: expected {expected_device}, got {actual_device}"
-                )
-            else:
-                logger.info(f"Data loaded successfully on device: {actual_device}")
-
         self.loaders = create_loader(self.ds, dl_cfg)
         super().__init__(has_val=True, has_test=True)
 
@@ -206,17 +195,6 @@ class STKfoldDataModule(STDataModuleBase):
 
     def __init__(self, task_cfg: TaskConfig, dl_cfg: DataLoaderConfig):
         self.ds = load_dataset(task_cfg, dl_cfg).to(dl_cfg.device)
-
-        # Validate device consistency
-        if torch.cuda.is_available() and "cuda" in dl_cfg.device:
-            actual_device = str(self.ds.data.x.device)
-            expected_device = dl_cfg.device
-            if actual_device != expected_device:
-                logger.warning(
-                    f"Device mismatch: expected {expected_device}, got {actual_device}"
-                )
-            else:
-                logger.info(f"Data loaded successfully on device: {actual_device}")
 
         self.loaders = create_kfold_loader(self.ds, dl_cfg)
         super().__init__(has_val=True, has_test=True)
