@@ -102,9 +102,6 @@ class STGymModule(pl.LightningModule):
                 }
             )
 
-        # # Also log as a metric for easier access
-        # self.log("device_info", hash(device_str) % 1000, on_step=False, on_epoch=True)
-
     def forward(self, *args, **kwargs):
         return self.model(*args, **kwargs)
 
