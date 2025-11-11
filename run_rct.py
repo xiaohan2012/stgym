@@ -1,5 +1,3 @@
-import time
-
 import hydra
 import ray
 from omegaconf import DictConfig, OmegaConf
@@ -77,11 +75,7 @@ def main(cfg: DictConfig):
         run_exp_remote = ray.remote(run_exp).options(
             num_cpus=res_cfg.num_cpus_per_trial, num_gpus=gpu_allocation
         )
-        # run_exp_remote = ray.remote(run_exp).options(
-        #     num_cpus=res_cfg.num_cpus_per_trial, num_gpus=0.5
-        # )
         promises.append(run_exp_remote.remote(exp_cfg, mlflow_cfg))
-        time.sleep(2)  # Prevent hard disk thrashing
     # Print summary
     total_exp = len(configs)
     exp_to_execute = len(promises)
