@@ -1,3 +1,4 @@
+import os
 import time
 from dataclasses import dataclass
 from typing import Any, Dict, Tuple
@@ -93,13 +94,13 @@ class STGymModule(pl.LightningModule):
         return key
 
     def on_fit_start(self):
-        # Log device information for consistency checking
-        model_device = next(self.parameters()).device
-        device_str = str(model_device)
-
-        # Log device as a hyperparameter to MLFlow
         if hasattr(self.logger, "log_hyperparams") and self.logger is not None:
-            self.logger.log_hyperparams({"device": device_str})
+            self.logger.log_hyperparams(
+                {
+                    "cuda_visible_devices": os.environ.get("CUDA_VISIBLE_DEVICES"),
+                    "model_device": str(next(self.parameters()).device),
+                }
+            )
 
         # # Also log as a metric for easier access
         # self.log("device_info", hash(device_str) % 1000, on_step=False, on_epoch=True)
