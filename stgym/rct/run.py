@@ -35,19 +35,21 @@ TL_TRAIN_CFG = {
 
 def run_exp(exp_cfg: ExperimentConfig, mlflow_cfg: MLFlowConfig):
     logz_logger.debug(OmegaConf.to_yaml(exp_cfg.model_dump()))
-    logger = mlflow_cfg.create_tl_logger()
 
     dim_out = get_dim_out(exp_cfg.task)
 
     use_kfold_cv = exp_cfg.data_loader.use_kfold_split
 
+    mlflow_cfg = mlflow_cfg.model_copy()
+    mlflow_cfg.tags = {
+        "task_type": exp_cfg.task.type,
+        "dataset_name": exp_cfg.task.dataset_name,
+    }
     if exp_cfg.group_id is not None:
-        mlflow_cfg = mlflow_cfg.model_copy()
-        mlflow_cfg.tags = {
-            "group_id": str(exp_cfg.group_id),
-            "task_type": exp_cfg.task.type,
-            "dataset_name": exp_cfg.task.dataset_name,
-        }
+        mlflow_cfg.tags |= {"group_id": str(exp_cfg.group_id)}
+
+    # Create logger AFTER setting tags
+    logger = mlflow_cfg.create_tl_logger()
 
     if logger is not None and mlflow_cfg.track:
         log_params_and_config_in_mlflow(exp_cfg, logger)
