@@ -119,9 +119,12 @@ class STGymModule(pl.LightningModule):
         if self.task_cfg.type == "graph-classification":
             batch, pred_logits, layer_losses = self(batch)
             true = batch.y
-            # the corner case of batch size = 1
             if pred_logits.ndim == 0:
+                # the corner case of batch size = 1 (for binary classification)
                 pred_logits = pred_logits.unsqueeze(-1)
+            elif pred_logits.ndim == 1 and len(pred_logits) > 1:
+                # For multiclass with batch_size=1, ensure shape is [1, num_classes]
+                pred_logits = pred_logits.unsqueeze(0)
 
             loss, pred_score = compute_classification_loss(pred_logits, true)
 

@@ -17,8 +17,10 @@ def compute_classification_loss(pred: torch.Tensor, true: torch.Tensor):
     pred = pred.squeeze(-1) if pred.ndim > 1 else pred
     true = true.squeeze(-1) if true.ndim > 1 else true
 
-    # multiclass
-    if pred.ndim > 1 and true.ndim == 1:
+    # multiclass: handle both batch_size > 1 and batch_size = 1 cases
+    if (pred.ndim > 1 and true.ndim == 1) or (
+        pred.ndim == 1 and true.ndim == 1 and len(pred) > 1
+    ):
         pred = F.log_softmax(pred, dim=-1)
         return F.nll_loss(pred, true), pred
     else:
