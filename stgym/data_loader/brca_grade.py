@@ -33,7 +33,7 @@ class BRCAGradeDataset(AbstractDataset):
 
     def process_data(self):
         csv_data_path = Path(self.raw_dir) / RAW_FILE_NAME
-        df = pd.read_csv(csv_data_path)
+        df = pd.read_csv(csv_data_path, low_memory=False)
         groups = list(df.groupby(GROUP_COLS))
         data_list = []
         for name, sample_df in groups:
