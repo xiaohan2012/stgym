@@ -8,6 +8,7 @@ from .base import AbstractDataset
 
 ID_COL = "cellID"
 GROUP_COLS = [
+    "grade",
     "gender",
     "age",
     "PTNM_M",
