@@ -107,9 +107,14 @@ def run_exp(exp_cfg: ExperimentConfig, mlflow_cfg: MLFlowConfig):
 
     except Exception as e:
         error_msg = f"Training failed: {e}"
+        full_stacktrace = traceback.format_exc()
         logz_logger.error(error_msg)
         traceback.print_exc()
         if logger is not None:
-            logger.experiment.log_text(logger.run_id, error_msg, "training_error.txt")
+            logger.experiment.log_text(
+                logger.run_id,
+                f"{error_msg}\n\nFull Stacktrace:\n{full_stacktrace}",
+                "training_error.txt",
+            )
 
     return True
