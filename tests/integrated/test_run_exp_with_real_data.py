@@ -18,7 +18,6 @@ from stgym.config_schema import (
 )
 from stgym.data_loader.ds_info import get_all_ds_names, get_info
 from stgym.rct.run import run_exp
-from stgym.utils import rm_dir_if_exists
 
 DEVICE = "cpu" if not torch.cuda.is_available() else "cuda"
 
@@ -172,10 +171,3 @@ class TestRunExpWithRealData:
         )
         result = run_exp(exp_cfg, self.mlflow_config)
         assert result is True
-
-    def teardown_method(self):
-        """Clean up test data after each test"""
-        # Clean up any processed data that might have been created during tests
-        test_datasets = GRAPH_CLASSIFICATION_DATASETS + NODE_CLASSIFICATION_DATASETS
-        for dataset_name in test_datasets:
-            rm_dir_if_exists(f"data/{dataset_name}/processed")
