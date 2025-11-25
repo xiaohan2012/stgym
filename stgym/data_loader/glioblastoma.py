@@ -8,7 +8,6 @@ from torch_geometric.data import Data
 from .base import AbstractDataset
 
 # Column definitions based on the CSV structure
-ID_COL = "barcode"
 GROUP_COLS = ["sample_id", "patient_id"]  # Use sample_id to group spots into graphs
 
 POS_COLS = ["x_coord", "y_coord"]
@@ -71,8 +70,12 @@ class GlioblastomaDataset(AbstractDataset):
         gene_feature_cols = [col for col in df.columns if col not in METADATA_COLS]
         logger.info(f"Gene expression features: {len(gene_feature_cols)} genes")
 
+        # Create mapping from codes to nominal values before encoding
+        tissue_categorical = pd.Categorical(df[LABEL_COL])
+        tissue_type_mapping = dict(enumerate(tissue_categorical.categories))
+
         # Encode tissue type labels as categorical codes
-        df[LABEL_COL] = pd.Categorical(df[LABEL_COL]).codes
+        df[LABEL_COL] = tissue_categorical.codes
 
         # Group by sample_id to create one graph per sample
         groups = list(df.groupby("sample_id"))
@@ -120,10 +123,16 @@ class GlioblastomaDataset(AbstractDataset):
             f"Created {len(data_list)} graphs from glioblastoma gene expression dataset"
         )
 
-        # Log dataset statistics
+        # Log dataset statistics with both codes and nominal values
         tissue_type_counts = df.groupby(["sample_id", LABEL_COL]).size().reset_index()
         tissue_type_summary = tissue_type_counts.groupby(LABEL_COL).size()
-        logger.info(f"Tissue type distribution: {dict(tissue_type_summary)}")
+
+        # Create distribution with both codes and nominal values
+        distribution_with_names = {
+            f"{code} ({tissue_type_mapping[code]})": count
+            for code, count in tissue_type_summary.items()
+        }
+        logger.info(f"Tissue type distribution: {distribution_with_names}")
 
         # Log feature statistics
         logger.info(f"Average spots per sample: {len(df) / len(groups):.1f}")
