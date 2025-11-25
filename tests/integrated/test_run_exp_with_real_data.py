@@ -14,6 +14,7 @@ from stgym.config_schema import (
     PostMPConfig,
     TaskConfig,
     TrainConfig,
+    dataset_eval_mode,
 )
 from stgym.data_loader.ds_info import get_all_ds_names, get_info
 from stgym.rct.run import run_exp
@@ -33,6 +34,11 @@ NODE_CLASSIFICATION_DATASETS = [
     for ds_name in get_all_ds_names()
     if get_info(ds_name)["task_type"] == "node-classification"
 ]
+
+
+def should_use_kfold(dataset_name: str) -> bool:
+    """Determine if a dataset should use k-fold split based on dataset_eval_mode"""
+    return dataset_name in dataset_eval_mode
 
 
 class TestRunExpWithRealData:
@@ -146,41 +152,23 @@ class TestRunExpWithRealData:
         )
 
     @pytest.mark.parametrize("dataset_name", GRAPH_CLASSIFICATION_DATASETS)
-    def test_graph_classification_datasets_regular_split(self, dataset_name):
-        """Test graph classification datasets with regular train/val/test split"""
+    def test_graph_classification_datasets(self, dataset_name):
+        """Test graph classification datasets with their appropriate evaluation mode"""
         num_classes = get_info(dataset_name)["num_classes"]
+        use_kfold = should_use_kfold(dataset_name)
         exp_cfg = self._create_graph_clf_experiment_config(
-            dataset_name, num_classes, use_kfold=False
-        )
-        result = run_exp(exp_cfg, self.mlflow_config)
-        assert result is True
-
-    @pytest.mark.parametrize("dataset_name", GRAPH_CLASSIFICATION_DATASETS)
-    def test_graph_classification_datasets_kfold_split(self, dataset_name):
-        """Test graph classification datasets with k-fold cross validation"""
-        num_classes = get_info(dataset_name)["num_classes"]
-        exp_cfg = self._create_graph_clf_experiment_config(
-            dataset_name, num_classes, use_kfold=True
+            dataset_name, num_classes, use_kfold=use_kfold
         )
         result = run_exp(exp_cfg, self.mlflow_config)
         assert result is True
 
     @pytest.mark.parametrize("dataset_name", NODE_CLASSIFICATION_DATASETS)
-    def test_node_classification_datasets_regular_split(self, dataset_name):
-        """Test node classification datasets with regular train/val/test split"""
+    def test_node_classification_datasets(self, dataset_name):
+        """Test node classification datasets with their appropriate evaluation mode"""
         num_classes = get_info(dataset_name)["num_classes"]
+        use_kfold = should_use_kfold(dataset_name)
         exp_cfg = self._create_node_clf_experiment_config(
-            dataset_name, num_classes, use_kfold=False
-        )
-        result = run_exp(exp_cfg, self.mlflow_config)
-        assert result is True
-
-    @pytest.mark.parametrize("dataset_name", NODE_CLASSIFICATION_DATASETS)
-    def test_node_classification_datasets_kfold_split(self, dataset_name):
-        """Test node classification datasets with k-fold cross validation"""
-        num_classes = get_info(dataset_name)["num_classes"]
-        exp_cfg = self._create_node_clf_experiment_config(
-            dataset_name, num_classes, use_kfold=True
+            dataset_name, num_classes, use_kfold=use_kfold
         )
         result = run_exp(exp_cfg, self.mlflow_config)
         assert result is True
