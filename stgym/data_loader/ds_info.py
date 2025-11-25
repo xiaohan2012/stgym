@@ -117,6 +117,14 @@ __data__ = {
         "data_source_url": "https://zenodo.org/records/6376767",
         "used_in_paper": "Unsupervised discovery of tissue architecture in multiplexed imaging",
     },
+    DatasetName.glioblastoma: {
+        "min_span": 2450.0,
+        "max_span": 12748.0,
+        "num_classes": 2,
+        "task_type": "graph-classification",
+        "data_source_url": "https://datadryad.org/dataset/doi:10.5061/dryad.h70rxwdmj",
+        "used_in_paper": "Spatially resolved multi-omics deciphers bidirectional tumor-host interdependence in glioblastoma",
+    },
 }
 
 
