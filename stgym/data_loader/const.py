@@ -17,3 +17,4 @@ class DatasetName:
     upmc = "upmc"
     charville = "charville"
     brca_grade = "brca-grade"
+    glioblastoma = "glioblastoma"
