@@ -53,3 +53,14 @@ python scripts/data_preprocessing/create_glioblastoma.py \
   - tumor: 18 samples, 59,652 spots
   - tumor_core: 1 sample, 1,853 spots
   - tumor_infiltration: 1 sample, 3,469 spots
+
+### Binary Classification Relabeling
+
+For improved classification performance, the dataset supports binary relabeling that consolidates tumor subtypes:
+
+- **cortex**: Remains as "cortex" (8 samples, 23,819 spots)
+- **tumor**: Combines "tumor", "tumor_core", and "tumor_infiltration" (20 samples total, 64,974 spots)
+
+**Motivation**: The original tumor_core (1 sample) and tumor_infiltration (1 sample) classes have very small sample sizes that can lead to poor generalization in machine learning models. By consolidating these into a single "tumor" class, we create a more balanced binary classification task suitable for robust model training.
+
+This relabeling is automatically applied in the GlioblastomaDataset loader when processing the data.

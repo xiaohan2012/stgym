@@ -48,8 +48,8 @@ class TestGlioblastomaDataset:
                 "tumor",
                 "cortex",
                 "cortex",
-                "tumor_core",
-                "tumor_core",
+                "tumor",
+                "tumor",
             ],
         }
 
@@ -67,7 +67,7 @@ class TestGlioblastomaDataset:
                     expr_values.append(
                         np.random.lognormal(1.0, 0.5)
                     )  # Medium expression
-                else:  # tumor_core
+                else:  # tumor (includes former tumor_core)
                     expr_values.append(
                         np.random.lognormal(1.5, 0.8)
                     )  # Variable expression
@@ -140,12 +140,12 @@ class TestGlioblastomaDataset:
 
         # Dataset structure validation
         assert len(ds) == 3  # 3 unique sample_ids
-        assert ds.num_classes == 3  # cortex, tumor, tumor_core
+        assert ds.num_classes == 2  # cortex, tumor (binary classification)
         assert ds.num_features == 10  # 10 genes in mock data
 
-        # Label encoding validation (alphabetical: cortex=0, tumor=1, tumor_core=2)
+        # Label encoding validation (alphabetical: cortex=0, tumor=1)
         labels = [data.y.item() for data in ds]
-        assert set(labels) == {0, 1, 2}
+        assert set(labels) == {0, 1}
 
         # Sample structure validation
         for data in ds:

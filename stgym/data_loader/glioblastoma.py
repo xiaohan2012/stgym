@@ -40,7 +40,7 @@ class GlioblastomaDataset(AbstractDataset):
 
         Each graph represents one spatial transcriptomics sample (e.g., #UKF304_T_ST).
         Nodes are spatial spots with gene expression features.
-        Graph-level labels are tissue types (cortex, tumor, tumor_core, tumor_infiltration).
+        Graph-level labels are binary tissue types (cortex vs tumor).
 
         This version uses raw gene expression data extracted from 10X Visium matrices
         instead of the processed cell type scores, providing:
@@ -52,9 +52,10 @@ class GlioblastomaDataset(AbstractDataset):
         Data processing steps:
         1. Load consolidated gene expression dataset created by preprocessing script
         2. Extract gene expression features (log-normalized counts)
-        3. Group spots by sample_id to create individual graphs
-        4. Assign tissue type as graph-level label
-        5. Create PyTorch Geometric Data objects
+        3. Relabel tissue types: tumor_core and tumor_infiltration → tumor (binary classification)
+        4. Group spots by sample_id to create individual graphs
+        5. Assign tissue type as graph-level label
+        6. Create PyTorch Geometric Data objects
 
         Features are gene expression values that have been:
         - Log-transformed: log(counts + 1)
@@ -69,6 +70,13 @@ class GlioblastomaDataset(AbstractDataset):
         # Identify gene expression feature columns
         gene_feature_cols = [col for col in df.columns if col not in METADATA_COLS]
         logger.info(f"Gene expression features: {len(gene_feature_cols)} genes")
+
+        # Relabel tissue types for binary classification (tumor subtypes → tumor)
+        logger.info(f"Original tissue types: {df[LABEL_COL].unique()}")
+        df[LABEL_COL] = df[LABEL_COL].replace(
+            {"tumor_core": "tumor", "tumor_infiltration": "tumor"}
+        )
+        logger.info(f"After relabeling: {df[LABEL_COL].unique()}")
 
         # Create mapping from codes to nominal values before encoding
         tissue_categorical = pd.Categorical(df[LABEL_COL])
