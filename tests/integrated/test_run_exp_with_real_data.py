@@ -27,12 +27,14 @@ GRAPH_CLASSIFICATION_DATASETS = [
     for ds_name in get_all_ds_names()
     if get_info(ds_name)["task_type"] == "graph-classification"
 ]
+# GRAPH_CLASSIFICATION_DATASETS = ['spatial-vdj']
 
 NODE_CLASSIFICATION_DATASETS = [
     ds_name
     for ds_name in get_all_ds_names()
     if get_info(ds_name)["task_type"] == "node-classification"
 ]
+# NODE_CLASSIFICATION_DATASETS = []
 
 
 def should_use_kfold(dataset_name: str) -> bool:
