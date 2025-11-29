@@ -20,7 +20,7 @@ Each dataset is described by a CSV file. You need to inspect the data.
 
 # Expected output
 
-You need to produce a table (of mark down style) and save it in a temporary file
+You need to produce a table (of mark down style).
 
 The table should contain the following:
 
@@ -37,6 +37,8 @@ The table should contain the following:
   - the number of unique labels
 
 It a dataset can be applied to multiple tasks, use one row for each task.
+
+Save your analysis under ${PROJECT_ROOT}/data-insecption-reports/
 
 # Other remarks
 

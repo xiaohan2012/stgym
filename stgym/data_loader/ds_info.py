@@ -125,6 +125,14 @@ __data__ = {
         "data_source_url": "https://datadryad.org/dataset/doi:10.5061/dryad.h70rxwdmj",
         "used_in_paper": "Spatially resolved multi-omics deciphers bidirectional tumor-host interdependence in glioblastoma",
     },
+    DatasetName.spatial_vdj: {
+        "min_span": 99.0,
+        "max_span": 36588.0,
+        "num_classes": 2,
+        "task_type": "graph-classification",
+        "data_source_url": "https://zenodo.org/records/7961605",
+        "used_in_paper": "Spatially resolved single-cell immune profiling in human cancer and autoimmune disease",
+    },
 }
 
 

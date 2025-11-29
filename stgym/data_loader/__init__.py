@@ -23,6 +23,7 @@ from stgym.data_loader.human_lung import HumanLungDataset
 from stgym.data_loader.mouse_kidney import MouseKidneyDataset
 from stgym.data_loader.mouse_preoptic import MousePreopticDataset
 from stgym.data_loader.mouse_spleen import MouseSpleenDataset
+from stgym.data_loader.spatial_vdj import SpatialVDJDataset
 from stgym.data_loader.upmc import UpmcDataset
 
 
@@ -57,6 +58,8 @@ def get_dataset_class(ds_name: str):
         return BRCAGradeDataset
     elif ds_name in ("glioblastoma", "glioblastoma-test"):
         return GlioblastomaDataset
+    elif ds_name in ("spatial-vdj", "spatial-vdj-test"):
+        return SpatialVDJDataset
     else:
         raise NotImplementedError(f"{ds_name} is not available yet.")
 

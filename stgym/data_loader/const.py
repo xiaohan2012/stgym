@@ -18,3 +18,4 @@ class DatasetName:
     charville = "charville"
     brca_grade = "brca-grade"
     glioblastoma = "glioblastoma"
+    spatial_vdj = "spatial-vdj"
