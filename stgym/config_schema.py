@@ -250,6 +250,9 @@ dataset_eval_mode = {
     "human-intestine": DataLoaderConfig.KFoldSplitConfig(
         num_folds=8
     ),  # since there are only 8 data points
+    "spatial-vdj": DataLoaderConfig.KFoldSplitConfig(
+        num_folds=5  # there are 12 samples
+    ),
 }
 
 
