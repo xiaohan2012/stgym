@@ -133,6 +133,14 @@ __data__ = {
         "data_source_url": "https://zenodo.org/records/7961605",
         "used_in_paper": "Spatially resolved single-cell immune profiling in human cancer and autoimmune disease",
     },
+    DatasetName.human_pancreas: {
+        "min_span": 4570.0,
+        "max_span": 9384.0,
+        "num_classes": 10,
+        "task_type": "node-classification",
+        "data_source_url": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE197317",
+        "used_in_paper": "Spatially resolved transcriptome atlas of the developing human pancreas",
+    },
 }
 
 

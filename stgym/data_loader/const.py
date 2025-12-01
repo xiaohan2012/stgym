@@ -19,3 +19,4 @@ class DatasetName:
     brca_grade = "brca-grade"
     glioblastoma = "glioblastoma"
     spatial_vdj = "spatial-vdj"
+    human_pancreas = "human-pancreas"
