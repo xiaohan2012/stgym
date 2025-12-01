@@ -2,6 +2,47 @@
 
 This directory contains data loaders for various spatial transcriptomics datasets used in STGym.
 
+## Human Pancreas Development Dataset
+
+This dataset contains spatial transcriptomics data from human pancreatic development at different post-conception weeks (PCW) for node classification tasks.
+
+### Data Source
+
+**Download the raw data from GEO repository:**
+https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE197317
+
+1. Visit the link above and download all files from GSE197317_RAW
+2. Extract all `.tar.gz` files to get 10x Visium spatial data directories
+3. Keep the `.csv.gz` files containing cell type deconvolution data
+
+### Data Preprocessing
+
+Use the preprocessing script to convert raw 10X Visium data and cell type deconvolution into the consolidated dataset:
+
+```bash
+python scripts/data_preprocessing/process_human_pancreas.py \
+    "/path/to/extracted/GSE197317_RAW" \
+    --output data/human-pancreas/raw/source.csv
+```
+
+Top-1000 genes with highest standard deviation in activation values are included.
+
+#### Parameters:
+- `input_directory`: Path to the directory containing extracted GSE197317 data (both 10x directories and deconvolution CSV files)
+- `--output`: Output CSV file path (default: `data/human-pancreas/raw/source.csv`)
+
+#### What the script does:
+1. Loads 10X Visium spatial coordinates and gene expression from all 8 samples
+2. Loads cell type deconvolution data for each sample
+3. Determines dominant cell type for each spatial spot as ground truth label
+4. Selects top 1000 variable genes as features
+5. Adds cell type proportions and spatial coordinates as additional features
+6. Outputs consolidated `source.csv` for node classification
+
+#### Generated files:
+- `source.csv`: Main dataset with spatial spots as rows and features as columns
+
+
 ## Glioblastoma Dataset
 
 This dataset contains spatial transcriptomics data from glioblastoma patients processed into gene expression features for graph classification tasks.
@@ -42,17 +83,6 @@ python scripts/data_preprocessing/create_glioblastoma.py \
 - `source.csv`: Main dataset (88,793 spots × 500 genes)
 - `gene_info.csv`: Selected gene metadata
 - `dataset_summary.txt`: Processing statistics
-
-### Dataset Statistics
-
-- **28 samples** from 20 glioblastoma patients
-- **88,793 total spatial spots** across all samples
-- **500 gene expression features** per spatial spot
-- **4 tissue types**:
-  - cortex: 8 samples, 23,819 spots
-  - tumor: 18 samples, 59,652 spots
-  - tumor_core: 1 sample, 1,853 spots
-  - tumor_infiltration: 1 sample, 3,469 spots
 
 ### Binary Classification Relabeling
 
