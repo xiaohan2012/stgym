@@ -21,11 +21,19 @@ Columns encode the following information:
 
 Note that cells/rows in each sample can have only one unique label.
 
+
+
 # Task specification
 
 ## Preparation
 
 Create a git worktree for this task and work under it for the remaining steps.
+
+Python environment setup
+
+```bash
+pyenv activate stgym
+```
 
 ## Step 0: copy the raw CSV file to project folder
 
@@ -33,6 +41,16 @@ Create a git worktree for this task and work under it for the remaining steps.
   - Ask me if they're not provided
 - Data folder is at `{PROJECT_ROOT}/data/{dataset_name}`
   - If you're under a git worktree, make sure the data is copied to the main worktree
+
+## Optional step: write the preprocessing script and instructions
+
+If the raw data needs to be further processed via custom script, save the script under ./scripts/data_preprocessing
+
+Add related instructions in stgym/data_loader/README.md. Include only:
+
+- how to obtain the data
+- how to process the data
+- no need to include any data statistics
 
 ## Step 1: identify the relevant columns
 

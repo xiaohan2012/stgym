@@ -21,12 +21,30 @@ Columns encode the following information:
 
 # Task specification
 
+## Preparation
+
+Python environment setup
+
+```bash
+pyenv activate stgym
+```
+
 ## Step 0: copy the raw CSV file to project folder
 
 - The CSV file path and dataset name will be specified in later instructions.
   - Ask me if they're not provided
 - Data folder is at `{PROJECT_ROOT}/data/{dataset_name}`
   - If you're under a git worktree, make sure the data is copied to the main worktree
+
+## Optional step: write the preprocessing script and instructions
+
+If the raw data needs to be further processed via custom script, save the script under ./scripts/data_preprocessing
+
+Add related instructions in stgym/data_loader/README.md. Include only:
+
+- how to obtain the data
+- how to process the data
+- no need to include any data statistics
 
 ## Step 1: select the relevant columns
 

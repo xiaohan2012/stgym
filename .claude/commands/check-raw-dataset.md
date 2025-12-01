@@ -16,6 +16,8 @@ Your task is to find out:
 
 It is possible that one dataset can be used for both task types, or even multiple cell/subject-level labels exist.
 
+Note that it is desirable for the subject-level labels to have clinical meaning, for example, they correspond to disease status.
+
 Each dataset is described by a CSV file. You need to inspect the data.
 
 # Expected output
