@@ -54,10 +54,8 @@ def train(
     #     ckpt_cbk = pl.callbacks.ModelCheckpoint(dirpath=get_ckpt_dir())
     #     callbacks.append(ckpt_cbk)
 
-    from pytorch_lightning.profilers import PyTorchProfiler
-
+    # from pytorch_lightning.profilers import PyTorchProfiler
     # profiler = PyTorchProfiler(sort_by_key='cuda_time_total', activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA])
-    PyTorchProfiler()
 
     trainer_config = tl_train_config or {}
     trainer = pl.Trainer(
