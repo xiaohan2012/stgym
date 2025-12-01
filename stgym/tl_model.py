@@ -122,7 +122,11 @@ class STGymModule(pl.LightningModule):
             if pred_logits.ndim == 0:
                 # the corner case of batch size = 1 (for binary classification)
                 pred_logits = pred_logits.unsqueeze(-1)
-            elif pred_logits.ndim == 1 and len(pred_logits) > 1:
+            elif (
+                self.task_cfg.num_classes > 2
+                and pred_logits.ndim == 1
+                and len(pred_logits) > 1
+            ):
                 # For multiclass with batch_size=1, ensure shape is [1, num_classes]
                 pred_logits = pred_logits.unsqueeze(0)
 
