@@ -20,3 +20,4 @@ class DatasetName:
     glioblastoma = "glioblastoma"
     spatial_vdj = "spatial-vdj"
     human_pancreas = "human-pancreas"
+    inflammatory_skin = "inflammatory-skin"
