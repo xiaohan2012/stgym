@@ -21,6 +21,7 @@ from stgym.data_loader.human_crc import HumanCRCDataset
 from stgym.data_loader.human_intestine import HumanIntestineDataset
 from stgym.data_loader.human_lung import HumanLungDataset
 from stgym.data_loader.human_pancreas import HumanPancreasDataset
+from stgym.data_loader.inflammatory_skin import InflammatorySkinDataset
 from stgym.data_loader.mouse_kidney import MouseKidneyDataset
 from stgym.data_loader.mouse_preoptic import MousePreopticDataset
 from stgym.data_loader.mouse_spleen import MouseSpleenDataset
@@ -63,6 +64,8 @@ def get_dataset_class(ds_name: str):
         return SpatialVDJDataset
     elif ds_name in ("human-pancreas", "human-pancreas-test"):
         return HumanPancreasDataset
+    elif ds_name in ("inflammatory-skin", "inflammatory-skin-test"):
+        return InflammatorySkinDataset
     else:
         raise NotImplementedError(f"{ds_name} is not available yet.")
 

@@ -141,6 +141,14 @@ __data__ = {
         "data_source_url": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE197317",
         "used_in_paper": "Spatially resolved transcriptome atlas of the developing human pancreas",
     },
+    DatasetName.inflammatory_skin: {
+        "min_span": 1802.0,
+        "max_span": 31847.0,
+        "num_classes": 2,
+        "task_type": "graph-classification",
+        "data_source_url": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE206391",
+        "used_in_paper": "Spatial transcriptomics of inflammatory skin diseases",
+    },
 }
 
 
