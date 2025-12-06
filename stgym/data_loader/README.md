@@ -148,3 +148,36 @@ For improved classification performance, the dataset supports binary relabeling 
 **Motivation**: The original tumor_core (1 sample) and tumor_infiltration (1 sample) classes have very small sample sizes that can lead to poor generalization in machine learning models. By consolidating these into a single "tumor" class, we create a more balanced binary classification task suitable for robust model training.
 
 This relabeling is automatically applied in the GlioblastomaDataset loader when processing the data.
+
+
+## Inflammatory Skin Diseases Dataset
+
+This dataset contains spatial transcriptomics data from inflammatory skin diseases (Psoriasis, Atopic Dermatitis, Lichen Planus) for graph classification tasks.
+
+### Data Source
+
+**Download the preprocessed data from GEO repository:**
+https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE206391
+
+1. Visit the link above
+2. Download `GSE206391_Preprocessed_data.h5` from the supplementary files
+3. Place the file at `data/inflammatory-skin/raw/source.h5`
+
+### Data Setup
+
+No additional preprocessing is required. The dataset uses the HDF5 file directly:
+
+```bash
+# Create directory structure
+mkdir -p data/inflammatory-skin/raw
+
+# Move downloaded file to correct location
+mv ~/Downloads/GSE206391_Preprocessed_data.h5 data/inflammatory-skin/raw/source.h5
+```
+
+#### What the dataset contains:
+1. Spatial transcriptomics data from 29 patients across 3 studies
+2. 82 tissue specimens with lesional vs non-lesional labels
+3. 59,319 spots with 16,685 gene features each
+4. Spatial coordinates for each spot
+5. Ready for graph classification tasks (lesional vs non-lesional tissue)

@@ -149,6 +149,14 @@ __data__ = {
         "data_source_url": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE246011",
         "used_in_paper": "METI: Deep profiling of tumor ecosystems by integrating cell morphology and spatial transcriptomics",
     },
+    DatasetName.inflammatory_skin: {
+        "min_span": 1802.0,
+        "max_span": 31847.0,
+        "num_classes": 2,
+        "task_type": "graph-classification",
+        "data_source_url": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE206391",
+        "used_in_paper": "Spatial transcriptomics of inflammatory skin diseases",
+    },
 }
 
 

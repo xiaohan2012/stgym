@@ -21,3 +21,4 @@ class DatasetName:
     spatial_vdj = "spatial-vdj"
     human_pancreas = "human-pancreas"
     gastric_bladder_cancer = "gastric-bladder-cancer"
+    inflammatory_skin = "inflammatory-skin"
