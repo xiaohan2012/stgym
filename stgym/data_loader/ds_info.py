@@ -141,6 +141,14 @@ __data__ = {
         "data_source_url": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE197317",
         "used_in_paper": "Spatially resolved transcriptome atlas of the developing human pancreas",
     },
+    DatasetName.gastric_bladder_cancer: {
+        "min_span": 94.0,
+        "max_span": 223.0,
+        "num_classes": 2,
+        "task_type": "graph-classification",
+        "data_source_url": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE246011",
+        "used_in_paper": "METI: Deep profiling of tumor ecosystems by integrating cell morphology and spatial transcriptomics",
+    },
     DatasetName.inflammatory_skin: {
         "min_span": 1802.0,
         "max_span": 31847.0,

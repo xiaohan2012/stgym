@@ -29,11 +29,9 @@ Note that cells/rows in each sample can have only one unique label.
 
 Create a git worktree for this task and work under it for the remaining steps.
 
-Python environment setup
 
-```bash
-pyenv activate stgym
-```
+Use `pyenv activate stgym` to activate the virtual environment.
+
 
 ## Step 0: copy the raw CSV file to project folder
 

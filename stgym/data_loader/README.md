@@ -27,6 +27,60 @@ python scripts/data_preprocessing/process_human_pancreas.py \
 
 Top-1000 genes with highest standard deviation in activation values are included.
 
+## Gastric-Bladder Cancer Dataset
+
+This dataset contains spatial transcriptomics data from gastric adenocarcinoma (STAD) and muscle-invasive bladder cancer (BLCA) samples for graph classification tasks.
+
+### Data Source
+
+**Download the raw data from GEO repository:**
+https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE246011
+
+1. Visit the link above and download `GSE246011_RAW.tar`
+2. Extract the tar file to access individual sample files (GSM*.csv.gz files)
+3. Each sample contains metadata and count data files
+
+### Data Preprocessing
+
+Use the preprocessing script to merge multiple sample files into a single consolidated dataset:
+
+```bash
+python scripts/data_preprocessing/gastric_bladder_cancer_preprocess.py
+```
+
+This script will:
+- Uncompress all `.gz` files as needed
+- Load metadata and count data for each sample
+- Merge spatial coordinates with gene expression data
+- Create unified CSV with sample identifiers and cancer type labels
+- Save the result as `data/gastric-bladder-cancer/raw/source.csv`
+
+The final dataset contains 6 samples (4 STAD, 2 BLCA) with ~32,500 total cells/spots and ~20,800 gene features.
+
+#### Dataset Labels
+
+**Binary Classification Task: Cancer Type Prediction**
+
+- **Label 0 (STAD - Gastric Adenocarcinoma)**: 4 samples
+  - STAD-G1: 1,202 cells
+  - STAD-G2: 4,328 cells
+  - STAD-G3: 3,875 cells
+  - STAD-G4: 4,130 cells
+
+- **Label 1 (BLCA - Bladder Cancer)**: 2 samples
+  - BLCA-B1: 9,029 cells
+  - BLCA-B2: 9,963 cells
+
+**Label Mapping:**
+- `STAD` (Gastric Adenocarcinoma) → `0`
+- `BLCA` (Bladder Cancer) → `1`
+
+**Summary:**
+- Total samples: 6 patients
+- Unique labels: 2 (binary classification)
+- Class balance: 4 STAD : 2 BLCA (2:1 ratio)
+- Total spots/cells: ~32,500 across all samples
+
 #### Parameters:
 - `input_directory`: Path to the directory containing extracted GSE197317 data (both 10x directories and deconvolution CSV files)
 - `--output`: Output CSV file path (default: `data/human-pancreas/raw/source.csv`)

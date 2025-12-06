@@ -16,6 +16,7 @@ from stgym.data_loader.cellcontrast_breast import CellcontrastBreastDataset
 from stgym.data_loader.charville import CharvilleDataset
 from stgym.data_loader.colorectal_cancer import ColorectalCancerDataset
 from stgym.data_loader.ds_info import get_all_ds_names, get_info  # noqa
+from stgym.data_loader.gastric_bladder_cancer import GastricBladderCancerDataset
 from stgym.data_loader.glioblastoma import GlioblastomaDataset
 from stgym.data_loader.human_crc import HumanCRCDataset
 from stgym.data_loader.human_intestine import HumanIntestineDataset
@@ -64,6 +65,8 @@ def get_dataset_class(ds_name: str):
         return SpatialVDJDataset
     elif ds_name in ("human-pancreas", "human-pancreas-test"):
         return HumanPancreasDataset
+    elif ds_name in ("gastric-bladder-cancer", "gastric-bladder-cancer-test"):
+        return GastricBladderCancerDataset
     elif ds_name in ("inflammatory-skin", "inflammatory-skin-test"):
         return InflammatorySkinDataset
     else:
