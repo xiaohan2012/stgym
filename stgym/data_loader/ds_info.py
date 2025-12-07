@@ -24,7 +24,7 @@ __data__ = {
         "min_span": 795.0,
         "max_span": 1919.0,
         "num_classes": 10,
-        "task_type": "node-clustering",
+        "task_type": "node-classification",
         "data_source_url": "https://data.mendeley.com/datasets/mpjzbtfgfr/1",
         "used_in_paper": "Unsupervised and supervised discovery of tissue cellular neighborhoods from cell phenotypes.",
     },

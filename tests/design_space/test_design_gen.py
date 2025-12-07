@@ -2,7 +2,6 @@ import pydash as _
 import pytest
 
 from stgym.config_schema import (
-    ClusteringModelConfig,
     DataLoaderConfig,
     ExperimentConfig,
     GraphClassifierModelConfig,
@@ -38,19 +37,11 @@ def mock_graph_clf_design_space():
     return DesignSpace.model_validate(data)
 
 
-@pytest.fixture
-def mock_clustering_design_space():
-    data = load_yaml("./tests/data/design-space-clustering.yaml")
-
-    return DesignSpace.model_validate(data)
-
-
 # A factory fixture that yields the other data sources
 @pytest.fixture(
     params=[
         "mock_node_clf_design_space",
         "mock_graph_clf_design_space",
-        "mock_clustering_design_space",
     ]
 )
 def mock_design_space(request):
@@ -196,13 +187,6 @@ class TestModelConfig:
         assert config.post_mp_layer.dims in ([64, 32], [32, 16])
         assert config.mp_layers[0].use_batchnorm is True
         assert config.post_mp_layer.use_batchnorm is True
-
-    def test_clustering_model_config(self, mock_clustering_design_space):
-        config = generate_model_config(
-            "node-clustering", mock_clustering_design_space.model, k=1
-        )[0]
-        assert isinstance(config, ClusteringModelConfig)
-        assert config.mp_layers[0].use_batchnorm is True
 
 
 def test_train_config_validity(mock_design_space):

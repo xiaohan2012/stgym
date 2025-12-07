@@ -4,7 +4,6 @@ import pytest
 import torch
 
 from stgym.config_schema import (
-    ClusteringModelConfig,
     DataLoaderConfig,
     ExperimentConfig,
     GraphClassifierModelConfig,
@@ -37,7 +36,6 @@ def base_task_configs():
         "node_clf": TaskConfig(
             dataset_name="human-crc-test", type="node-classification", num_classes=10
         ),
-        "clustering": TaskConfig(dataset_name="human-crc-test", type="node-clustering"),
     }
 
 
@@ -64,14 +62,6 @@ def base_model_configs():
             ],
             post_mp_layer=PostMPConfig(dims=[16, 8]),
         ),
-        "clustering": ClusteringModelConfig(
-            mp_layers=[
-                MessagePassingConfig(
-                    layer_type="gcnconv",
-                    pooling=PoolingConfig(type="dmon", n_clusters=8),
-                )
-            ]
-        ),
     }
 
 
@@ -90,12 +80,6 @@ def base_train_configs():
             lr_schedule=LRScheduleConfig(type=None),
             max_epoch=2,  # Reduced for testing
             early_stopping={"metric": "val_accuracy", "mode": "max"},
-        ),
-        "clustering": TrainConfig(
-            optim=OptimizerConfig(),
-            lr_schedule=LRScheduleConfig(type=None),
-            max_epoch=2,  # Reduced for testing
-            early_stopping={"metric": "val_nmi", "mode": "max"},
         ),
     }
 
@@ -241,25 +225,6 @@ class TestRunExp:
 
         assert result is True
         mock_train.assert_called_once()
-
-    def test_clustering_task(
-        self,
-        mlflow_config,
-    ):
-        """Test run_exp with clustering task (dim_out should be None)"""
-        exp_cfg = self._create_experiment_config("clustering")
-
-        with patch("stgym.rct.run.STGymModule") as mock_module_class, patch(
-            "stgym.rct.run.train"
-        ):
-            mock_module_class.return_value = Mock()
-            result = run_exp(exp_cfg, mlflow_config)
-
-            # Check that dim_out=None for clustering
-            call_args = mock_module_class.call_args
-            assert call_args[1]["dim_out"] is None
-
-        assert result is True
 
     @pytest.mark.parametrize(
         "mock_target,exception_msg",

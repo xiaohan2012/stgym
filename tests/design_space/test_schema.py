@@ -10,7 +10,7 @@ from stgym.design_space.schema import (
 from stgym.utils import load_yaml
 
 
-@pytest.mark.parametrize("name", ["node-clf", "graph-clf", "clustering"])
+@pytest.mark.parametrize("name", ["node-clf", "graph-clf"])
 def test_basic(name):
     data = load_yaml(f"./tests/data/design-space-{name}.yaml")
 
