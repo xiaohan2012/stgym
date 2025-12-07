@@ -25,7 +25,7 @@ from stgym.config_schema import ExperimentConfig
 from stgym.data_loader import create_loader, load_dataset
 from stgym.data_loader.ds_info import get_info
 from stgym.mem_utils import estimate_memory_usage
-from stgym.model import STClusteringModel, STGraphClassifier, STNodeClassifier
+from stgym.model import STGraphClassifier, STNodeClassifier
 
 
 def count_model_parameters(model: torch.nn.Module) -> int:
@@ -76,8 +76,6 @@ def create_model_from_config(model_cfg, task_cfg, num_features, num_classes=None
         return STGraphClassifier(num_features, num_classes, model_cfg)
     elif task_cfg.type == "node-classification":
         return STNodeClassifier(num_features, num_classes, model_cfg)
-    elif task_cfg.type == "node-clustering":
-        return STClusteringModel(num_features, model_cfg)
     else:
         raise ValueError(f"Unsupported task type: {task_cfg.type}")
 

@@ -3,22 +3,14 @@ import time
 from dataclasses import dataclass
 from typing import Any, Dict, Tuple
 
-import numpy as np
 import pydash as _
 import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
-from sklearn.metrics import (
-    accuracy_score,
-    adjusted_rand_score,
-    f1_score,
-    normalized_mutual_info_score,
-    roc_auc_score,
-)
+from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 from torch_geometric.data import Data
 
 from stgym.config_schema import (
-    ClusteringModelConfig,
     DataLoaderConfig,
     GraphClassifierModelConfig,
     NodeClassifierModelConfig,
@@ -26,7 +18,7 @@ from stgym.config_schema import (
     TrainConfig,
 )
 from stgym.loss import compute_classification_loss
-from stgym.model import STClusteringModel, STGraphClassifier, STNodeClassifier
+from stgym.model import STGraphClassifier, STNodeClassifier
 from stgym.optimizer import create_optimizer_from_cfg, create_scheduler
 from stgym.utils import collapse_ptr_list
 
@@ -51,11 +43,7 @@ class STGymModule(pl.LightningModule):
     def __init__(
         self,
         dim_in,
-        model_cfg: (
-            GraphClassifierModelConfig
-            | ClusteringModelConfig
-            | NodeClassifierModelConfig
-        ),
+        model_cfg: GraphClassifierModelConfig | NodeClassifierModelConfig,
         train_cfg: TrainConfig,
         task_cfg: TaskConfig,
         dl_cfg: DataLoaderConfig,
@@ -67,8 +55,6 @@ class STGymModule(pl.LightningModule):
         if task_cfg.type == "graph-classification":
             assert dim_out is not None, "`dim_out` should be provided."
             self.model = STGraphClassifier(dim_in, dim_out, model_cfg)
-        elif task_cfg.type == "node-clustering":
-            self.model = STClusteringModel(dim_in, model_cfg)
         elif task_cfg.type == "node-classification":
             assert dim_out is not None, "`dim_out` should be provided."
             self.model = STNodeClassifier(dim_in, dim_out, model_cfg)
@@ -145,25 +131,6 @@ class STGymModule(pl.LightningModule):
                 pred_score=pred_score.detach(),
                 step_end_time=step_end_time,
             )
-        elif self.task_cfg.type == "node-clustering":
-            ptr = batch.ptr  # used to determine instance boundaries
-            batch, pred, layer_losses = self(batch)
-            clustering_related_loss = sum(layer_losses[-1].values())
-            step_end_time = time.time()
-            if split == Split.train:
-                return dict(
-                    loss=clustering_related_loss,
-                    step_end_time=step_end_time,
-                )
-            else:
-                true = batch.y
-                return dict(
-                    ptr=ptr.detach(),
-                    loss=clustering_related_loss,
-                    true=true,
-                    pred_score=pred.detach(),
-                    step_end_time=step_end_time,
-                )
         elif self.task_cfg.type == "node-classification":
             batch, pred_logits, layer_losses = self(batch)
             true = batch.y
@@ -244,30 +211,6 @@ class STGymModule(pl.LightningModule):
             else:
                 roc_auc = roc_auc_score(true.cpu(), pred.cpu())
             self.log(self.prefix_log_key(f"{split}_roc_auc"), roc_auc, prog_bar=True)
-        elif self.task_cfg.type == "node-clustering":
-            true, pred, ptr_batch = self._extract_pred_and_test_from_step_outputs(
-                split=split
-            )
-            true, pred, ptr_batch = true.cpu(), pred.cpu(), ptr_batch.cpu()
-            nmi_scores = []
-            ari_scores = []
-            for start, end in zip(ptr_batch[:-1], ptr_batch[1:]):
-                nmi_scores.append(
-                    normalized_mutual_info_score(
-                        true[start:end], pred[start:end, :].argmax(axis=1)
-                    )
-                )
-                ari_scores.append(
-                    adjusted_rand_score(
-                        true[start:end], pred[start:end, :].argmax(axis=1)
-                    )
-                )
-            self.log(
-                self.prefix_log_key(f"{split}_nmi"), np.mean(nmi_scores), prog_bar=True
-            )
-            self.log(
-                self.prefix_log_key(f"{split}_ari"), np.mean(ari_scores), prog_bar=True
-            )
         elif self.task_cfg.type == "node-classification":
             true, pred = self._extract_pred_and_test_from_step_outputs(split=split)
             pred_argmax = pred.argmax(axis=1).cpu()

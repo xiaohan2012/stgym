@@ -2,11 +2,7 @@ import torch
 from torch import Tensor
 from torch_geometric.data import Data
 
-from stgym.config_schema import (
-    ClusteringModelConfig,
-    GraphClassifierModelConfig,
-    NodeClassifierModelConfig,
-)
+from stgym.config_schema import GraphClassifierModelConfig, NodeClassifierModelConfig
 from stgym.global_pooling import get_pooling_operator
 from stgym.layers import MLP, GeneralMultiLayer
 
@@ -42,26 +38,6 @@ class STGraphClassifier(torch.nn.Module):
             other_loss = []
         graph_embeddings = self.global_pooling(batch.x, batch.batch)
         pred = self.post_mp(graph_embeddings)
-        return batch, pred.squeeze(), other_loss
-
-
-class STClusteringModel(torch.nn.Module):
-    def __init__(self, dim_in: int, cfg: ClusteringModelConfig):
-        super().__init__()
-        self.mp_module = GeneralMultiLayer(
-            dim_in=dim_in, layer_configs=cfg.mp_layers, mem_config=cfg.mem
-        )
-
-    def forward(self, batch: Data) -> tuple[Data, Tensor]:
-        """return the batch before global pooling and the predictions by post MP layers"""
-        check_edge_index(batch)
-
-        batch = self.mp_module(batch)
-        pred = torch.softmax(batch.s, axis=1)
-        if hasattr(batch, "loss"):
-            other_loss = batch.loss
-        else:
-            other_loss = []
         return batch, pred.squeeze(), other_loss
 
 

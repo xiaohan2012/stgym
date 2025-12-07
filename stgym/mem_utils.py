@@ -21,7 +21,6 @@ import torch
 
 from stgym.cache import DatasetStatistics, generate_cache_key, load_cached_statistics
 from stgym.config_schema import (
-    ClusteringModelConfig,
     DataLoaderConfig,
     ExperimentConfig,
     GraphClassifierModelConfig,
@@ -30,7 +29,7 @@ from stgym.config_schema import (
 )
 from stgym.data_loader import load_dataset
 from stgym.data_loader.ds_info import get_info
-from stgym.model import STClusteringModel, STGraphClassifier, STNodeClassifier
+from stgym.model import STGraphClassifier, STNodeClassifier
 
 
 def compute_dataset_statistics_using_config(
@@ -195,9 +194,7 @@ def _initialize_model_with_dummy_data(
 
 
 def get_actual_model_memory(
-    model_cfg: (
-        GraphClassifierModelConfig | NodeClassifierModelConfig | ClusteringModelConfig
-    ),
+    model_cfg: GraphClassifierModelConfig | NodeClassifierModelConfig,
     task_cfg: TaskConfig,
     num_features: int,
     num_classes: Optional[int] = None,
@@ -220,8 +217,6 @@ def get_actual_model_memory(
         model = STGraphClassifier(num_features, num_classes, model_cfg)
     elif task_cfg.type == "node-classification":
         model = STNodeClassifier(num_features, num_classes, model_cfg)
-    elif task_cfg.type == "node-clustering":
-        model = STClusteringModel(num_features, model_cfg)
     else:
         raise ValueError(f"Unsupported task type: {task_cfg.type}")
 

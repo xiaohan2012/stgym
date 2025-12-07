@@ -17,8 +17,7 @@ def get_dim_out(task_cfg: TaskConfig) -> int | None:
         if dim_out == 2:
             dim_out -= 1  # for binary classification, output dim being 1 is enough
     else:
-        # for clustering, dim_out is specified by the pooling operation
-        dim_out = None
+        raise ValueError(f"Unsupported task type: {task_cfg.type}")
     return dim_out
 
 

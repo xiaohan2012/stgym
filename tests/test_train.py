@@ -2,7 +2,6 @@ import pytest
 import torch
 
 from stgym.config_schema import (
-    ClusteringModelConfig,
     DataLoaderConfig,
     ExperimentConfig,
     GraphClassifierModelConfig,
@@ -52,19 +51,6 @@ def graph_clf_model_cfg():
 
 
 @pytest.fixture
-def clustering_model_cfg():
-    return ClusteringModelConfig(
-        # message passing layers
-        mp_layers=[
-            MessagePassingConfig(
-                layer_type="gcnconv",
-                pooling=PoolingConfig(type="dmon", n_clusters=8),
-            ),
-        ],
-    )
-
-
-@pytest.fixture
 def node_clf_model_cfg():
     return NodeClassifierModelConfig(
         # message passing layers
@@ -85,17 +71,6 @@ def graph_clf_train_cfg():
         lr_schedule=LRScheduleConfig(type=None),
         max_epoch=10,
         early_stopping={"metric": "val_roc_auc", "mode": "max"},
-        devices=PL_TRAIN_DEVICES,
-    )
-
-
-@pytest.fixture
-def clustering_train_cfg():
-    return TrainConfig(
-        optim=OptimizerConfig(),
-        lr_schedule=LRScheduleConfig(type=None),
-        max_epoch=10,
-        early_stopping={"metric": "val_nmi", "mode": "max"},
         devices=PL_TRAIN_DEVICES,
     )
 
@@ -133,11 +108,6 @@ def graph_clf_task_cfg():
 
 
 @pytest.fixture
-def clustering_task_cfg():
-    return TaskConfig(dataset_name="human-crc-test", type="node-clustering")
-
-
-@pytest.fixture
 def node_clf_task_cfg():
     return TaskConfig(
         dataset_name="human-crc-test", type="node-classification", num_classes=10
@@ -165,23 +135,6 @@ def test_train_on_graph_clf_task(
     ).to(TORCH_DEVICE)
     train(model_module, data_module, graph_clf_train_cfg, mlflow_cfg, logger=None)
     rm_dir_if_exists("tests/data/brca-test/processed")
-
-
-def test_clustering_task(
-    clustering_task_cfg, dl_cfg, clustering_model_cfg, clustering_train_cfg, mlflow_cfg
-):
-    """for node clustering task"""
-    data_module = STDataModule(clustering_task_cfg, dl_cfg)
-    model_module = STGymModule(
-        dim_in=data_module.num_features,
-        model_cfg=clustering_model_cfg,
-        train_cfg=clustering_train_cfg,
-        task_cfg=clustering_task_cfg,
-        dl_cfg=dl_cfg,
-    ).to(TORCH_DEVICE)
-
-    train(model_module, data_module, clustering_train_cfg, mlflow_cfg, logger=None)
-    rm_dir_if_exists("tests/data/human-crc-test/processed")
 
 
 def test_train_on_node_clf_task(

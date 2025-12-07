@@ -33,7 +33,7 @@ LRSchedulerType = Literal[None, "cos"]
 GlobalPoolingType = Literal["max", "mean", "add"]
 PostMPLayerType = Literal["mlp", "linear"]
 GraphConstructionApproach = Literal["knn", "radius"]
-TaskType = Literal["node-classification", "graph-classification", "node-clustering"]
+TaskType = Literal["node-classification", "graph-classification"]
 EvalMetric = Literal["pr-auc", "roc-auc", "accuracy", "nmi"]
 
 
@@ -136,14 +136,6 @@ class GraphClassifierModelConfig(BaseModel):
     mem: MemoryConfig = MemoryConfig(inplace=False)
 
 
-class ClusteringModelConfig(BaseModel):
-    # architecture
-    mp_layers: list[MessagePassingConfig]
-
-    # misc
-    mem: MemoryConfig = MemoryConfig(inplace=False)
-
-
 class NodeClassifierModelConfig(BaseModel):
     # architecture
     mp_layers: list[MessagePassingConfig]
@@ -231,7 +223,7 @@ class TaskConfig(BaseModel):
 
     @model_validator(mode="after")
     def validate_num_classes(self) -> Self:
-        if self.type != "node-clustering" and self.num_classes is None:
+        if self.num_classes is None:
             raise ValueError(
                 "num_classes is required for node-classification and graph-classification"
             )
@@ -259,9 +251,7 @@ dataset_eval_mode = {
 class ExperimentConfig(MyBaseModel):
     task: TaskConfig
     data_loader: DataLoaderConfig
-    model: (
-        GraphClassifierModelConfig | NodeClassifierModelConfig | ClusteringModelConfig
-    )
+    model: GraphClassifierModelConfig | NodeClassifierModelConfig
     train: TrainConfig
     group_id: Optional[int] = None
 

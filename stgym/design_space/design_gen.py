@@ -5,7 +5,6 @@ import pydash as _
 from pydantic import BaseModel
 
 from stgym.config_schema import (
-    ClusteringModelConfig,
     DataLoaderConfig,
     ExperimentConfig,
     GraphClassifierModelConfig,
@@ -75,9 +74,7 @@ def sample_across_dimensions(
 
 def generate_model_config(
     task_type: TaskType, space: ModelSpace, k: int = 1, seed: int = None
-) -> list[
-    GraphClassifierModelConfig | NodeClassifierModelConfig | ClusteringModelConfig
-]:
+) -> list[GraphClassifierModelConfig | NodeClassifierModelConfig]:
     seeds = rand_ints(k, seed=seed)
     ret = []
     for i in range(k):
@@ -97,8 +94,6 @@ def generate_model_config(
             ret.append(GraphClassifierModelConfig(**kwargs))
         elif task_type == "node-classification":
             ret.append(NodeClassifierModelConfig(**kwargs))
-        elif task_type == "node-clustering":
-            ret.append(ClusteringModelConfig(**kwargs))
         else:
             raise ValueError(f"Unsupported task type: {task_type}")
     return ret
