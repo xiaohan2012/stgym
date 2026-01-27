@@ -7,12 +7,6 @@ ds_list = [
     get_dataset_class(ds_name)(root=f"data/{ds_name}") for ds_name in get_all_ds_names()
 ]
 
-for ds in ds_list:
-    print(ds)
-    for dt in ds:
-        print(dt.x.device)
-        break
-
 
 def get_info(ds):
     name = ds.root.split("/")[1]
