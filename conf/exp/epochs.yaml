@@ -1,0 +1,7 @@
+# @package _global_
+
+design_dimension: train.max_epoch
+design_choices: [50, 100, 200, 300]
+
+mlflow:
+  experiment_name: epochs

@@ -1,0 +1,7 @@
+# @package _global_
+
+design_dimension: model.num_mp_layers
+design_choices: [1, 2, 3]
+
+mlflow:
+  experiment_name: n_mlp_layers
