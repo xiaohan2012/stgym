@@ -8,7 +8,11 @@ task:
   type: graph-classification
   dataset_name:
     - brca
-    - mouse-preoptic
-    - mouse-kidney
-    - brca-ptnm-m
+    - spatial-vdj
+    - glioblastoma
     - brca-grade
+    - gastric-bladder-cancer
+    - mouse-kidney
+    - inflammatory-skin
+    - mouse-preoptic
+    - brca-ptnm-m
