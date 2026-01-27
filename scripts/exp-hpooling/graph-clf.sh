@@ -3,7 +3,7 @@
 time python run_rct.py \
        +exp=hpooling \
        design_space=graph_clf \
-       resource=gpu-2 \
+       resource=gpu \
        sample_size=100 \
        design_space.train.max_epoch=200 \
        mlflow.experiment_name=graph-clf-hpooling-$(date +%m-%d-%Y)
