@@ -1,0 +1,4 @@
+num_cpus: 32
+num_gpus: 6
+num_cpus_per_trial: 5
+num_gpus_per_trial: 1
