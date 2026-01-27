@@ -3,17 +3,9 @@ import pandas as pd
 from stgym.data_loader import get_all_ds_names, get_dataset_class
 from stgym.data_loader import get_info as get_ds_info
 
-# ds_list = [
-#     get_dataset_class(ds_name)(root=f"data/{ds_name}") for ds_name in get_all_ds_names()
-# ]
-
-ds_list = []
-
-for ds_name in get_all_ds_names():
-    print(f"ds_name: {ds_name}")
-    ds = get_dataset_class(ds_name)(root=f"data/{ds_name}")
-    ds_list.append(ds)
-
+ds_list = [
+    get_dataset_class(ds_name)(root=f"data/{ds_name}") for ds_name in get_all_ds_names()
+]
 
 for ds in ds_list:
     print(ds)
