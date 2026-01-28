@@ -49,10 +49,10 @@ def main(cfg: DictConfig):
     )
 
     # Calculate GPU requirements for each experiment
-    gpu_memory_gb = res_cfg.gpu_memory_gb
-    print(
-        f"Estimating GPU requirements for {len(configs)} experiments (assuming {gpu_memory_gb}GB per GPU)..."
-    )
+    # gpu_memory_gb = res_cfg.gpu_memory_gb
+    # print(
+    #     f"Estimating GPU requirements for {len(configs)} experiments (assuming {gpu_memory_gb}GB per GPU)..."
+    # )
 
     # Launch experiments with dynamic GPU allocation
     promises = []
@@ -63,14 +63,14 @@ def main(cfg: DictConfig):
         gpu_allocation = res_cfg.num_gpus_per_trial
 
         # Optional: Still check memory requirements for validation
-        estimated_gpu_ratio = estimate_gpu_requirements(exp_cfg, gpu_memory_gb)
-        if estimated_gpu_ratio > gpu_allocation:
-            print(
-                f"Experiment {i+1}/{len(configs)}: WARNING - estimated GPU requirement ({estimated_gpu_ratio:.3f}) "
-                f"exceeds allocated GPUs ({gpu_allocation:.3f})"
-            )
+        # estimated_gpu_ratio = estimate_gpu_requirements(exp_cfg, gpu_memory_gb)
+        # if estimated_gpu_ratio > gpu_allocation:
+        #     print(
+        #         f"Experiment {i+1}/{len(configs)}: WARNING - estimated GPU requirement ({estimated_gpu_ratio:.3f}) "
+        #         f"exceeds allocated GPUs ({gpu_allocation:.3f})"
+        #     )
 
-        print(f"Experiment {i+1}/{len(configs)}: using {gpu_allocation:.3f} GPU(s)")
+        # print(f"Experiment {i+1}/{len(configs)}: using {gpu_allocation:.3f} GPU(s)")
 
         run_exp_remote = ray.remote(run_exp).options(
             num_cpus=res_cfg.num_cpus_per_trial, num_gpus=gpu_allocation
