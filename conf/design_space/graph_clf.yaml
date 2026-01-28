@@ -12,7 +12,8 @@ task:
     - glioblastoma
     - brca-grade
     - gastric-bladder-cancer
-    - mouse-kidney
-    - inflammatory-skin
+    # these datasets are not processed yet
+    # - mouse-kidney
+    # - inflammatory-skin
     - mouse-preoptic
     - brca-ptnm-m
