@@ -117,14 +117,27 @@ def create_loader(
         ds, lengths=[cfg.split.train_ratio, cfg.split.val_ratio, cfg.split.test_ratio]
     )
     train_loader = DataLoader(
-        train_ds, batch_size=cfg.batch_size, shuffle=True, num_workers=cfg.num_workers
+        train_ds,
+        batch_size=cfg.batch_size,
+        shuffle=True,
+        num_workers=cfg.num_workers,
+        # drop last to avoid single-sample batch (which has undefined variance in batch norm)
+        drop_last=True,
     )
     # val/test data is in one batch
     val_loader = DataLoader(
-        val_ds, batch_size=cfg.batch_size, shuffle=False, num_workers=cfg.num_workers
+        val_ds,
+        batch_size=cfg.batch_size,
+        shuffle=False,
+        num_workers=cfg.num_workers,
+        drop_last=True,
     )
     test_loader = DataLoader(
-        test_ds, batch_size=cfg.batch_size, shuffle=False, num_workers=cfg.num_workers
+        test_ds,
+        batch_size=cfg.batch_size,
+        shuffle=False,
+        num_workers=cfg.num_workers,
+        drop_last=True,
     )
 
     return train_loader, val_loader, test_loader
@@ -156,13 +169,25 @@ def create_kfold_loader(ds, cfg: DataLoaderConfig):
 
     # Create DataLoaders with same parameters as create_loader
     train_loader = DataLoader(
-        train_ds, batch_size=cfg.batch_size, shuffle=True, num_workers=cfg.num_workers
+        train_ds,
+        batch_size=cfg.batch_size,
+        shuffle=True,
+        num_workers=cfg.num_workers,
+        drop_last=True,
     )
     val_loader = DataLoader(
-        val_ds, batch_size=cfg.batch_size, shuffle=False, num_workers=cfg.num_workers
+        val_ds,
+        batch_size=cfg.batch_size,
+        shuffle=False,
+        num_workers=cfg.num_workers,
+        drop_last=True,
     )
     test_loader = DataLoader(
-        test_ds, batch_size=cfg.batch_size, shuffle=False, num_workers=cfg.num_workers
+        test_ds,
+        batch_size=cfg.batch_size,
+        shuffle=False,
+        num_workers=cfg.num_workers,
+        drop_last=True,
     )
 
     return train_loader, val_loader, test_loader
