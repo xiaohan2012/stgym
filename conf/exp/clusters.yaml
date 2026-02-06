@@ -1,0 +1,7 @@
+# @package _global_
+
+design_dimension: model.pooling.n_clusters
+design_choices: [5, 10, 20, 30]
+
+mlflow:
+  experiment_name: clusters

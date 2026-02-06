@@ -19,7 +19,7 @@ model:
     - '32, 16'
 train:
   optim:
-    optimizer: adam
+    optimizer: ['adam', 'sgd']
     base_lr: [0.1, 0.01, 0.001]
   lr_schedule:
     type: null

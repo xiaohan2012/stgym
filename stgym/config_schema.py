@@ -259,12 +259,13 @@ class ExperimentConfig(MyBaseModel):
     def modify_early_stopping_metric_when_kfold_split_is_used(self) -> Self:
         """Early stopping metric should contain Kfold split"""
         if self.data_loader.use_kfold_split:
+            # extrac the metric
             metric = (
+                # e.g., split_{k}_{metric} -> {metric}
                 re.sub(r"split_\d+_", "", self.train.early_stopping.metric)
                 if self.train.early_stopping.metric.startswith("split")
                 else self.train.early_stopping.metric
             )
-
             self.train.early_stopping.metric = (
                 f"split_{self.data_loader.split.split_index}_{metric}"
             )

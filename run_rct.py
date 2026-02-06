@@ -48,41 +48,19 @@ def main(cfg: DictConfig):
         cfg.random_seed,
     )
 
-    # Calculate GPU requirements for each experiment
-    gpu_memory_gb = res_cfg.gpu_memory_gb
-    print(
-        f"Estimating GPU requirements for {len(configs)} experiments (assuming {gpu_memory_gb}GB per GPU)..."
-    )
-
-    # Launch experiments with dynamic GPU allocation
     promises = []
-    skipped_exp = 0
 
     for i, exp_cfg in enumerate(configs):
         # Use configured GPU allocation instead of memory-based estimation
         gpu_allocation = res_cfg.num_gpus_per_trial
-
-        # Optional: Still check memory requirements for validation
-        estimated_gpu_ratio = estimate_gpu_requirements(exp_cfg, gpu_memory_gb)
-        if estimated_gpu_ratio > gpu_allocation:
-            print(
-                f"Experiment {i+1}/{len(configs)}: WARNING - estimated GPU requirement ({estimated_gpu_ratio:.3f}) "
-                f"exceeds allocated GPUs ({gpu_allocation:.3f})"
-            )
-
-        print(f"Experiment {i+1}/{len(configs)}: using {gpu_allocation:.3f} GPU(s)")
 
         run_exp_remote = ray.remote(run_exp).options(
             num_cpus=res_cfg.num_cpus_per_trial, num_gpus=gpu_allocation
         )
         promises.append(run_exp_remote.remote(exp_cfg, mlflow_cfg))
     # Print summary
-    total_exp = len(configs)
-    exp_to_execute = len(promises)
-    print(f"\n🎯 Execution Summary:")
-    print(f"   Total experiments: {total_exp}")
-    print(f"   To execute: {exp_to_execute}")
-    print(f"   Skipped (memory exceeded): {skipped_exp}")
+    total_exp = len(promises)
+    print(f"Total experiments to run: {total_exp}")
 
     if promises:
         RayProgressBar.show(promises)

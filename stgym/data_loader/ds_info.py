@@ -69,14 +69,14 @@ __data__ = {
         "data_source_url": "https://cellxgene.cziscience.com/collections/4195ab4c-20bd-4cd3-8b3d-65601277e731",
         "used_in_paper": "CellContrast: Reconstructing spatial relationships in single-cell RNA sequencing data via deep contrastive learning",
     },
-    DatasetName.mouse_kidney: {
-        "min_span": 4708.080078125,
-        "max_span": 5432.63720703125,
-        "num_classes": 3,
-        "task_type": "graph-classification",
-        "data_source_url": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE190094",
-        "used_in_paper": "High-resolution Slide-seqV2 spatial transcriptomics enables discovery of disease-specific cell neighborhoods and pathways",
-    },
+    # DatasetName.mouse_kidney: {
+    #     "min_span": 4708.080078125,
+    #     "max_span": 5432.63720703125,
+    #     "num_classes": 3,
+    #     "task_type": "graph-classification",
+    #     "data_source_url": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE190094",
+    #     "used_in_paper": "High-resolution Slide-seqV2 spatial transcriptomics enables discovery of disease-specific cell neighborhoods and pathways",
+    # },
     DatasetName.cellcontrast_breast: {
         "min_span": 16.074260711669922,
         "max_span": 16.33220672607422,
@@ -149,14 +149,14 @@ __data__ = {
         "data_source_url": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE246011",
         "used_in_paper": "METI: Deep profiling of tumor ecosystems by integrating cell morphology and spatial transcriptomics",
     },
-    DatasetName.inflammatory_skin: {
-        "min_span": 1802.0,
-        "max_span": 31847.0,
-        "num_classes": 2,
-        "task_type": "graph-classification",
-        "data_source_url": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE206391",
-        "used_in_paper": "Spatial transcriptomics of inflammatory skin diseases",
-    },
+    # DatasetName.inflammatory_skin: {
+    #     "min_span": 1802.0,
+    #     "max_span": 31847.0,
+    #     "num_classes": 2,
+    #     "task_type": "graph-classification",
+    #     "data_source_url": "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE206391",
+    #     "used_in_paper": "Spatial transcriptomics of inflammatory skin diseases",
+    # },
 }
 
 

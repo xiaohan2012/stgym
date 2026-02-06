@@ -109,6 +109,16 @@ def load_dataset(task_cfg: TaskConfig, dl_cfg: DataLoaderConfig):
         return ds_cls(root=f"./data/{ds_name}", transform=transform)
 
 
+def should_drop_last_batch(num_sample: int, batch_size: int):
+    """Determine whether the last batch should be dropped based on the following:
+
+    - if the last batch has only one sample
+
+    This check is needed for batch norm, which does not work with single-element batch.
+    """
+    return (num_sample % batch_size) == 1
+
+
 def create_loader(
     ds, cfg: DataLoaderConfig
 ) -> tuple[DataLoader, DataLoader, DataLoader]:
@@ -116,15 +126,28 @@ def create_loader(
     train_ds, val_ds, test_ds = random_split(
         ds, lengths=[cfg.split.train_ratio, cfg.split.val_ratio, cfg.split.test_ratio]
     )
+
     train_loader = DataLoader(
-        train_ds, batch_size=cfg.batch_size, shuffle=True, num_workers=cfg.num_workers
+        train_ds,
+        batch_size=cfg.batch_size,
+        shuffle=True,
+        num_workers=cfg.num_workers,
+        drop_last=should_drop_last_batch(len(train_ds), cfg.batch_size),
     )
     # val/test data is in one batch
     val_loader = DataLoader(
-        val_ds, batch_size=cfg.batch_size, shuffle=False, num_workers=cfg.num_workers
+        val_ds,
+        batch_size=cfg.batch_size,
+        shuffle=False,
+        num_workers=cfg.num_workers,
+        drop_last=should_drop_last_batch(len(val_ds), cfg.batch_size),
     )
     test_loader = DataLoader(
-        test_ds, batch_size=cfg.batch_size, shuffle=False, num_workers=cfg.num_workers
+        test_ds,
+        batch_size=cfg.batch_size,
+        shuffle=False,
+        num_workers=cfg.num_workers,
+        drop_last=should_drop_last_batch(len(test_ds), cfg.batch_size),
     )
 
     return train_loader, val_loader, test_loader
@@ -156,13 +179,25 @@ def create_kfold_loader(ds, cfg: DataLoaderConfig):
 
     # Create DataLoaders with same parameters as create_loader
     train_loader = DataLoader(
-        train_ds, batch_size=cfg.batch_size, shuffle=True, num_workers=cfg.num_workers
+        train_ds,
+        batch_size=cfg.batch_size,
+        shuffle=True,
+        num_workers=cfg.num_workers,
+        drop_last=should_drop_last_batch(len(train_ds), cfg.batch_size),
     )
     val_loader = DataLoader(
-        val_ds, batch_size=cfg.batch_size, shuffle=False, num_workers=cfg.num_workers
+        val_ds,
+        batch_size=cfg.batch_size,
+        shuffle=False,
+        num_workers=cfg.num_workers,
+        drop_last=should_drop_last_batch(len(val_ds), cfg.batch_size),
     )
     test_loader = DataLoader(
-        test_ds, batch_size=cfg.batch_size, shuffle=False, num_workers=cfg.num_workers
+        test_ds,
+        batch_size=cfg.batch_size,
+        shuffle=False,
+        num_workers=cfg.num_workers,
+        drop_last=should_drop_last_batch(len(test_ds), cfg.batch_size),
     )
 
     return train_loader, val_loader, test_loader

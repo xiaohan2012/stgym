@@ -1,0 +1,7 @@
+# @package _global_
+
+design_dimension: data_loader.batch_size
+design_choices: [4, 8, 16, 32]
+
+mlflow:
+  experiment_name: batch_size
