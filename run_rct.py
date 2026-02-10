@@ -1,4 +1,5 @@
 import hydra
+import pydash as pyd
 import ray
 from omegaconf import DictConfig, OmegaConf
 
@@ -75,7 +76,17 @@ def main(cfg: DictConfig):
         run_exp_remote = ray.remote(run_exp).options(
             num_cpus=res_cfg.num_cpus_per_trial, num_gpus=gpu_allocation
         )
-        promises.append(run_exp_remote.remote(exp_cfg, mlflow_cfg))
+        promises.append(
+            run_exp_remote.remote(
+                exp_cfg,
+                mlflow_cfg,
+                # add additional mlflow tags
+                metadata_for_tag={
+                    "design_dimension": design_dimension,
+                    "design_chocies": "|".join(pyd.map_(design_chocies, str)),
+                },
+            )
+        )
     # Print summary
     total_exp = len(configs)
     exp_to_execute = len(promises)

@@ -111,6 +111,8 @@ def mlflow_config():
 class TestRunExp:
     """Test class for the run_exp function covering both k-fold and regular splits"""
 
+    metadata_for_tag = {"foo": "bar"}
+
     @pytest.fixture(autouse=True)
     def setup_configs(
         self,
@@ -181,7 +183,9 @@ class TestRunExp:
 
         with patch("stgym.rct.run.train") as mock_train:
             mock_train.return_value = None
-            result = run_exp(exp_cfg, mlflow_config)
+            result = run_exp(
+                exp_cfg, mlflow_config, metadata_for_tag=self.metadata_for_tag
+            )
 
         assert result is True
         assert mock_train.call_count == expected_calls
@@ -206,7 +210,7 @@ class TestRunExp:
             "stgym.rct.run.train"
         ):
             mock_module_class.return_value = Mock()
-            run_exp(exp_cfg, mlflow_config)
+            run_exp(exp_cfg, mlflow_config, metadata_for_tag=self.metadata_for_tag)
 
             # Check that dim_out matches expected value
             call_args = mock_module_class.call_args
@@ -221,7 +225,9 @@ class TestRunExp:
 
         with patch("stgym.rct.run.train") as mock_train:
             mock_train.return_value = None
-            result = run_exp(exp_cfg, mlflow_config)
+            result = run_exp(
+                exp_cfg, mlflow_config, metadata_for_tag=self.metadata_for_tag
+            )
 
         assert result is True
         mock_train.assert_called_once()
@@ -248,7 +254,9 @@ class TestRunExp:
         with patch(mock_target) as mock_component:
             mock_component.side_effect = RuntimeError(exception_msg)
 
-            result = run_exp(exp_cfg, mlflow_config)
+            result = run_exp(
+                exp_cfg, mlflow_config, metadata_for_tag=self.metadata_for_tag
+            )
 
             # Should still return True even with error
             assert result is True
