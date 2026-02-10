@@ -1,4 +1,5 @@
 import traceback
+from typing import Optional
 
 from logzero import logger as logz_logger
 from omegaconf import OmegaConf
@@ -7,6 +8,7 @@ from stgym.config_schema import ExperimentConfig, MLFlowConfig, TaskConfig
 from stgym.data_loader import STDataModule, STKfoldDataModule
 from stgym.tl_model import STGymModule
 from stgym.train import train
+from stgym.types import primitive_type
 from stgym.utils import log_params_and_config_in_mlflow
 
 
@@ -32,7 +34,11 @@ TL_TRAIN_CFG = {
 }
 
 
-def run_exp(exp_cfg: ExperimentConfig, mlflow_cfg: MLFlowConfig):
+def run_exp(
+    exp_cfg: ExperimentConfig,
+    mlflow_cfg: MLFlowConfig,
+    metadata_for_tag: Optional[dict[str, primitive_type]] = None,
+):
     logz_logger.debug(OmegaConf.to_yaml(exp_cfg.model_dump()))
 
     dim_out = get_dim_out(exp_cfg.task)
@@ -46,6 +52,8 @@ def run_exp(exp_cfg: ExperimentConfig, mlflow_cfg: MLFlowConfig):
     }
     if exp_cfg.group_id is not None:
         mlflow_cfg.tags |= {"group_id": str(exp_cfg.group_id)}
+    if metadata_for_tag is not None:
+        mlflow_cfg.tags |= metadata_for_tag
 
     # Create logger AFTER setting tags
     logger = mlflow_cfg.create_tl_logger()
