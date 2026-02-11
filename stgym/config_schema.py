@@ -245,6 +245,16 @@ dataset_eval_mode = {
     "spatial-vdj": DataLoaderConfig.KFoldSplitConfig(
         num_folds=5  # there are 12 samples
     ),
+    "human-pancreas": DataLoaderConfig.KFoldSplitConfig(
+        num_folds=3  # there are 7 samples
+    ),
+    "colorectal-cancer": DataLoaderConfig.KFoldSplitConfig(
+        num_folds=4  # there are 8 samples
+    ),
+    "gastric-bladder-cancer": DataLoaderConfig.KFoldSplitConfig(
+        num_folds=3  # 6 samples, graph clf
+    ),
+    "cellcontrast-breast": DataLoaderConfig.KFoldSplitConfig(num_folds=5),  # 10 samples
 }
 
 
