@@ -5,23 +5,17 @@ Runs a single experiment from a YAML configuration file using the STGym framewor
 ## Usage
 
 ```
-/run_exp <config_path> [--no-tracking]
+/run_exp <config_path> --no-tracking  # always avoid MLFlow tracking
 ```
 
 ## Parameters
 
 - `config_path`: Path to the YAML configuration file (required)
-- `--no-tracking`: Disable MLflow tracking (optional)
+- `--no-tracking`: Disable MLflow tracking (use it)
 
-## Examples
-
-```
-/run_exp conf/exp/basic_gcn.yaml
-/run_exp conf/exp/gat_experiment.yaml --no-tracking
-```
 
 ## Implementation
 
 ```bash
-python run_experiment_by_yaml.py "$@"
+python run_experiment_by_yaml.py "$@" --no-tracking
 ```
