@@ -1,4 +1,3 @@
-import re
 from pathlib import Path
 from typing import Literal, Optional
 
@@ -266,26 +265,12 @@ class ExperimentConfig(MyBaseModel):
     group_id: Optional[int] = None
 
     @model_validator(mode="after")
-    def modify_early_stopping_metric_when_kfold_split_is_used(self) -> Self:
-        """Early stopping metric should contain Kfold split"""
-        if self.data_loader.use_kfold_split:
-            # extrac the metric
-            metric = (
-                # e.g., split_{k}_{metric} -> {metric}
-                re.sub(r"split_\d+_", "", self.train.early_stopping.metric)
-                if self.train.early_stopping.metric.startswith("split")
-                else self.train.early_stopping.metric
-            )
-            self.train.early_stopping.metric = (
-                f"split_{self.data_loader.split.split_index}_{metric}"
-            )
-        return self
-
-    @model_validator(mode="after")
     def override_eval_mode(self) -> Self:
         """Override evaluation mode for certain dataset"""
         if self.task.dataset_name in dataset_eval_mode:
-            self.data_loader.split = dataset_eval_mode[self.task.dataset_name]
+            self.data_loader.split = dataset_eval_mode[
+                self.task.dataset_name
+            ].model_copy()
         return self
 
     @classmethod

@@ -96,8 +96,8 @@ class TestDataLoaderConfig:
             )
 
 
-class TestearlyStoppingModificationLogic:
-    """Test ExperimentConfig.modify_early_stopping_metric_when_kfold_split_is_used."""
+class TestEarlyStoppingMetric:
+    """Test that early stopping metric remains generic across all split types."""
 
     def create_exp_config(self, data_loader_cfg: DataLoaderConfig):
         return ExperimentConfig(
@@ -112,28 +112,28 @@ class TestearlyStoppingModificationLogic:
             train=TrainConfig(max_epoch=100),
         )
 
-    def test_modification_fired(self):
-        # Test with kfold split - metric should be modified
+    def test_kfold_split_uses_generic_metric(self):
+        # Test with kfold split - metric should remain generic
         exp_config = self.create_exp_config(
             DataLoaderConfig(split=dict(num_folds=5, split_index=2))
         )
 
-        # Check that early stopping metric was modified to include split index
-        assert exp_config.train.early_stopping.metric == "split_2_val_loss"
+        # Check that early stopping metric stays generic (no split prefix)
+        assert exp_config.train.early_stopping.metric == "val_loss"
 
-        # fire again
+        # Validate again with different split_index - metric should still be generic
         exp_config.data_loader.split.split_index = 3
         exp_config = exp_config.validate()
-        assert exp_config.train.early_stopping.metric == "split_3_val_loss"
+        assert exp_config.train.early_stopping.metric == "val_loss"
 
-    def test_modification_silent(self):
-        # Test with regular split - metric should not be modified
+    def test_regular_split_uses_generic_metric(self):
+        # Test with regular split - metric should remain generic
         exp_config_regular = self.create_exp_config(
             DataLoaderConfig(
                 split=dict(train_ratio=0.7, val_ratio=0.15, test_ratio=0.15)
             )
         )
-        # Check that early stopping metric was not modified
+        # Check that early stopping metric is generic
         assert exp_config_regular.train.early_stopping.metric == "val_loss"
 
 

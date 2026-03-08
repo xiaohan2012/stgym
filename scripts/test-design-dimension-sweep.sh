@@ -16,6 +16,7 @@ EXPERIMENTS_FULL=$(ls conf/exp/*.yaml | xargs -n1 basename | sed 's/\.yaml$//' |
 EXPERIMENTS_DEBUG="hpooling,bn"
 DESIGN_SPACES="graph_clf,node_clf"
 
+
 # Set mode (default to debug, can be overridden with MODE environment variable)
 MODE=${MODE:-debug}
 # Set resource (default to cpu-4, can be overridden with RESOURCE environment variable)
