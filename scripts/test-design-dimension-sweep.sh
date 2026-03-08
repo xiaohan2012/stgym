@@ -12,7 +12,8 @@
 # Full mode: all experiments × 2 design spaces
 
 # Configuration variables
-EXPERIMENTS_FULL=$(ls conf/exp/*.yaml | xargs -n1 basename | sed 's/\.yaml$//' | tr '\n' ',' | sed 's/,$//')
+# remove 'epochs' experiment for efficiency reasons
+EXPERIMENTS_FULL=$(ls conf/exp/*.yaml | xargs -n1 basename | sed 's/\.yaml$//' | grep -v '^epochs$' | tr '\n' ',' | sed 's/,$//')
 EXPERIMENTS_DEBUG="hpooling,bn"
 DESIGN_SPACES="graph_clf,node_clf"
 
