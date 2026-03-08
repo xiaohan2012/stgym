@@ -49,16 +49,6 @@ def main(cfg: DictConfig):
         cfg.random_seed,
     )
 
-    # for i, exp_cfg in enumerate(configs):
-    #     run_exp(
-    #         exp_cfg,
-    #         mlflow_cfg,
-    #         # add additional mlflow tags
-    #         metadata_for_tag={
-    #             "design_dimension": design_dimension,
-    #             "design_chocies": "|".join(pyd.map_(design_chocies, str)),
-    #         },
-    #     )
     promises = []
 
     for i, exp_cfg in enumerate(configs):
