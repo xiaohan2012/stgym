@@ -14,10 +14,9 @@
 # Configuration variables
 # EXPERIMENTS_FULL=$(ls conf/exp/*.yaml | xargs -n1 basename | sed 's/\.yaml$//' | tr '\n' ',' | sed 's/,$//')
 EXPERIMENTS_FULL="radius"
-# EXPERIMENTS_DEBUG="hpooling,bn"
-EXPERIMENTS_DEBUG="radius"
-# DESIGN_SPACES="graph_clf,node_clf"
-DESIGN_SPACES="node_clf"
+EXPERIMENTS_DEBUG="hpooling,bn"
+DESIGN_SPACES="graph_clf,node_clf"
+
 
 # Set mode (default to debug, can be overridden with MODE environment variable)
 MODE=${MODE:-debug}
