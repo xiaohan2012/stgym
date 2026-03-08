@@ -12,7 +12,7 @@ DESIGN_SPACES="graph_clf,node_clf"
 
 # Configuration variables with defaults
 RESOURCE=${RESOURCE:-gpu-6}
-SAMPLE_SIZE=${SAMPLE_SIZE:-500}
+SAMPLE_SIZE=${SAMPLE_SIZE:-100}
 
 # Generate datetime for experiment name
 DATETIME=$(date '+%Y%m%d-%H%M%S')
