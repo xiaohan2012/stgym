@@ -1,10 +1,9 @@
-#! /bin/bash
+#!/bin/bash
 
 time python run_rct.py \
-       +exp=knn \
+       +exp=n_mlp_layers \
        design_space=graph_clf \
        resource=gpu \
        sample_size=100 \
        design_space.train.max_epoch=200 \
-       design_space.data_loader.graph_const=knn \
-       mlflow.experiment_name=graph-clf-knn-$(date +%m-%d-%Y)
+       mlflow.experiment_name=graph-clf-n_mlp_layers-$(date +%m-%d-%Y)

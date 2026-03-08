@@ -34,6 +34,9 @@ class GastricBladderCancerDataset(AbstractDataset):
         csv_data_path = Path(self.raw_dir) / RAW_FILE_NAME
         df = pd.read_csv(csv_data_path)
 
+        # drop columns with NaN values
+        df.dropna(axis=1, how="any", inplace=True)
+
         # Group by sample_id to create separate graphs for each patient
         groups = list(df.groupby(GROUP_COLS))
         data_list = []

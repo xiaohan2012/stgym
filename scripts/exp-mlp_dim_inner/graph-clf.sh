@@ -1,10 +1,9 @@
-#! /bin/bash
+#!/bin/bash
 
 time python run_rct.py \
-       +exp=knn \
+       +exp=mlp_dim_inner \
        design_space=graph_clf \
        resource=gpu \
        sample_size=100 \
        design_space.train.max_epoch=200 \
-       design_space.data_loader.graph_const=knn \
-       mlflow.experiment_name=graph-clf-knn-$(date +%m-%d-%Y)
+       mlflow.experiment_name=graph-clf-mlp_dim_inner-$(date +%m-%d-%Y)
