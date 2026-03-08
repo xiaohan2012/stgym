@@ -55,15 +55,17 @@ def run_exp(
     if metadata_for_tag is not None:
         mlflow_cfg.tags |= metadata_for_tag
 
-    # Create logger AFTER setting tags
-    logger = mlflow_cfg.create_tl_logger()
-
-    if logger is not None and mlflow_cfg.track:
-        log_params_and_config_in_mlflow(exp_cfg, logger)
-
+    print(f"mlflow_cfg: {mlflow_cfg}")
     try:
         if not use_kfold_cv:
             logz_logger.info("Evaluation mode: train/validation/test split.")
+            # Create logger for single experiment
+            if mlflow_cfg.track:
+                logger = mlflow_cfg.create_tl_logger()
+                log_params_and_config_in_mlflow(exp_cfg, logger)
+            else:
+                logger = None
+
             # regular train/val/test split
             data_module = STDataModule(exp_cfg.task, exp_cfg.data_loader)
             model_module = STGymModule(
@@ -84,13 +86,25 @@ def run_exp(
             )
         else:
             logz_logger.info("Evaluation mode: k-fold cross validation.")
-            # k-fold split
+            # k-fold split - create separate logger for each fold
             for fold in range(exp_cfg.data_loader.split.num_folds):
                 exp_cfg.data_loader.split.split_index = fold
                 # trigger model validation and post-processing logic
                 exp_cfg = exp_cfg.validate()
 
                 fold_dl_cfg = exp_cfg.data_loader.model_copy()
+                # Explicitly set fold index to ensure correct data split
+                fold_dl_cfg.split.split_index = fold
+
+                # Create individual logger for this fold
+                if mlflow_cfg.track:
+                    fold_logger = mlflow_cfg.create_tl_logger()
+                    fold_logger.experiment.set_tag(
+                        fold_logger.run_id, "fold", str(fold)
+                    )
+                    log_params_and_config_in_mlflow(exp_cfg, fold_logger)
+                else:
+                    fold_logger = None
 
                 # Create data module for this fold
                 fold_data_module = STKfoldDataModule(exp_cfg.task, fold_dl_cfg)
@@ -111,19 +125,14 @@ def run_exp(
                     exp_cfg.train,
                     mlflow_cfg,
                     tl_train_config=TL_TRAIN_CFG,
-                    logger=logger,
+                    logger=fold_logger,
                 )
 
     except Exception as e:
         error_msg = f"Training failed: {e}"
-        full_stacktrace = traceback.format_exc()
+        traceback.format_exc()
         logz_logger.error(error_msg)
         traceback.print_exc()
-        if logger is not None:
-            logger.experiment.log_text(
-                logger.run_id,
-                f"{error_msg}\n\nFull Stacktrace:\n{full_stacktrace}",
-                "training_error.txt",
-            )
+        # Note: Individual fold loggers handle their own error logging
 
     return True

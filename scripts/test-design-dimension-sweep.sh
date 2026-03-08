@@ -12,9 +12,12 @@
 # Full mode: all experiments × 2 design spaces
 
 # Configuration variables
-EXPERIMENTS_FULL=$(ls conf/exp/*.yaml | xargs -n1 basename | sed 's/\.yaml$//' | tr '\n' ',' | sed 's/,$//')
-EXPERIMENTS_DEBUG="hpooling,bn"
-DESIGN_SPACES="graph_clf,node_clf"
+# EXPERIMENTS_FULL=$(ls conf/exp/*.yaml | xargs -n1 basename | sed 's/\.yaml$//' | tr '\n' ',' | sed 's/,$//')
+EXPERIMENTS_FULL="radius"
+# EXPERIMENTS_DEBUG="hpooling,bn"
+EXPERIMENTS_DEBUG="radius"
+# DESIGN_SPACES="graph_clf,node_clf"
+DESIGN_SPACES="node_clf"
 
 # Set mode (default to debug, can be overridden with MODE environment variable)
 MODE=${MODE:-debug}
@@ -35,6 +38,6 @@ time python run_rct.py --multirun \
        +exp=$EXPERIMENTS \
        design_space=$DESIGN_SPACES \
        resource=$RESOURCE \
-       sample_size=5 \
+       sample_size=1 \
        design_space.train.max_epoch=1 \
        ++mlflow.experiment_name=test

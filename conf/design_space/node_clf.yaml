@@ -7,13 +7,13 @@ model:
 task:
   type: node-classification
   dataset_name:
-    - breast-cancer
-    - human-intestine
+    # - breast-cancer
+    # - human-intestine
     - colorectal-cancer
-    - upmc
-    - charville
-    - mouse-spleen
-    - human-crc
-    - human-pancreas
-    - human-lung
-    - cellcontrast-breast
+    # - upmc
+    # - charville
+    # - mouse-spleen
+    # - human-crc
+    # - human-pancreas
+    # - human-lung
+    # - cellcontrast-breast
