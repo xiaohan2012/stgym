@@ -5,5 +5,4 @@ time python run_rct.py \
        design_space=graph_clf \
        resource=gpu \
        sample_size=100 \
-       design_space.train.max_epoch=200 \
        mlflow.experiment_name=graph-clf-epochs-$(date +%m-%d-%Y)
