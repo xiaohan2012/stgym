@@ -60,6 +60,22 @@ class HumanPancreasDataset(AbstractDataset):
                 )
 
             features = sample_df[feature_cols].values
+
+            # Handle NaN values in the feature matrix
+            # Check if there are any NaN values
+            if pd.isnull(features).any():
+                import numpy as np
+
+                nan_count = np.isnan(features).sum()
+                total_features = features.shape[0] * features.shape[1]
+                print(
+                    f"Warning: Sample {name} has {nan_count}/{total_features} ({nan_count/total_features*100:.1f}%) NaN feature values"
+                )
+
+                # Strategy: Fill NaN with 0 (common for gene expression data)
+                # Alternative strategies could be: median imputation, mean imputation, etc.
+                features = np.nan_to_num(features, nan=0.0, posinf=0.0, neginf=0.0)
+
             x = torch.Tensor(features)
 
             # Verify dimensions match
