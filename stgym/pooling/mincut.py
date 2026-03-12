@@ -64,17 +64,9 @@ def mincut_pool(
     # mincut loss
     mincut_normalizer = C_bd.T @ d_diag @ C_bd
 
-    # torch.sparse.trace does not exist yet
-    # Add numerical stability to prevent division by zero/very small values
-    normalizer_trace = torch.trace(mincut_normalizer.to_dense())
-    eps = 1e-8  # Small epsilon for numerical stability
-
-    if torch.abs(normalizer_trace) < eps:
-        # If normalizer trace is too small, set mincut_loss to 0 to avoid NaN
-        mincut_loss = torch.tensor(0.0, device=device, requires_grad=True)
-    else:
-        mincut_loss = -torch.trace(C_bd.T @ adj @ C_bd.to_dense()) / normalizer_trace
-
+    mincut_loss = -torch.trace(C_bd.T @ adj @ C_bd.to_dense()) / torch.trace(
+        mincut_normalizer.to_dense()
+    )
     sqrt_K = torch.sqrt(torch.tensor(K, device=device, dtype=torch.float))
 
     # orthogonality loss
