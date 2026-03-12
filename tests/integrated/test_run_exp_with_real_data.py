@@ -42,6 +42,7 @@ def should_use_kfold(dataset_name: str) -> bool:
     return dataset_name in dataset_eval_mode
 
 
+@pytest.mark.slow
 class TestRunExpWithRealData:
     """Integration tests for run_exp function with real datasets"""
 

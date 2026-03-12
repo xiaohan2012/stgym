@@ -204,6 +204,14 @@ def create_kfold_loader(ds, cfg: DataLoaderConfig):
 
 
 class STDataModuleBase(LightningDataModule):
+    def check_nan(self):
+        nan_count = torch.isnan(self.ds.x).sum().item()
+        total = self.ds.x.numel()
+        if nan_count > 0:
+            raise ValueError(
+                f"Dataset has {nan_count}/{total} ({nan_count/total*100:.1f}%) NaN feature values"
+            )
+
     @property
     def num_features(self):
         assert hasattr(self, "ds")
@@ -235,7 +243,7 @@ class STDataModule(STDataModuleBase):
 
     def __init__(self, task_cfg: TaskConfig, dl_cfg: DataLoaderConfig):
         self.ds = load_dataset(task_cfg, dl_cfg).to(dl_cfg.device)
-
+        self.check_nan()
         self.loaders = create_loader(self.ds, dl_cfg)
         super().__init__(has_val=True, has_test=True)
 
@@ -245,6 +253,6 @@ class STKfoldDataModule(STDataModuleBase):
 
     def __init__(self, task_cfg: TaskConfig, dl_cfg: DataLoaderConfig):
         self.ds = load_dataset(task_cfg, dl_cfg).to(dl_cfg.device)
-
+        self.check_nan()
         self.loaders = create_kfold_loader(self.ds, dl_cfg)
         super().__init__(has_val=True, has_test=True)

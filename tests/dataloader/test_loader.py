@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 import torch
 from torch.utils.data import DataLoader
@@ -121,6 +123,68 @@ class TestSTKfoldDataModule:
         assert isinstance(mod.train_dataloader(), DataLoader)
         assert isinstance(mod.val_dataloader(), DataLoader)
         assert isinstance(mod.test_dataloader(), DataLoader)
+
+
+@patch("stgym.data_loader.load_dataset")
+class TestSTDataModuleNaNDetection:
+    """Test NaN detection functionality in STDataModule"""
+
+    @property
+    def mock_dataset_with_nans(self):
+        """Create a mock dataset with NaN values in features"""
+        from torch_geometric.data import Data
+
+        # Create a simple mock dataset with NaN values
+        class MockDataset:
+            def __init__(self):
+                # Create sample data with NaN values
+                x = torch.tensor(
+                    [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]],
+                    dtype=torch.float,
+                )
+                x[0, 0] = float("nan")  # Add NaN to first feature of first sample
+                x[1, 2] = float("nan")  # Add NaN to third feature of second sample
+
+                self.data = Data(
+                    x=x,
+                    edge_index=torch.tensor([[0, 1, 1, 2], [1, 0, 2, 1]]),
+                    y=torch.tensor([0, 1, 0]),
+                )
+
+            def to(self, device):
+                self.data = self.data.to(device)
+                return self
+
+            @property
+            def x(self):
+                return self.data.x
+
+            def __len__(self):
+                return 3
+
+        return MockDataset()
+
+    def test_nan_detection_raises_error(
+        self, mock_load_dataset, mock_task_cfg, mock_dl_cfg
+    ):
+        """Test that STDataModule raises ValueError when dataset contains NaN values"""
+        # Setup mock to return dataset with NaN values
+        mock_load_dataset.return_value = self.mock_dataset_with_nans
+
+        # Test STDataModule raises error on NaN detection
+        with pytest.raises(
+            ValueError, match=r"Dataset has \d+/\d+ \(\d+\.\d+%\) NaN feature values"
+        ):
+            STDataModule(mock_task_cfg, mock_dl_cfg)
+
+        # Test STKfoldDataModule also raises error on NaN detection
+        mock_dl_cfg.split = DataLoaderConfig.KFoldSplitConfig(
+            num_folds=2, split_index=0
+        )
+        with pytest.raises(
+            ValueError, match=r"Dataset has \d+/\d+ \(\d+\.\d+%\) NaN feature values"
+        ):
+            STKfoldDataModule(mock_task_cfg, mock_dl_cfg)
 
 
 def teardown_module(module):
