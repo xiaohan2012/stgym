@@ -68,7 +68,6 @@ def mincut_pool(
     mincut_loss = -torch.trace(C_bd.T @ adj @ C_bd.to_dense()) / torch.trace(
         mincut_normalizer.to_dense()
     )
-
     sqrt_K = torch.sqrt(torch.tensor(K, device=device, dtype=torch.float))
 
     # orthogonality loss
