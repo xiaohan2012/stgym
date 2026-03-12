@@ -5,7 +5,8 @@
       "Bash(gh pr view:*)",
       "Bash(git checkout:*)",
       "Bash(gh issue comment:*)",
-      "Bash(gh pr comment:*)"
+      "Bash(gh pr comment:*)",
+      "Bash(gh issue close:*)"
     ],
     "deny": [
       "Bash(git add .:*)",
