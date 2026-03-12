@@ -64,6 +64,7 @@ def mincut_pool(
     # mincut loss
     mincut_normalizer = C_bd.T @ d_diag @ C_bd
 
+    # torch.sparse.trace does not exist yet
     mincut_loss = -torch.trace(C_bd.T @ adj @ C_bd.to_dense()) / torch.trace(
         mincut_normalizer.to_dense()
     )
