@@ -13,11 +13,14 @@ from omegaconf import OmegaConf
 
 from stgym.config_schema import ExperimentConfig, MLFlowConfig
 from stgym.rct.run import run_exp
-from stgym.utils import (
-    export_memory_snapshot,
-    start_record_memory_history,
-    stop_record_memory_history,
-)
+
+# Memory recording functions are available in stgym.utils for debugging:
+# from stgym.utils import (
+#     export_memory_snapshot,
+#     start_record_memory_history,
+#     stop_record_memory_history,
+# )
+# To enable memory recording, uncomment the imports above and the function calls below
 
 
 def load_yaml_config(yaml_path: str) -> ExperimentConfig:
@@ -100,10 +103,11 @@ def main():
     # Run experiment
     logger.info("Starting experiment...")
 
-    start_record_memory_history()
+    # Memory recording disabled for performance - uncomment to enable debugging:
+    # start_record_memory_history()
     success = run_exp(exp_cfg, mlflow_cfg)
-    stop_record_memory_history()
-    export_memory_snapshot()
+    # stop_record_memory_history()
+    # export_memory_snapshot()
     if success:
         logger.info("Experiment completed successfully!")
     else:
