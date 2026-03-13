@@ -187,6 +187,107 @@ class TestSTDataModuleNaNDetection:
             STKfoldDataModule(mock_task_cfg, mock_dl_cfg)
 
 
+class TestDropLastBehavior:
+    """Test for issue #42: drop_last=False for validation/test sets to ensure val_loss availability."""
+
+    @property
+    def small_mock_dataset(self):
+        """Create a small mock dataset to reproduce drop_last issues."""
+        from torch_geometric.data import Data
+
+        class MockDataset:
+            def __init__(self, num_samples):
+                self.data_list = []
+                for i in range(num_samples):
+                    # Create simple mock data points
+                    x = torch.randn(10, 5)  # 10 nodes, 5 features
+                    y = torch.randint(0, 21, (10,))  # 21 classes (like human-intestine)
+                    pos = torch.randn(10, 2)  # 2D positions
+                    self.data_list.append(Data(x=x, y=y, pos=pos))
+
+            def __len__(self):
+                return len(self.data_list)
+
+            def __getitem__(self, idx):
+                return self.data_list[idx]
+
+        return MockDataset
+
+    @pytest.mark.parametrize(
+        "num_samples, batch_size, num_folds, expected_val_samples",
+        [
+            (8, 32, 8, 1),  # Original issue #42 scenario
+            (6, 20, 3, 2),  # 3-fold with 6 samples
+            (10, 15, 5, 2),  # 5-fold with 10 samples
+        ],
+    )
+    def test_kfold_large_batch_size(
+        self, num_samples, batch_size, num_folds, expected_val_samples
+    ):
+        """
+        Test k-fold CV with large batch size doesn't drop validation data.
+
+        Before the fix, validation sets smaller than batch_size would be completely
+        dropped, causing early stopping to fail due to missing val_loss.
+        """
+        dataset = self.small_mock_dataset(num_samples)
+
+        config = DataLoaderConfig(
+            batch_size=batch_size,
+            split=DataLoaderConfig.KFoldSplitConfig(num_folds=num_folds, split_index=0),
+            device="cpu",
+            graph_const="knn",
+            knn_k=5,
+        )
+
+        train_loader, val_loader, test_loader = create_kfold_loader(dataset, config)
+
+        # Validation and test loaders must have data (this was the bug)
+        assert len(val_loader) > 0, "Validation loader should not be empty"
+        assert len(test_loader) > 0, "Test loader should not be empty"
+
+        # Count actual samples to verify expected behavior
+        val_samples = sum(len(batch) for batch in val_loader)
+        assert (
+            val_samples == expected_val_samples
+        ), f"Expected {expected_val_samples} validation samples, got {val_samples}"
+
+        # Verify we can iterate through data (simulates PyTorch Lightning training)
+        for batch in val_loader:
+            assert batch.x is not None
+            assert batch.y is not None
+            assert len(batch) > 0
+
+    def test_regular_split_large_batch_size(self):
+        """Test regular train/val/test split with large batch size preserves val/test data."""
+        dataset = self.small_mock_dataset(6)
+
+        config = DataLoaderConfig(
+            batch_size=10,  # Larger than any split
+            split=DataLoaderConfig.DataSplitConfig(
+                train_ratio=0.5,  # 3 samples
+                val_ratio=0.25,  # ~1.5 → 2 samples
+                test_ratio=0.25,  # ~1.5 → 1 sample
+            ),
+            device="cpu",
+            graph_const="knn",
+            knn_k=5,
+        )
+
+        train_loader, val_loader, test_loader = create_loader(dataset, config)
+
+        # All loaders should have data (before fix, small val/test sets would be dropped)
+        assert len(val_loader) > 0, "Validation loader should not be empty"
+        assert len(test_loader) > 0, "Test loader should not be empty"
+
+        # Verify data accessibility
+        val_samples = sum(len(batch) for batch in val_loader)
+        test_samples = sum(len(batch) for batch in test_loader)
+
+        assert val_samples > 0, f"Expected validation samples, got {val_samples}"
+        assert test_samples > 0, f"Expected test samples, got {test_samples}"
+
+
 def teardown_module(module):
     """Teardown function called after all tests in this module."""
     rm_dir_if_exists("tests/data/brca-test/processed")
