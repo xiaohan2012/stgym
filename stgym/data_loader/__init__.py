@@ -134,20 +134,20 @@ def create_loader(
         num_workers=cfg.num_workers,
         drop_last=should_drop_last_batch(len(train_ds), cfg.batch_size),
     )
-    # val/test data is in one batch
+    # val/test data should never drop batches to ensure all data is evaluated
     val_loader = DataLoader(
         val_ds,
         batch_size=cfg.batch_size,
         shuffle=False,
         num_workers=cfg.num_workers,
-        drop_last=should_drop_last_batch(len(val_ds), cfg.batch_size),
+        drop_last=False,
     )
     test_loader = DataLoader(
         test_ds,
         batch_size=cfg.batch_size,
         shuffle=False,
         num_workers=cfg.num_workers,
-        drop_last=should_drop_last_batch(len(test_ds), cfg.batch_size),
+        drop_last=False,
     )
 
     return train_loader, val_loader, test_loader
@@ -185,19 +185,20 @@ def create_kfold_loader(ds, cfg: DataLoaderConfig):
         num_workers=cfg.num_workers,
         drop_last=should_drop_last_batch(len(train_ds), cfg.batch_size),
     )
+    # val/test data should never drop batches to ensure all data is evaluated
     val_loader = DataLoader(
         val_ds,
         batch_size=cfg.batch_size,
         shuffle=False,
         num_workers=cfg.num_workers,
-        drop_last=should_drop_last_batch(len(val_ds), cfg.batch_size),
+        drop_last=False,
     )
     test_loader = DataLoader(
         test_ds,
         batch_size=cfg.batch_size,
         shuffle=False,
         num_workers=cfg.num_workers,
-        drop_last=should_drop_last_batch(len(test_ds), cfg.batch_size),
+        drop_last=False,
     )
 
     return train_loader, val_loader, test_loader
