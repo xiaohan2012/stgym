@@ -44,9 +44,15 @@ class InflammatorySkinDataset(AbstractDataset):
             if hasattr(gene_expression, "toarray"):
                 gene_expression = gene_expression.toarray()
 
-            # AnnData stores as (n_genes, n_cells), we need (n_cells, n_genes)
-            # Always transpose from AnnData format
-            gene_expression = gene_expression.T
+            # Per dataset documentation: 59,319 spots with 16,685 gene features
+            # Matrix is already in correct (n_cells, n_genes) format - no transpose needed
+            # Validate dimensions match expected cell count
+            expected_cells = len(spatial_coords)
+            if gene_expression.shape[0] != expected_cells:
+                raise ValueError(
+                    f"Gene expression matrix has {gene_expression.shape[0]} rows "
+                    f"but expected {expected_cells} cells. Matrix should be (cells, genes)."
+                )
 
             # Group cells by specimen to create graphs
             unique_specimens = np.unique(specimens)

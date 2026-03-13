@@ -40,11 +40,12 @@ def mock_h5_file():
         ]
     )
 
-    # Mock gene expression (random data) - in AnnData format: (n_genes, n_cells)
+    # Mock gene expression (random data) - in correct format: (n_cells, n_genes)
+    # Real dataset has format (59,319 cells, 16,685 genes)
     np.random.seed(42)
-    gene_expression_dense = np.random.rand(n_genes, n_cells).astype(np.float32)
+    gene_expression_dense = np.random.rand(n_cells, n_genes).astype(np.float32)
 
-    # Convert to sparse format (CSR) - already in correct (n_genes, n_cells) format
+    # Convert to sparse format (CSR) - in correct (n_cells, n_genes) format
     gene_expression_sparse = scipy.sparse.csr_matrix(gene_expression_dense)
 
     # Create HDF5 file with AnnData-like structure
