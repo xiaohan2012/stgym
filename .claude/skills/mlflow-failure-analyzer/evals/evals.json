@@ -1,0 +1,93 @@
+{
+  "skill_name": "mlflow-failure-analyzer",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "hey this mlflow experiment at http://127.0.0.1:5001/#/experiments/292891157014984425 is failing like crazy, can you figure out what's going wrong? the artifacts are on cyy2 server",
+      "expected_output": "Comprehensive failure analysis report with error categorization, configuration patterns, and actionable recommendations",
+      "files": [],
+      "assertions": [
+        {
+          "name": "uses_mlflow_reader_skill",
+          "description": "Explicitly uses the mlflow-reader skill for run discovery"
+        },
+        {
+          "name": "fetches_remote_artifacts",
+          "description": "Uses SCP to retrieve error logs and configuration files from cyy2 server"
+        },
+        {
+          "name": "categorizes_errors",
+          "description": "Identifies specific error types like CUDA/NVML errors and k-fold validation issues"
+        },
+        {
+          "name": "analyzes_configurations",
+          "description": "Detects patterns in failed configurations such as k-fold setup problems"
+        },
+        {
+          "name": "structured_report",
+          "description": "Generates report following the required markdown template with all sections"
+        },
+        {
+          "name": "actionable_recommendations",
+          "description": "Provides specific, implementable fixes based on identified error patterns"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "our team's been running experiments for the past week and we've got about 200 failed runs in experiment 'model-sweep-2024'. the mlflow server is at ml-server.company.com:5000 and artifacts are stored on compute-cluster.research.edu in /shared/experiments/mlruns/. need to understand the failure patterns before our next sprint planning meeting tomorrow",
+      "expected_output": "Detailed analysis report focusing on failure patterns and trends suitable for sprint planning",
+      "files": [],
+      "assertions": [
+        {
+          "name": "handles_custom_server_config",
+          "description": "Adapts to custom MLflow server and artifact storage configuration"
+        },
+        {
+          "name": "processes_large_failure_set",
+          "description": "Efficiently handles analysis of 200+ failed runs"
+        },
+        {
+          "name": "identifies_sprint_priorities",
+          "description": "Categorizes issues by priority for sprint planning context"
+        },
+        {
+          "name": "provides_trend_analysis",
+          "description": "Identifies patterns across the week-long experiment period"
+        },
+        {
+          "name": "business_context_aware",
+          "description": "Tailors recommendations for sprint planning meeting context"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "i'm looking at this sweep-all-20260309-040454 experiment with tons of failures. server is running on port 5001 locally, but the actual run data is stored on our compute cluster at cluster.research.edu. need to know if it's a config issue or infrastructure problem - we're seeing some weird CUDA errors but also validation metric issues",
+      "expected_output": "Analysis distinguishing between configuration vs infrastructure issues with specific focus on CUDA and validation problems",
+      "files": [],
+      "assertions": [
+        {
+          "name": "distinguishes_error_categories",
+          "description": "Clearly separates infrastructure issues (CUDA) from configuration issues (validation)"
+        },
+        {
+          "name": "provides_root_cause_analysis",
+          "description": "Identifies whether problems are systemic infrastructure vs configuration-related"
+        },
+        {
+          "name": "handles_mixed_error_types",
+          "description": "Analyzes both CUDA/hardware errors and validation metric configuration issues"
+        },
+        {
+          "name": "cluster_environment_aware",
+          "description": "Considers multi-server cluster environment in analysis"
+        },
+        {
+          "name": "prioritizes_by_impact",
+          "description": "Ranks issues by whether they're blocking all experiments vs subset"
+        }
+      ]
+    }
+  ]
+}
