@@ -37,6 +37,6 @@ time python run_rct.py --multirun \
        +exp=$EXPERIMENTS \
        design_space=$DESIGN_SPACES \
        resource=$RESOURCE \
-       sample_size=5 \
-       design_space.train.max_epoch=1 \
+       sample_size=10 \
+       design_space.train.max_epoch=5 \
        ++mlflow.experiment_name=test
