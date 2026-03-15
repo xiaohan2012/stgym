@@ -59,7 +59,12 @@ For MLflow artifacts:
    - Read training error logs from failed runs
    - Access any artifact file by relative path
    - No download required - direct file system access
-3. **Model Loading**: Load registered models and their versions
+3. **Remote Artifact Retrieval**: Access artifacts from remote servers using SCP
+   - Retrieve artifacts from SSH-accessible remote servers
+   - Common pattern: `scp remote_host:~/mlruns/{experiment_id}/{run_id}/artifacts/training_error.txt ./local_file.txt`
+   - Supports batch retrieval for multiple runs
+   - Example remote server configuration: `cyy2:~/stgym/mlruns/`
+4. **Model Loading**: Load registered models and their versions
 
 ## Configuration Patterns
 
