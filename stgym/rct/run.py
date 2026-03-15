@@ -25,6 +25,10 @@ def log_training_error(e: Exception, logger: Optional, error_context: str = ""):
             "training_error.txt",
         )
 
+        logger.experiment.set_tag(
+            logger.run_id, "error", f"{type(e).__name__}: {str(e)}"
+        )
+
 
 def get_dim_out(task_cfg: TaskConfig) -> int | None:
     """Get output dimension of the GNN model based on experiment config"""
