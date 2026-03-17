@@ -12,6 +12,11 @@ POS_COLS = ["array_x", "array_y"]
 LABEL_COL = "cancer_type"
 # Label mapping: STAD -> 0, BLCA -> 1
 LABEL_MAPPING = {"STAD": 0, "BLCA": 1}
+# Metadata columns that are not gene expression features
+METADATA_COLS = ["x1", "x2", "x3", "x4", "x5", "pixel_x", "pixel_y"]
+NON_FEATURE_COLS = [ID_COL] + GROUP_COLS + POS_COLS + [LABEL_COL] + METADATA_COLS
+
+N_TOP_GENES = 2000
 
 RAW_FILE_NAME = "source.csv"
 
@@ -37,6 +42,12 @@ class GastricBladderCancerDataset(AbstractDataset):
         # drop columns with NaN values
         df.dropna(axis=1, how="any", inplace=True)
 
+        # Extract gene expression columns (exclude metadata)
+        feature_cols = [col for col in df.columns if col not in NON_FEATURE_COLS]
+
+        # Select top N highly variable genes by variance across all cells
+        feature_cols = select_hvg(df[feature_cols], N_TOP_GENES)
+
         # Group by sample_id to create separate graphs for each patient
         groups = list(df.groupby(GROUP_COLS))
         data_list = []
@@ -56,13 +67,6 @@ class GastricBladderCancerDataset(AbstractDataset):
 
             y = torch.tensor(LABEL_MAPPING[cancer_type])
 
-            # Extract gene expression features (all columns except metadata)
-            feature_cols = [
-                col
-                for col in sample_df.columns
-                if col not in [ID_COL] + GROUP_COLS + POS_COLS + [LABEL_COL]
-            ]
-
             x = torch.Tensor(sample_df[feature_cols].values)
 
             # Validate data shapes
@@ -80,3 +84,10 @@ class GastricBladderCancerDataset(AbstractDataset):
             )
 
         return data_list
+
+
+def select_hvg(gene_df: pd.DataFrame, n_top: int) -> list[str]:
+    """Select top n_top highly variable genes by variance."""
+    variances = gene_df.var()
+    top_genes = variances.nlargest(n_top).index.tolist()
+    return top_genes

@@ -4,7 +4,10 @@ from unittest.mock import patch
 import pandas as pd
 import pytest
 
-from stgym.data_loader.gastric_bladder_cancer import GastricBladderCancerDataset
+from stgym.data_loader.gastric_bladder_cancer import (
+    GastricBladderCancerDataset,
+    select_hvg,
+)
 from stgym.utils import rm_dir_if_exists
 
 
@@ -53,10 +56,13 @@ def test_gastric_bladder_cancer_dataset(mock_df):
         assert len(ds) == 2, f"There should be 2 graph samples but got {len(ds)}"
 
         # Note: Due to groupby ordering, BLCA samples may come first
-        # Test samples - we have 2 samples with 3 cells each and 10 features
-        # (3 gene features + 7 metadata columns that become features)
+        # Test samples - we have 2 samples with 3 cells each and 3 gene features
+        # (metadata columns x1-x5, pixel_x, pixel_y are excluded)
         data_0 = ds[0]
-        assert data_0.x.shape == (3, 10), "Shape of x should be (3 cells, 10 features)"
+        assert data_0.x.shape == (
+            3,
+            3,
+        ), "Shape of x should be (3 cells, 3 gene features)"
         assert data_0.y.item() in [0, 1], "Label should be 0 (STAD) or 1 (BLCA)"
         assert data_0.pos.shape == (
             3,
@@ -65,7 +71,10 @@ def test_gastric_bladder_cancer_dataset(mock_df):
 
         # Test second sample
         data_1 = ds[1]
-        assert data_1.x.shape == (3, 10), "Shape of x should be (3 cells, 10 features)"
+        assert data_1.x.shape == (
+            3,
+            3,
+        ), "Shape of x should be (3 cells, 3 gene features)"
         assert data_1.y.item() in [0, 1], "Label should be 0 (STAD) or 1 (BLCA)"
         assert data_1.pos.shape == (
             3,
@@ -84,6 +93,29 @@ def test_gastric_bladder_cancer_dataset(mock_df):
 
         # Clean up
         rm_dir_if_exists(data_root / "processed")
+
+
+class TestSelectHvg:
+    """Test select_hvg function."""
+
+    @property
+    def gene_df(self) -> pd.DataFrame:
+        return pd.DataFrame(
+            {
+                "LOW_VAR": [1.0, 1.0, 1.0, 1.0],
+                "MED_VAR": [0.0, 1.0, 0.0, 1.0],
+                "HIGH_VAR": [0.0, 10.0, 0.0, 20.0],
+                "ZERO_VAR": [5.0, 5.0, 5.0, 5.0],
+            }
+        )
+
+    def test_selects_top_n_by_variance(self):
+        result = select_hvg(self.gene_df, n_top=2)
+        assert result == ["HIGH_VAR", "MED_VAR"]
+
+    def test_returns_all_when_n_top_exceeds_columns(self):
+        result = select_hvg(self.gene_df, n_top=100)
+        assert len(result) == 4
 
 
 def test_single_label_validation():
