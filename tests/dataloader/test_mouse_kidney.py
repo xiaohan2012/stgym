@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
+import pyarrow as pa
 import pytest
 import torch
 
@@ -61,7 +62,17 @@ def mock_df():
 
 
 def test_mouse_kidney_dataset(mock_df):
-    with patch("pandas.read_parquet", return_value=mock_df):
+    mock_schema = pa.schema([(col, pa.string()) for col in mock_df.columns])
+
+    def mock_read_parquet(_path, columns=None):
+        if columns is not None:
+            return mock_df[columns]
+        return mock_df
+
+    with (
+        patch("pyarrow.parquet.read_schema", return_value=mock_schema),
+        patch("pandas.read_parquet", side_effect=mock_read_parquet),
+    ):
         data_root = Path("./tests/data/mouse-kidney")
         rm_dir_if_exists(data_root / "processed")
         ds = MouseKidneyDataset(root=data_root)

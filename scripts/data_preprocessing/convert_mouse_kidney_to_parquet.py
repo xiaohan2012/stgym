@@ -20,6 +20,11 @@ if __name__ == "__main__":
     df = pd.read_csv(CSV_PATH)
     print(f"  shape: {df.shape}")
 
+    # Downcast float64 columns to float32 to reduce memory at load time
+    float64_cols = df.select_dtypes("float64").columns
+    df[float64_cols] = df[float64_cols].astype("float32")
+    print(f"  downcast {len(float64_cols)} float64 columns to float32")
+
     print(f"Writing {PARQUET_PATH} ...")
     df.to_parquet(PARQUET_PATH, index=False)
 

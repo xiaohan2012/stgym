@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 import pandas as pd
+import pyarrow.parquet as pq
 import torch
 from logzero import logger
 from torch_geometric.data import Data
@@ -42,7 +43,12 @@ class MouseKidneyDataset(AbstractDataset):
     def process_data(self):
         data_path = Path(self.raw_dir) / RAW_FILE_NAME
         logger.info(f"[mem {_mem_gb():.1f} GB] reading parquet...")
-        df = pd.read_parquet(data_path)
+
+        # Read only needed columns to avoid loading metadata into memory
+        all_cols = pq.read_schema(data_path).names
+        cols_to_skip = set(COLS_TO_DROP + [ID_COL])
+        cols_to_read = [c for c in all_cols if c not in cols_to_skip]
+        df = pd.read_parquet(data_path, columns=cols_to_read)
         logger.info(
             f"[mem {_mem_gb():.1f} GB] loaded DataFrame: "
             f"{df.shape}, {df.memory_usage(deep=True).sum() / 1e9:.1f} GB"
@@ -52,7 +58,7 @@ class MouseKidneyDataset(AbstractDataset):
         df[LABEL_COL] = pd.Categorical(df[LABEL_COL]).codes
 
         # Identify feature columns and drop NaN columns in-place
-        non_feature_cols = [ID_COL] + GROUP_COLS + POS_COLS + [LABEL_COL] + COLS_TO_DROP
+        non_feature_cols = set(GROUP_COLS + POS_COLS + [LABEL_COL])
         feature_cols = [c for c in df.columns if c not in non_feature_cols]
         nan_cols = [c for c in feature_cols if df[c].isna().any()]
         if nan_cols:
@@ -60,17 +66,7 @@ class MouseKidneyDataset(AbstractDataset):
             df.drop(columns=nan_cols, inplace=True)
             feature_cols = [c for c in feature_cols if c not in nan_cols]
 
-        # Drop metadata columns no longer needed
-        df.drop(columns=COLS_TO_DROP + [ID_COL], inplace=True)
-        logger.info(f"[mem {_mem_gb():.1f} GB] after dropping metadata columns")
-
-        # Downcast float64 feature columns to float32 to halve memory
-        float64_cols = df.select_dtypes("float64").columns
-        df[float64_cols] = df[float64_cols].astype("float32")
-        logger.info(
-            f"[mem {_mem_gb():.1f} GB] after float32 downcast, "
-            f"DataFrame: {df.memory_usage(deep=True).sum() / 1e9:.1f} GB"
-        )
+        logger.info(f"[mem {_mem_gb():.1f} GB] before building graphs")
 
         data_list = []
         for i, (_, sample_df) in enumerate(df.groupby(GROUP_COLS)):
