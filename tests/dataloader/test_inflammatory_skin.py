@@ -144,10 +144,49 @@ def test_inflammatory_skin_dataset_empty():
             ds = InflammatorySkinDataset(root=data_root)
 
 
-if __name__ == "__main__":
-    # Run a simple test
-    import tempfile
-
+def test_hvg_filtering(mock_h5_file):
+    """Test that HVG filtering caps features to N_TOP_GENES when n_genes > threshold."""
     with tempfile.TemporaryDirectory() as temp_dir:
-        print(f"Running test in {temp_dir}")
-        # Basic smoke test would go here
+        data_root = Path(temp_dir)
+        raw_dir = data_root / "raw"
+        raw_dir.mkdir()
+
+        # Create HDF5 with 3000 genes (> N_TOP_GENES=2000)
+        n_cells = 6
+        n_genes = 3000
+        specimens = np.array([0, 0, 0, 1, 1, 1])
+        biopsy_types = np.array([1, 1, 1, 0, 0, 0])
+        spatial_coords = np.array(
+            [[10, 20], [11, 21], [12, 22], [30, 40], [31, 41], [32, 42]],
+            dtype=np.float32,
+        )
+
+        np.random.seed(42)
+        gene_expression = np.random.rand(n_cells, n_genes).astype(np.float32)
+        sparse_matrix = scipy.sparse.csr_matrix(gene_expression)
+
+        h5_path = raw_dir / "source.h5"
+        with h5py.File(h5_path, "w") as f:
+            f.create_group("obsm").create_dataset("spatial", data=spatial_coords)
+            obs = f.create_group("obs")
+            obs.create_dataset("specimen", data=specimens)
+            obs.create_dataset("biopsy_type", data=biopsy_types)
+            cats = obs.create_group("__categories")
+            cats.create_dataset(
+                "biopsy_type",
+                data=[b"NON LESIONAL", b"LESIONAL"],
+                dtype=h5py.string_dtype(),
+            )
+            x = f.create_group("X")
+            x.create_dataset("data", data=sparse_matrix.data)
+            x.create_dataset("indices", data=sparse_matrix.indices)
+            x.create_dataset("indptr", data=sparse_matrix.indptr)
+            x.attrs["shape"] = sparse_matrix.shape
+
+        from stgym.data_loader.inflammatory_skin import N_TOP_GENES
+
+        ds = InflammatorySkinDataset(root=data_root)
+        assert ds[0].x.shape[1] == N_TOP_GENES, (
+            f"Expected {N_TOP_GENES} features after HVG filtering, "
+            f"got {ds[0].x.shape[1]}"
+        )

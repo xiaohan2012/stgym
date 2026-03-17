@@ -12,6 +12,7 @@ POS_KEY = "obsm/spatial"
 GROUP_COL = "specimen"  # Changed from patient to specimen
 LABEL_COL = "biopsy_type"
 FEATURE_KEY = "X"
+N_TOP_GENES = 2000
 
 
 class InflammatorySkinDataset(AbstractDataset):
@@ -44,8 +45,13 @@ class InflammatorySkinDataset(AbstractDataset):
             if hasattr(gene_expression, "toarray"):
                 gene_expression = gene_expression.toarray()
 
-            # Per dataset documentation: 59,319 spots with 16,685 gene features
-            # Matrix is already in correct (n_cells, n_genes) format - no transpose needed
+            # Select top N highly variable genes by variance
+            if gene_expression.shape[1] > N_TOP_GENES:
+                variances = np.var(gene_expression, axis=0)
+                top_gene_indices = np.argsort(variances)[-N_TOP_GENES:]
+                top_gene_indices.sort()  # keep original column order
+                gene_expression = gene_expression[:, top_gene_indices]
+
             # Validate dimensions match expected cell count
             expected_cells = len(spatial_coords)
             if gene_expression.shape[0] != expected_cells:
