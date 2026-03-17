@@ -61,7 +61,7 @@ def mock_df():
 
 
 def test_mouse_kidney_dataset(mock_df):
-    with patch("pandas.read_csv", return_value=mock_df):
+    with patch("pandas.read_parquet", return_value=mock_df):
         data_root = Path("./tests/data/mouse-kidney")
         rm_dir_if_exists(data_root / "processed")
         ds = MouseKidneyDataset(root=data_root)

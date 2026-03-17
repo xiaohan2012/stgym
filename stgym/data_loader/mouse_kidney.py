@@ -12,7 +12,7 @@ GROUP_COLS = ["Source-Sample-ID", "Sample_title"]
 LABEL_COL = "Disease-Status"
 POS_COLS = ["xcoord", "ycoord"]
 COLS_TO_DROP = ["cell_type", "Tissue", "Age"]
-RAW_FILE_NAME = "GSE190094.csv"
+RAW_FILE_NAME = "GSE190094.parquet"
 
 
 class MouseKidneyDataset(AbstractDataset):
@@ -27,8 +27,8 @@ class MouseKidneyDataset(AbstractDataset):
         return [RAW_FILE_NAME]
 
     def process_data(self):
-        csv_data_path = Path(self.raw_dir) / RAW_FILE_NAME
-        df = pd.read_csv(csv_data_path, sep=",")
+        data_path = Path(self.raw_dir) / RAW_FILE_NAME
+        df = pd.read_parquet(data_path)
         df[LABEL_COL] = pd.Categorical(df[LABEL_COL]).codes
         groups = list(df.groupby(GROUP_COLS))
         data_list = []
