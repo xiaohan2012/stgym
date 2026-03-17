@@ -29,23 +29,33 @@ class MouseKidneyDataset(AbstractDataset):
     def process_data(self):
         data_path = Path(self.raw_dir) / RAW_FILE_NAME
         df = pd.read_parquet(data_path)
+
+        # Encode labels in-place
         df[LABEL_COL] = pd.Categorical(df[LABEL_COL]).codes
-        groups = list(df.groupby(GROUP_COLS))
+
+        # Identify feature columns and drop NaN columns in-place
+        non_feature_cols = [ID_COL] + GROUP_COLS + POS_COLS + [LABEL_COL] + COLS_TO_DROP
+        feature_cols = [c for c in df.columns if c not in non_feature_cols]
+        nan_cols = [c for c in feature_cols if df[c].isna().any()]
+        if nan_cols:
+            logger.info(f"Dropping columns containing NaN values: {nan_cols}")
+            df.drop(columns=nan_cols, inplace=True)
+            feature_cols = [c for c in feature_cols if c not in nan_cols]
+
+        # Drop metadata columns no longer needed
+        df.drop(columns=COLS_TO_DROP + [ID_COL], inplace=True)
+
+        # Downcast float64 feature columns to float32 to halve memory
+        float64_cols = df.select_dtypes("float64").columns
+        df[float64_cols] = df[float64_cols].astype("float32")
+
         data_list = []
-
-        cols_to_drop = [ID_COL] + GROUP_COLS + POS_COLS + [LABEL_COL] + COLS_TO_DROP
-        feat_df = df.drop(columns=cols_to_drop)
-        nan_cols = feat_df.columns[feat_df.isna().any(axis=0)]
-        logger.info(f"Dropping columns containing NaN values: {nan_cols}")
-
-        for _, sample_df in groups:
-            labels = set(sample_df[LABEL_COL].values)
+        for _, sample_df in df.groupby(GROUP_COLS):
+            labels = sample_df[LABEL_COL].unique()
             assert len(labels) == 1, len(labels)
-            y = torch.tensor(list(labels)[0], dtype=torch.long)
-            pos = torch.Tensor(sample_df[POS_COLS].values)
-            x = torch.Tensor(
-                sample_df.drop(columns=cols_to_drop + list(nan_cols)).values
-            )
-
+            y = torch.tensor(labels[0], dtype=torch.long)
+            pos = torch.tensor(sample_df[POS_COLS].values, dtype=torch.float)
+            x = torch.tensor(sample_df[feature_cols].values, dtype=torch.float)
             data_list.append(Data(x=x, y=y, pos=pos))
+
         return data_list
