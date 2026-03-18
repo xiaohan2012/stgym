@@ -185,3 +185,48 @@ class TestUsingKfoldData:
         ).to(TORCH_DEVICE)
         train(model_module, data_module, graph_clf_train_cfg, mlflow_cfg, logger=None)
         rm_dir_if_exists("tests/data/brca-test/processed")
+
+
+def test_data_stays_on_cpu_and_lightning_transfers_to_device(
+    graph_clf_task_cfg, dl_cfg, graph_clf_model_cfg, graph_clf_train_cfg, mlflow_cfg
+):
+    """Verify that dataset stays on CPU and Lightning transfers batches to the correct device."""
+    data_module = STDataModule(graph_clf_task_cfg, dl_cfg)
+
+    # 1. Verify dataset stays on CPU after construction
+    for data in data_module.ds:
+        assert data.x.device == torch.device(
+            "cpu"
+        ), f"Dataset should stay on CPU, but found {data.x.device}"
+        break  # checking one sample is sufficient
+
+    # 2. Verify batches arrive on the expected device during training
+    #    by monkey-patching training_step to record the batch device
+    observed_devices = []
+    model_module = STGymModule(
+        dim_in=data_module.num_features,
+        model_cfg=graph_clf_model_cfg,
+        train_cfg=graph_clf_train_cfg,
+        task_cfg=graph_clf_task_cfg,
+        dl_cfg=dl_cfg,
+        dim_out=1,
+    ).to(TORCH_DEVICE)
+
+    original_training_step = model_module.training_step
+
+    def patched_training_step(batch, *args, **kwargs):
+        observed_devices.append(batch.x.device)
+        return original_training_step(batch, *args, **kwargs)
+
+    model_module.training_step = patched_training_step
+
+    train(model_module, data_module, graph_clf_train_cfg, mlflow_cfg, logger=None)
+
+    assert len(observed_devices) > 0, "training_step was never called"
+    expected_device = torch.device(TORCH_DEVICE)
+    for dev in observed_devices:
+        assert (
+            dev == expected_device
+        ), f"Batch should be on {expected_device}, but found {dev}"
+
+    rm_dir_if_exists("tests/data/brca-test/processed")
