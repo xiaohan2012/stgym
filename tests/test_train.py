@@ -223,10 +223,10 @@ def test_data_stays_on_cpu_and_lightning_transfers_to_device(
     train(model_module, data_module, graph_clf_train_cfg, mlflow_cfg, logger=None)
 
     assert len(observed_devices) > 0, "training_step was never called"
-    expected_device = torch.device(TORCH_DEVICE)
+    expected_type = torch.device(TORCH_DEVICE).type
     for dev in observed_devices:
         assert (
-            dev == expected_device
-        ), f"Batch should be on {expected_device}, but found {dev}"
+            dev.type == expected_type
+        ), f"Batch should be on {expected_type}, but found {dev}"
 
     rm_dir_if_exists("tests/data/brca-test/processed")
