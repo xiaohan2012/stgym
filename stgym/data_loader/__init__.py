@@ -246,7 +246,7 @@ class STDataModule(STDataModuleBase):
         self.ds = load_dataset(task_cfg, dl_cfg)
         # Run NaN check on CPU to avoid CUDA OOM for large datasets
         self.check_nan()
-        # Keep data on CPU; PyTorch Lightning auto-transfers each batch to GPU
+        self.ds = self.ds.to(dl_cfg.device)
         self.loaders = create_loader(self.ds, dl_cfg)
         super().__init__(has_val=True, has_test=True)
 
@@ -258,6 +258,6 @@ class STKfoldDataModule(STDataModuleBase):
         self.ds = load_dataset(task_cfg, dl_cfg)
         # Run NaN check on CPU to avoid CUDA OOM for large datasets
         self.check_nan()
-        # Keep data on CPU; PyTorch Lightning auto-transfers each batch to GPU
+        self.ds = self.ds.to(dl_cfg.device)
         self.loaders = create_kfold_loader(self.ds, dl_cfg)
         super().__init__(has_val=True, has_test=True)
