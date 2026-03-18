@@ -150,6 +150,31 @@ For improved classification performance, the dataset supports binary relabeling 
 This relabeling is automatically applied in the GlioblastomaDataset loader when processing the data.
 
 
+## Mouse Kidney Dataset
+
+This dataset contains Slide-seqV2 spatial transcriptomics data from mouse kidneys for graph classification tasks (healthy vs diabetic).
+
+### Data Source
+
+**Download the raw data from GEO repository:**
+https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE190094
+
+### Raw Data Format
+
+The original raw data is a large CSV file (`GSE190094.csv`, ~16 GB). To reduce memory usage during processing, the CSV is converted to Parquet format:
+
+```bash
+python scripts/data_preprocessing/convert_mouse_kidney_to_parquet.py
+```
+
+This converts `data/mouse-kidney/raw/GSE190094.csv` to `data/mouse-kidney/raw/GSE190094.parquet` (0.14 GB, 99% smaller). The data loader reads the Parquet file.
+
+#### Dataset summary:
+- 85 graphs (tissue specimens)
+- 2,000 gene features per spot
+- ~2M total spots across all samples
+- Binary classification: healthy vs diabetic kidney
+
 ## Inflammatory Skin Diseases Dataset
 
 This dataset contains spatial transcriptomics data from inflammatory skin diseases (Psoriasis, Atopic Dermatitis, Lichen Planus) for graph classification tasks.
