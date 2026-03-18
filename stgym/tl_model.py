@@ -7,6 +7,7 @@ import pydash as _
 import pytorch_lightning as pl
 import torch
 import torch.nn.functional as F
+from logzero import logger
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score
 from torch_geometric.data import Data
 
@@ -146,7 +147,8 @@ class STGymModule(pl.LightningModule):
             raise NotImplementedError
 
     def training_step(self, batch: Data, *args, **kwargs):
-        # Log batch device on first training step for consistency check
+        if self.global_step == 0:
+            logger.info(f"First training batch on device: {batch.x.device}")
 
         output = self._shared_step(batch, split=Split.train)
         self.log(
