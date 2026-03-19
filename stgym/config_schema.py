@@ -186,25 +186,6 @@ class NodeClassifierModelConfig(BaseModel):
     # misc
     mem: MemoryConfig = MemoryConfig(inplace=False)
 
-    @model_validator(mode="after")
-    def reject_pooling_for_node_classification(self) -> Self:
-        """Reject any MP layer with hierarchical pooling enabled.
-
-        Hierarchical pooling (DMoN/MinCut) coarsens the graph, reducing the
-        number of nodes. Node classification requires per-node predictions,
-        so pooling is incompatible.
-        """
-        pooling_layers = [mp for mp in self.mp_layers if mp.has_pooling]
-        if pooling_layers:
-            types = [mp.pooling.type for mp in pooling_layers]
-            raise ValueError(
-                f"Node classification requires per-node predictions, but "
-                f"hierarchical pooling {types} coarsens the graph and reduces "
-                f"the node count. Remove pooling from all MP layers for "
-                f"node-classification tasks."
-            )
-        return self
-
 
 class DataLoaderConfig(BaseModel):
     class DataSplitConfig(BaseModel):
