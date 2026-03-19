@@ -9,6 +9,7 @@ from stgym.config_schema import (
     LayerConfig,
     MessagePassingConfig,
     MLFlowConfig,
+    PoolingConfig,
     PostMPConfig,
     TaskConfig,
     TrainConfig,
@@ -135,6 +136,49 @@ class TestEarlyStoppingMetric:
         )
         # Check that early stopping metric is generic
         assert exp_config_regular.train.early_stopping.metric == "val_loss"
+
+
+class TestEdgeWeightPoolingValidation:
+    """Validate that unweighted MP operators are rejected with multi-layer pooling."""
+
+    def _make_mp_layer(self, layer_type, with_pooling=False):
+        pooling = PoolingConfig(type="dmon", n_clusters=3) if with_pooling else None
+        return MessagePassingConfig(layer_type=layer_type, pooling=pooling)
+
+    @pytest.mark.parametrize("layer_type", ["sageconv", "ginconv", "gcnconv"])
+    def test_single_pooling_layer_accepts_any_operator(self, layer_type):
+        """A single pooling layer is fine regardless of operator."""
+        cfg = GraphClassifierModelConfig(
+            mp_layers=[
+                self._make_mp_layer(layer_type, with_pooling=True),
+                self._make_mp_layer(layer_type, with_pooling=False),
+            ],
+            post_mp_layer=PostMPConfig(dims=[10]),
+        )
+        assert len([mp for mp in cfg.mp_layers if mp.has_pooling]) == 1
+
+    def test_multi_pooling_with_gcnconv_is_valid(self):
+        """GCNConv supports edge_weight, so multi-pooling is fine."""
+        cfg = GraphClassifierModelConfig(
+            mp_layers=[
+                self._make_mp_layer("gcnconv", with_pooling=True),
+                self._make_mp_layer("gcnconv", with_pooling=True),
+            ],
+            post_mp_layer=PostMPConfig(dims=[10]),
+        )
+        assert len([mp for mp in cfg.mp_layers if mp.has_pooling]) == 2
+
+    @pytest.mark.parametrize("layer_type", ["sageconv", "ginconv"])
+    def test_multi_pooling_with_unweighted_operator_raises(self, layer_type):
+        """SAGEConv/GINConv don't support edge_weight — reject with multi-pooling."""
+        with pytest.raises(ValidationError, match="edge_weight"):
+            GraphClassifierModelConfig(
+                mp_layers=[
+                    self._make_mp_layer(layer_type, with_pooling=True),
+                    self._make_mp_layer(layer_type, with_pooling=True),
+                ],
+                post_mp_layer=PostMPConfig(dims=[10]),
+            )
 
 
 class TestExperimentConfig:

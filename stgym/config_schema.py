@@ -1,8 +1,10 @@
+import inspect
 from pathlib import Path
 from typing import Literal, Optional
 
 import pydash as _
 import torch
+import torch_geometric.nn as pyg_nn
 import yaml
 from pydantic import (
     BaseModel,
@@ -34,6 +36,19 @@ PostMPLayerType = Literal["mlp", "linear"]
 GraphConstructionApproach = Literal["knn", "radius"]
 TaskType = Literal["node-classification", "graph-classification"]
 EvalMetric = Literal["pr-auc", "roc-auc", "accuracy", "nmi"]
+
+
+_PYG_CONV_CLASSES: dict[str, type] = {
+    "gcnconv": pyg_nn.GCNConv,
+    "sageconv": pyg_nn.SAGEConv,
+    "ginconv": pyg_nn.GINConv,
+}
+
+
+def supports_edge_weight(layer_type: str) -> bool:
+    """Check if a PyG conv operator supports edge_weight in its forward() signature."""
+    pyg_cls = _PYG_CONV_CLASSES[layer_type]
+    return "edge_weight" in inspect.signature(pyg_cls.forward).parameters
 
 
 class MyBaseModel(BaseModel):
@@ -133,6 +148,34 @@ class GraphClassifierModelConfig(BaseModel):
 
     # misc
     mem: MemoryConfig = MemoryConfig(inplace=False)
+
+    @model_validator(mode="after")
+    def validate_edge_weight_support_for_multi_pooling(self) -> Self:
+        """Reject unweighted MP operators when multiple pooling layers exist.
+
+        After hierarchical pooling (DMoN/MinCut), the coarsened graph is a complete
+        graph where edge weights encode inter-cluster connectivity. Operators that
+        don't support edge_weight (e.g. SAGEConv, GINConv) would ignore these weights,
+        making the pooling output meaningless.
+        """
+        pooling_layers = [mp for mp in self.mp_layers if mp.has_pooling]
+        if len(pooling_layers) <= 1:
+            return self
+
+        unsupported = [
+            mp.layer_type
+            for mp in pooling_layers
+            if mp.layer_type in _PYG_CONV_CLASSES
+            and not supports_edge_weight(mp.layer_type)
+        ]
+        if unsupported:
+            raise ValueError(
+                f"Multi-layer pooling requires MP operators that support edge_weight, "
+                f"but found unsupported operator(s): {unsupported}. "
+                f"Use an operator like 'gcnconv' that accepts edge_weight, "
+                f"or reduce to a single pooling layer."
+            )
+        return self
 
 
 class NodeClassifierModelConfig(BaseModel):
