@@ -4,6 +4,7 @@ defaults:
 
 model:
   global_pooling: null
+  pooling: null
 task:
   type: node-classification
   dataset_name:
