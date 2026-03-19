@@ -6,9 +6,7 @@ model:
   dim_inner: [64, 128]
   act: ['prelu', 'relu']
   use_batchnorm: true
-  pooling:
-    type: dmon
-    n_clusters: [10, 20]
+  pooling: null
   post_mp_dims:
     - '64,32'
     - '32, 16'
