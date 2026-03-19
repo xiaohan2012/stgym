@@ -102,14 +102,15 @@ class TestGeneralMultiLayer(BatchLoaderMixin):
             dim_inner[-1],
         )
 
-    def test_with_pooling(self):
+    @pytest.mark.parametrize("layer_type", ["gcnconv", "sageconv", "ginconv"])
+    def test_with_pooling(self, layer_type):
         # dim_inner = [128, 64]
         final_n_clusters = 10
         final_dim_inner = 64
         # n_layers = len(dim_inner)
         layer_configs = [
             MessagePassingConfig(
-                layer_type="gcnconv",
+                layer_type=layer_type,
                 dim_inner=128,
                 pooling=PoolingConfig(
                     type="dmon",
@@ -117,7 +118,7 @@ class TestGeneralMultiLayer(BatchLoaderMixin):
                 ),
             ),
             MessagePassingConfig(
-                layer_type="gcnconv",
+                layer_type=layer_type,
                 dim_inner=final_dim_inner,
                 pooling=PoolingConfig(
                     type="dmon",
