@@ -3,6 +3,7 @@ from pydantic import ValidationError
 from pytorch_lightning.loggers import MLFlowLogger
 
 from stgym.config_schema import (
+    _PYG_CONV_CLASSES,
     DataLoaderConfig,
     ExperimentConfig,
     GraphClassifierModelConfig,
@@ -14,6 +15,7 @@ from stgym.config_schema import (
     TaskConfig,
     TrainConfig,
     dataset_eval_mode,
+    supports_edge_weight,
 )
 
 
@@ -157,12 +159,16 @@ class TestEdgeWeightPoolingValidation:
         )
         assert len([mp for mp in cfg.mp_layers if mp.has_pooling]) == 1
 
-    def test_multi_pooling_with_gcnconv_is_valid(self):
-        """GCNConv supports edge_weight, so multi-pooling is fine."""
+    @pytest.mark.parametrize(
+        "layer_type",
+        [k for k in _PYG_CONV_CLASSES if supports_edge_weight(k)],
+    )
+    def test_multi_pooling_with_weighted_operator_is_valid(self, layer_type):
+        """Operators that support edge_weight are fine with multi-pooling."""
         cfg = GraphClassifierModelConfig(
             mp_layers=[
-                self._make_mp_layer("gcnconv", with_pooling=True),
-                self._make_mp_layer("gcnconv", with_pooling=True),
+                self._make_mp_layer(layer_type, with_pooling=True),
+                self._make_mp_layer(layer_type, with_pooling=True),
             ],
             post_mp_layer=PostMPConfig(dims=[10]),
         )
