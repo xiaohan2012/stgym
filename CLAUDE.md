@@ -38,10 +38,18 @@ Examples:
 
 ## Common Development Commands
 
-### Activating virtual enviroment
+### Activating virtual environment
 
 ```bash
-pyenv activate stgym
+# Create venv and install all dependencies including dev tools (first time or after changes)
+uv sync --group dev
+
+# Activate the venv
+source .venv/bin/activate
+
+# Or run commands directly without activating
+uv run python ...
+uv run pytest tests/ -v
 ```
 
 ### Running Single Experiments
