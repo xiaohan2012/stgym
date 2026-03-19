@@ -64,6 +64,7 @@ def train(
         callbacks=callbacks,
         # default_root_dir=cfg.out_dir,
         max_epochs=train_cfg.max_epoch,
+        gradient_clip_val=1.0,  # TODO: make configurable via TrainConfig (issue #83)
         devices=train_cfg.devices,
         # 'mps' not supporting some sparse operations, therefore shouldn't be used
         accelerator="cpu" if not torch.cuda.is_available() else "gpu",
