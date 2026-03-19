@@ -84,7 +84,8 @@ class SAGEConv(torch.nn.Module):
         )
 
     def forward(self, batch):
-        batch.x = self.model(batch.x, batch.edge_index, get_edge_weight(batch))
+        # SAGEConv does not accept edge_weight; its 3rd arg is `size`
+        batch.x = self.model(batch.x, batch.edge_index)
         return batch
 
 
@@ -101,7 +102,8 @@ class GINConv(torch.nn.Module):
         self.model = pyg.nn.GINConv(gin_nn)
 
     def forward(self, batch):
-        batch.x = self.model(batch.x, batch.edge_index, get_edge_weight(batch))
+        # GINConv does not accept edge_weight; its 3rd arg is `size`
+        batch.x = self.model(batch.x, batch.edge_index)
         return batch
 
 
