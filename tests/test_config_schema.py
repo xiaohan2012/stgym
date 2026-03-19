@@ -10,6 +10,7 @@ from stgym.config_schema import (
     LayerConfig,
     MessagePassingConfig,
     MLFlowConfig,
+    NodeClassifierModelConfig,
     PoolingConfig,
     PostMPConfig,
     TaskConfig,
@@ -182,6 +183,30 @@ class TestEdgeWeightPoolingValidation:
                 mp_layers=[
                     self._make_mp_layer(layer_type, with_pooling=True),
                     self._make_mp_layer(layer_type, with_pooling=True),
+                ],
+                post_mp_layer=PostMPConfig(dims=[10]),
+            )
+
+
+class TestNodeClassificationPoolingValidation:
+    """Validate that hierarchical pooling is rejected for node classification."""
+
+    @pytest.mark.parametrize("layer_type", ["gcnconv", "sageconv", "ginconv"])
+    def test_no_pooling_is_valid(self, layer_type):
+        NodeClassifierModelConfig(
+            mp_layers=[MessagePassingConfig(layer_type=layer_type)],
+            post_mp_layer=PostMPConfig(dims=[10]),
+        )
+
+    @pytest.mark.parametrize("pooling_type", ["dmon", "mincut"])
+    def test_pooling_raises(self, pooling_type):
+        with pytest.raises(ValidationError, match="Node classification"):
+            NodeClassifierModelConfig(
+                mp_layers=[
+                    MessagePassingConfig(
+                        layer_type="gcnconv",
+                        pooling=PoolingConfig(type=pooling_type, n_clusters=3),
+                    ),
                 ],
                 post_mp_layer=PostMPConfig(dims=[10]),
             )
