@@ -55,10 +55,7 @@ def base_model_configs():
         ),
         "node_clf": NodeClassifierModelConfig(
             mp_layers=[
-                MessagePassingConfig(
-                    layer_type="gcnconv",
-                    pooling=PoolingConfig(type="dmon", n_clusters=8),
-                )
+                MessagePassingConfig(layer_type="gcnconv"),
             ],
             post_mp_layer=PostMPConfig(dims=[16, 8]),
         ),
