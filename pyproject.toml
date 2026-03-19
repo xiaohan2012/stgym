@@ -1,0 +1,60 @@
+[project]
+name = "stgym"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "torch>=2.7.0,<2.8.0",
+    "torch-geometric",
+    "pytorch-lightning",
+    "torchmetrics",
+    "torch-scatter",
+    "torch-cluster",
+    "torch-sparse",
+    "torch-spline-conv",
+    "pyg-lib==0.4.0; sys_platform == 'linux'",
+    "mlflow",
+    "ray",
+    "hydra-core",
+    "omegaconf",
+    "pydantic",
+    "h5py",
+    "numpy",
+    "pandas",
+    "scipy",
+    "scikit-learn",
+    "pyarrow",
+    "matplotlib",
+    "networkx",
+    "logzero",
+    "tabulate",
+    "pydash",
+    "ipython",
+    "ipykernel",
+    "jupyter-client",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "black",
+    "isort",
+    "flake8",
+    "pylint",
+    "mypy",
+    "autopep8",
+    "yapf",
+    "pre-commit>=4.5.1",
+]
+
+[tool.uv]
+find-links = ["https://data.pyg.org/whl/torch-2.7.0+cpu.html"]
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu" }]
+torchvision = [{ index = "pytorch-cpu" }]
+torchaudio = [{ index = "pytorch-cpu" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
