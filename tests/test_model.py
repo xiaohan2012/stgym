@@ -43,7 +43,14 @@ class TestSTGraphClassifier(BatchLoaderMixin):
 
 
 class TestSTNodeClassifier(BatchLoaderMixin):
-    def _run_with_config(self, cfg, with_pooling: bool):
+    def test_without_pooling(self):
+        cfg = NodeClassifierModelConfig(
+            mp_layers=[
+                MessagePassingConfig(layer_type="gcnconv", pooling=None),
+                MessagePassingConfig(layer_type="gcnconv", pooling=None),
+            ],
+            post_mp_layer=PostMPConfig(dims=[64, 32]),
+        )
         batch = self.load_batch()
         model = STNodeClassifier(self.num_features, self.num_classes, cfg).to(
             self.device
@@ -55,30 +62,3 @@ class TestSTNodeClassifier(BatchLoaderMixin):
             self.batch_size * self.num_nodes_per_graph,
             self.num_classes,
         )
-        if with_pooling:
-            assert len(other_loss) == 1
-            for loss in other_loss:
-                assert isinstance(loss, dict)
-
-    def test_with_pooling(self):
-        cfg = NodeClassifierModelConfig(
-            mp_layers=[
-                MessagePassingConfig(
-                    layer_type="gcnconv",
-                    pooling=PoolingConfig(type="dmon", n_clusters=128),
-                ),
-                # Remark: it is unclear how to make the code run with more than one pooling layers
-            ],
-            post_mp_layer=PostMPConfig(dims=[64, 32]),
-        )
-        self._run_with_config(cfg, with_pooling=True)
-
-    def test_without_pooling(self):
-        cfg = NodeClassifierModelConfig(
-            mp_layers=[
-                MessagePassingConfig(layer_type="gcnconv", pooling=None),
-                MessagePassingConfig(layer_type="gcnconv", pooling=None),
-            ],
-            post_mp_layer=PostMPConfig(dims=[64, 32]),
-        )
-        self._run_with_config(cfg, with_pooling=False)

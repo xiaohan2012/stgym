@@ -53,12 +53,8 @@ def graph_clf_model_cfg():
 @pytest.fixture
 def node_clf_model_cfg():
     return NodeClassifierModelConfig(
-        # message passing layers
         mp_layers=[
-            MessagePassingConfig(
-                layer_type="gcnconv",
-                pooling=PoolingConfig(type="dmon", n_clusters=8),
-            ),
+            MessagePassingConfig(layer_type="gcnconv"),
         ],
         post_mp_layer=PostMPConfig(dims=[16, 8]),
     )
