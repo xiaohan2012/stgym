@@ -165,14 +165,14 @@ class GraphClassifierModelConfig(BaseModel):
         unsupported = [
             mp.layer_type
             for mp in pooling_layers
-            if mp.layer_type in _PYG_CONV_CLASSES
-            and not supports_edge_weight(mp.layer_type)
+            if not supports_edge_weight(mp.layer_type)
         ]
         if unsupported:
+            supported = [k for k in _PYG_CONV_CLASSES if supports_edge_weight(k)]
             raise ValueError(
                 f"Multi-layer pooling requires MP operators that support edge_weight, "
                 f"but found unsupported operator(s): {unsupported}. "
-                f"Use an operator like 'gcnconv' that accepts edge_weight, "
+                f"Use an operator that accepts edge_weight (e.g. {supported}), "
                 f"or reduce to a single pooling layer."
             )
         return self
