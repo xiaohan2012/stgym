@@ -14,14 +14,14 @@ git clone <repository-url>
 cd stgym
 ```
 
-2. Activate the environment:
+2. Install dependencies and create the virtual environment (requires Python 3.12+):
 ```bash
-pyenv activate stgym
+uv sync --group dev
 ```
 
-3. Install dependencies:
+3. Activate the environment:
 ```bash
-pip install -r requirements.txt
+source .venv/bin/activate
 ```
 
 ## Quick Start
@@ -30,7 +30,7 @@ pip install -r requirements.txt
 
 Launch an experiment from a YAML configuration:
 ```bash
-python run_experiment_by_yaml.py conf/exp/bn.yaml --mlflow-uri http://127.0.0.1:5000
+python run_experiment_by_yaml.py conf/adhoc/test.yaml --mlflow-uri http://127.0.0.1:5000
 ```
 
 ### Distributed Experiments
