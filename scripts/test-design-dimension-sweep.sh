@@ -13,10 +13,10 @@
 
 # Configuration variables
 # remove 'epochs' experiment for efficiency reasons
-EXPERIMENTS_FULL=$(ls conf/exp/*.yaml | xargs -n1 basename | sed 's/\.yaml$//' | grep -v '^epochs$' | tr '\n' ',' | sed 's/,$//')
+EXPERIMENTS_FULL_GRAPH_CLF=$(ls conf/exp/*.yaml | xargs -n1 basename | sed 's/\.yaml$//' | grep -v '^epochs$' | tr '\n' ',' | sed 's/,$//')
+# node_clf design space has pooling: null, so hpooling and clusters dimensions don't exist there
+EXPERIMENTS_FULL_NODE_CLF=$(ls conf/exp/*.yaml | grep -v -E '(hpooling|clusters)' | xargs -n1 basename | sed 's/\.yaml$//' | grep -v '^epochs$' | tr '\n' ',' | sed 's/,$//')
 EXPERIMENTS_DEBUG="hpooling,bn"
-DESIGN_SPACES="graph_clf,node_clf"
-
 
 # Set mode (default to debug, can be overridden with MODE environment variable)
 MODE=${MODE:-debug}
@@ -24,19 +24,48 @@ MODE=${MODE:-debug}
 RESOURCE=${RESOURCE:-cpu-4}
 
 echo "Mode: $MODE, Resource: $RESOURCE"
-# Select experiment list based on mode
-if [ "$MODE" = "full" ]; then
-    EXPERIMENTS=$EXPERIMENTS_FULL
-    echo "Running in full mode: $EXPERIMENTS with $DESIGN_SPACES"
-else
-    EXPERIMENTS=$EXPERIMENTS_DEBUG
-    echo "Running in debug mode: $EXPERIMENTS with $DESIGN_SPACES"
-fi
 
-time python run_rct.py --multirun \
-       +exp=$EXPERIMENTS \
-       design_space=$DESIGN_SPACES \
-       resource=$RESOURCE \
-       sample_size=5 \
-       design_space.train.max_epoch=2 \
-       ++mlflow.experiment_name=test-sweep-$(date +%m-%d-%Y--%H:%M:%S)
+EXPERIMENT_NAME="test-sweep-$(date +%m-%d-%Y--%H:%M:%S)"
+
+if [ "$MODE" = "full" ]; then
+    echo "Running in full mode"
+    echo "  graph_clf experiments: $EXPERIMENTS_FULL_GRAPH_CLF"
+    echo "  node_clf experiments: $EXPERIMENTS_FULL_NODE_CLF"
+
+    # graph_clf: all experiments (pooling dimensions are valid)
+    time python run_rct.py --multirun \
+           +exp=$EXPERIMENTS_FULL_GRAPH_CLF \
+           design_space=graph_clf \
+           resource=$RESOURCE \
+           sample_size=5 \
+           design_space.train.max_epoch=2 \
+           ++mlflow.experiment_name=$EXPERIMENT_NAME
+
+    # node_clf: pooling experiments excluded (hpooling/clusters reference model.pooling which is null in node_clf)
+    time python run_rct.py --multirun \
+           +exp=$EXPERIMENTS_FULL_NODE_CLF \
+           design_space=node_clf \
+           resource=$RESOURCE \
+           sample_size=5 \
+           design_space.train.max_epoch=2 \
+           ++mlflow.experiment_name=$EXPERIMENT_NAME
+else
+    # Debug mode: hpooling and bn are both valid for graph_clf; only bn is valid for node_clf
+    echo "Running in debug mode: $EXPERIMENTS_DEBUG with graph_clf, then bn with node_clf"
+
+    time python run_rct.py --multirun \
+           +exp=$EXPERIMENTS_DEBUG \
+           design_space=graph_clf \
+           resource=$RESOURCE \
+           sample_size=5 \
+           design_space.train.max_epoch=2 \
+           ++mlflow.experiment_name=$EXPERIMENT_NAME
+
+    time python run_rct.py --multirun \
+           +exp=bn \
+           design_space=node_clf \
+           resource=$RESOURCE \
+           sample_size=5 \
+           design_space.train.max_epoch=2 \
+           ++mlflow.experiment_name=$EXPERIMENT_NAME
+fi
