@@ -2,6 +2,7 @@ import math
 from os import path as osp
 
 import numpy as np
+import pytest
 import torch
 from torch_geometric.datasets import TUDataset
 from torch_geometric.loader import DataLoader
@@ -19,6 +20,7 @@ from ..utils import DEVICE, BatchLoaderMixin
 RTOL = 2.5e-3
 
 
+@pytest.mark.slow
 def test_mincut_pool():
     path = osp.join("data", "TU")
     dataset = TUDataset(path, name="MUTAG").shuffle()
