@@ -86,3 +86,38 @@ def test_invalid_design_dimension(mock_design_space):
             sample_size=10,
             random_seed=None,
         )
+
+
+@pytest.mark.parametrize(
+    "locked_graph_const, design_dimension, design_choices",
+    [
+        ("knn", "data_loader.knn_k", [10, 20, 30]),
+        ("radius", "data_loader.radius_ratio", [0.05, 0.075, 0.1]),
+    ],
+)
+def test_no_wasted_runs_when_graph_const_is_locked(
+    mock_design_space, locked_graph_const, design_dimension, design_choices
+):
+    """Locking graph_const ensures every run exercises the intended design dimension.
+
+    Reproduces issue #87: when graph_const is free to vary, ~50% of knn/radius
+    experiment runs sample the wrong graph construction method, making the design
+    dimension (knn_k or radius_ratio) irrelevant for those runs.
+    """
+    ds = _.set_(mock_design_space, "data_loader.graph_const", locked_graph_const)
+    exp_cfgs = generate_experiment_configs(
+        ds,
+        design_dimension=design_dimension,
+        design_choices=design_choices,
+        sample_size=10,
+        random_seed=42,
+    )
+
+    for cfg in exp_cfgs:
+        assert cfg.data_loader.graph_const == locked_graph_const
+        if locked_graph_const == "knn":
+            assert cfg.data_loader.radius_ratio is None
+            assert cfg.data_loader.knn_k in design_choices
+        else:
+            assert cfg.data_loader.knn_k is None
+            assert cfg.data_loader.radius_ratio in design_choices

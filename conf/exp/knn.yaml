@@ -3,5 +3,11 @@
 design_dimension: data_loader.knn_k
 design_choices: [10, 20, 30]  # TODO: increase the span
 
+# Lock graph_const to knn so all sampled configs exercise the knn_k dimension.
+# Without this, ~50% of runs would sample graph_const=radius and knn_k would have no effect.
+design_space:
+  data_loader:
+    graph_const: knn
+
 mlflow:
   experiment_name: knn
