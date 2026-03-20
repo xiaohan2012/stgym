@@ -43,11 +43,14 @@ python run_rct.py +exp=bn design_space=graph_clf resource=gpu-4 sample_size=64
 ### Testing
 
 Run comprehensive tests:
+
 ```bash
 pytest tests/ -v
 ```
 
-Quick CPU validation:
+
+Skip slow tests
+
 ```bash
-bash scripts/test_on_cpu.sh
+pytest tests/ -m "not slow"
 ```
