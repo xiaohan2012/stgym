@@ -3,5 +3,11 @@
 design_dimension: data_loader.radius_ratio
 design_choices: [0.05, 0.075, 0.1]
 
+# Lock graph_const to radius so all sampled configs exercise the radius_ratio dimension.
+# Without this, ~50% of runs would sample graph_const=knn and radius_ratio would have no effect.
+design_space:
+  data_loader:
+    graph_const: radius
+
 mlflow:
   experiment_name: radius
