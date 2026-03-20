@@ -2,6 +2,7 @@
 
 [![Lint](https://github.com/xiaohan2012/stgym/actions/workflows/lint.yml/badge.svg)](https://github.com/xiaohan2012/stgym/actions/workflows/lint.yml)
 [![Test](https://github.com/xiaohan2012/stgym/actions/workflows/test.yml/badge.svg)](https://github.com/xiaohan2012/stgym/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/xiaohan2012/stgym/branch/main/graph/badge.svg)](https://codecov.io/gh/xiaohan2012/stgym)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/release/python-3120/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![ty](https://img.shields.io/badge/type--checked-ty-blue)](https://github.com/astral-sh/ty)

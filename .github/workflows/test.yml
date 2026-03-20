@@ -19,5 +19,11 @@ jobs:
       - name: Install dependencies
         run: uv sync --group dev
 
-      - name: Run tests
-        run: uv run pytest tests/ -m "not slow" -v
+      - name: Run tests with coverage
+        run: uv run pytest tests/ -m "not slow" --cov=stgym --cov-branch --cov-report=xml -q
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
