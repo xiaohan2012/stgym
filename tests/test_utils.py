@@ -147,13 +147,6 @@ def test_collapse_ptr_list(ptr_list, expected):
 
 
 class TestGetCoordSpan:
-    def test_single_graph(self):
-        # x-span=3, y-span=4 → span=4
-        pos = torch.tensor([[0.0, 0.0], [3.0, 4.0]])
-        result = get_coord_span([Data(pos=pos)])
-        assert result["min_span"] == pytest.approx(4.0)
-        assert result["max_span"] == pytest.approx(4.0)
-
     def test_multiple_graphs(self):
         ds = [
             Data(pos=torch.tensor([[0.0, 0.0], [1.0, 1.0]])),  # span=1
@@ -162,10 +155,6 @@ class TestGetCoordSpan:
         result = get_coord_span(ds)
         assert result["min_span"] == pytest.approx(1.0)
         assert result["max_span"] == pytest.approx(5.0)
-
-    def test_return_types(self):
-        ds = [Data(pos=torch.tensor([[0.0, 0.0], [2.0, 2.0]]))]
-        result = get_coord_span(ds)
         assert isinstance(result["min_span"], float)
         assert isinstance(result["max_span"], float)
 
@@ -180,24 +169,20 @@ class TestLogExperimentConfigAsArtifact:
         logger.run_id = run_id
         return logger
 
-    def test_calls_log_artifact(self):
+    @pytest.mark.parametrize(
+        "filename, expected_suffix",
+        [
+            (None, "experiment_config.yaml"),
+            ("my_config.yaml", "my_config.yaml"),
+        ],
+    )
+    def test_filename(self, filename, expected_suffix):
         logger = self._make_logger()
-        log_experiment_config_as_artifact(logger, self.config_dict)
+        kwargs = {"filename": filename} if filename is not None else {}
+        log_experiment_config_as_artifact(logger, self.config_dict, **kwargs)
         logger.experiment.log_artifact.assert_called_once()
-
-    def test_default_filename(self):
-        logger = self._make_logger()
-        log_experiment_config_as_artifact(logger, self.config_dict)
         path_arg = logger.experiment.log_artifact.call_args[0][1]
-        assert path_arg.endswith("experiment_config.yaml")
-
-    def test_custom_filename(self):
-        logger = self._make_logger()
-        log_experiment_config_as_artifact(
-            logger, self.config_dict, filename="my_config.yaml"
-        )
-        path_arg = logger.experiment.log_artifact.call_args[0][1]
-        assert path_arg.endswith("my_config.yaml")
+        assert path_arg.endswith(expected_suffix)
 
     def test_run_id_passed_correctly(self):
         logger = self._make_logger(run_id="my-run-42")
