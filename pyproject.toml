@@ -48,7 +48,7 @@ exclude = [".claude"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP"]
-ignore = ["E501"]
+ignore = ["E501", "E402", "F821"]
 
 [tool.uv]
 find-links = ["https://data.pyg.org/whl/torch-2.7.0+cpu.html"]

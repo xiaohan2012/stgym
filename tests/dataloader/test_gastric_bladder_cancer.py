@@ -136,7 +136,7 @@ def test_single_label_validation():
 
         # Should raise assertion error during dataset creation due to multiple labels per sample
         with pytest.raises(AssertionError, match="multiple labels"):
-            ds = GastricBladderCancerDataset(root=data_root)
+            GastricBladderCancerDataset(root=data_root)
 
         rm_dir_if_exists(data_root / "processed")
 
@@ -159,6 +159,6 @@ def test_unknown_cancer_type():
 
         # Should raise assertion error during dataset creation due to unknown cancer type
         with pytest.raises(AssertionError, match="Unknown cancer type"):
-            ds = GastricBladderCancerDataset(root=data_root)
+            GastricBladderCancerDataset(root=data_root)
 
         rm_dir_if_exists(data_root / "processed")

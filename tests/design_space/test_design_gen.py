@@ -84,8 +84,8 @@ class TestSampleAcrossDimensions:
         space.global_pooling = None
         space.post_mp_dims = None
         design = sample_across_dimensions(space)
-        assert design["global_pooling"] == None
-        assert design["post_mp_dims"] == None
+        assert design["global_pooling"] is None
+        assert design["post_mp_dims"] is None
 
     @pytest.mark.parametrize("seed", RANDOM_SEEDS)
     def test_seed(self, seed):
