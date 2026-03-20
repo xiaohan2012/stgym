@@ -181,7 +181,7 @@ def test_spatial_vdj_dataset_mixed_labels_error():
 
         # Should raise ValueError for mixed tissue types in same sample
         with pytest.raises(ValueError, match="has multiple tissue types"):
-            ds = SpatialVDJDataset(root=data_root)
+            SpatialVDJDataset(root=data_root)
 
         # Clean up
         rm_dir_if_exists(data_root / "processed")

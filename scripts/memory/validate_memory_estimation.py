@@ -134,7 +134,7 @@ def run_memory_test(cfg: ExperimentConfig, device="cuda"):
         try:
             ds_info = get_info(cfg.task.dataset_name)
             num_classes = ds_info.get("num_classes")
-        except:
+        except Exception:
             num_classes = None
             print("Warning: Could not get num_classes from dataset info")
 
