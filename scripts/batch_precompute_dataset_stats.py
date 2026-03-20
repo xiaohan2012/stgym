@@ -13,7 +13,6 @@ Usage:
 import argparse
 import sys
 from pathlib import Path
-from typing import Dict, List
 
 # Add the project root to sys.path so we can import stgym
 project_root = Path(__file__).parent.parent
@@ -44,7 +43,7 @@ def load_config(config_path: str) -> DictConfig:
     return cfg
 
 
-def generate_combinations(config: DictConfig) -> List[Dict]:
+def generate_combinations(config: DictConfig) -> list[dict]:
     """Generate all combinations of dataset and graph construction parameters."""
     combinations = []
 
@@ -90,7 +89,7 @@ def cache_exists(
     return cache_file.exists()
 
 
-def generate_stats_for_combination(combination: Dict, cache_dir: Path) -> None:
+def generate_stats_for_combination(combination: dict, cache_dir: Path) -> None:
     """Generate statistics for a single combination and save to cache."""
     dataset_name = combination["dataset_name"]
     graph_const = combination["graph_const"]
@@ -191,7 +190,7 @@ def main():
                 continue
 
     # Print summary
-    print(f"\n" + "=" * 60)
+    print("\n" + "=" * 60)
     print(f"Summary: {len(combinations)} combinations processed")
     print(f"  Computed: {computed_count}")
     print(f"  Skipped: {skipped_count} (cache existed)")

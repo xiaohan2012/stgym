@@ -82,7 +82,7 @@ def create_model_from_config(model_cfg, task_cfg, num_features, num_classes=None
 
 def run_memory_test(cfg: ExperimentConfig, device="cuda"):
     """Run memory estimation test on given configuration."""
-    print(f"Testing memory estimation for configuration...")
+    print("Testing memory estimation for configuration...")
     print(f"Dataset: {cfg.task.dataset_name}")
     print(f"Task: {cfg.task.type}")
     print(f"Batch size: {cfg.data_loader.batch_size}")
@@ -95,7 +95,7 @@ def run_memory_test(cfg: ExperimentConfig, device="cuda"):
 
         print(f"  Total memory: {total_memory:.3f} GB")
         print(f"  Model parameters: {breakdown['model_param_count']:,}")
-        print(f"  ✅ Single call, no redundant computation!")
+        print("  ✅ Single call, no redundant computation!")
         print()
 
         print("DETAILED MEMORY BREAKDOWN:")
@@ -156,7 +156,7 @@ def run_memory_test(cfg: ExperimentConfig, device="cuda"):
         print("ACTUAL MODEL MEASUREMENTS:")
         print(f"  Model parameters: {actual_params:,}")
         print(
-            f"  Model memory: {actual_model_memory_mb:.2f} MB ({actual_model_memory_mb/1024:.3f} GB)"
+            f"  Model memory: {actual_model_memory_mb:.2f} MB ({actual_model_memory_mb / 1024:.3f} GB)"
         )
 
         # Compare with estimates (using breakdown data from single call)
@@ -173,7 +173,7 @@ def run_memory_test(cfg: ExperimentConfig, device="cuda"):
         )
         print(f"  Parameter estimation error: {param_error:.1f}%")
         print(f"  Memory estimation error: {memory_error:.1f}%")
-        print(f"  ✅ Perfect accuracy with single function call!")
+        print("  ✅ Perfect accuracy with single function call!")
         print()
 
         # Test GPU memory if available

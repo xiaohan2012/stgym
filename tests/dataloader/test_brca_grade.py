@@ -54,9 +54,9 @@ def test_brca_grade_dataset(mock_df):
     with patch("pandas.read_csv", return_value=mock_df):
         data_root = Path("./tests/data/brca-grade-test")
         ds = BRCAGradeDataset(root=data_root)
-        assert (
-            len(ds) == 3
-        ), f"There should be 3 graph samples (one per grade) but got {len(ds)}"
+        assert len(ds) == 3, (
+            f"There should be 3 graph samples (one per grade) but got {len(ds)}"
+        )
 
         # Test first sample (grade 1 -> label 0)
         data0 = ds[0]

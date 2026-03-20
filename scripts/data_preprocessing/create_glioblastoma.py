@@ -410,7 +410,7 @@ def create_universal_gene_set_fast(
         for gene_idx, gene_id in enumerate(gene_ids):
             gene_total_expression[gene_id] += gene_sums[gene_idx]
 
-        logger.info(f"  Processed sample {i+1}/{len(sample_data_list)}")
+        logger.info(f"  Processed sample {i + 1}/{len(sample_data_list)}")
 
     # Find intersection of all gene sets (genes present in ALL samples)
     universal_gene_set = sample_gene_sets[0]
@@ -458,7 +458,7 @@ def consolidate_samples_fast(sample_data_list, selected_genes, gene_id_to_name):
 
     for i, sample_data in enumerate(sample_data_list):
         logger.info(
-            f"  Processing sample {i+1}/{len(sample_data_list)}: {sample_data['sample_id']}"
+            f"  Processing sample {i + 1}/{len(sample_data_list)}: {sample_data['sample_id']}"
         )
 
         # Get position data
@@ -487,7 +487,7 @@ def consolidate_samples_fast(sample_data_list, selected_genes, gene_id_to_name):
             gene_expression_data[col_name] = log_expression
 
             if (j + 1) % 100 == 0:
-                logger.info(f"    Processed {j+1}/{len(selected_genes)} genes")
+                logger.info(f"    Processed {j + 1}/{len(selected_genes)} genes")
 
         # Create expression DataFrame
         expr_df = pd.DataFrame(gene_expression_data, index=range(len(pos_df)))
@@ -599,7 +599,7 @@ def create_consolidated_gene_expression_dataset_fast(
         f.write(
             f"Processing date: {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
         )
-        f.write(f"Data source: Filtered 10X Visium gene expression matrices\n\n")
+        f.write("Data source: Filtered 10X Visium gene expression matrices\n\n")
         f.write(f"Total spots: {len(consolidated_df):,}\n")
         f.write(f"Total samples: {consolidated_df['sample_id'].nunique()}\n")
         f.write(f"Unique patients: {consolidated_df['patient_id'].nunique()}\n")
@@ -618,7 +618,7 @@ def create_consolidated_gene_expression_dataset_fast(
                 f"  {tissue_type}: {row['samples']} samples, {row['spots']:,} spots\n"
             )
 
-        f.write(f"\nFeature columns (first 20 genes):\n")
+        f.write("\nFeature columns (first 20 genes):\n")
         gene_cols = [
             col
             for col in consolidated_df.columns
@@ -696,7 +696,7 @@ Example usage:
             min_expression=args.min_expression,
             top_genes=args.top_genes,
         )
-        logger.info(f"Fast dataset creation completed successfully!")
+        logger.info("Fast dataset creation completed successfully!")
         logger.info(f"Output file: {output_file}")
         return 0
 

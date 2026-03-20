@@ -181,7 +181,6 @@ def create_mlflow_experiment(exp_name: str):
 
 
 class YamlLoaderMixin:
-
     @classmethod
     def from_yaml(cls, yaml_file):
         data = load_yaml(yaml_file)

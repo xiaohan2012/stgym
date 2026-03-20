@@ -36,15 +36,17 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest",
-    "black",
-    "isort",
-    "flake8",
-    "pylint",
-    "mypy",
-    "autopep8",
-    "yapf",
+    "ruff",
+    "ty",
     "pre-commit>=4.5.1",
 ]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
 
 [tool.uv]
 find-links = ["https://data.pyg.org/whl/torch-2.7.0+cpu.html"]

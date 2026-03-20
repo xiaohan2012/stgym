@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pydantic import BaseModel, PositiveFloat, PositiveInt, field_validator
 
 from stgym.config_schema import (
@@ -16,7 +14,7 @@ from stgym.utils import YamlLoaderMixin
 
 
 class ModelWithZip(BaseModel):
-    zip_: Optional[list[str]] = []  # used to specify the fields to be 'zipped' over
+    zip_: list[str] | None = []  # used to specify the fields to be 'zipped' over
 
 
 class ModelSpace(ModelWithZip):
@@ -27,7 +25,7 @@ class ModelSpace(ModelWithZip):
     num_mp_layers: PositiveInt | list[PositiveInt]
 
     # not null only for graph classification
-    global_pooling: Optional[GlobalPoolingType | list[GlobalPoolingType]] = None
+    global_pooling: GlobalPoolingType | list[GlobalPoolingType] | None = None
 
     normalize_adj: bool | list[bool]
     layer_type: LayerType | list[LayerType]
@@ -38,7 +36,7 @@ class ModelSpace(ModelWithZip):
 
     # temporary hack, which stores a tuple of ints as a comma-separated string
     # because yaml does not distinguish tuple from list
-    post_mp_dims: Optional[str | list[str]] = None
+    post_mp_dims: str | list[str] | None = None
 
 
 class TrainSpace(ModelWithZip):

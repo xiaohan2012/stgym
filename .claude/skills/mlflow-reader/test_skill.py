@@ -23,7 +23,7 @@ def test_url_parsing():
 
     try:
         tracking_uri, exp_id, run_id = MLflowReader.parse_mlflow_url(test_url)
-        print(f"✅ URL parsed successfully:")
+        print("✅ URL parsed successfully:")
         print(f"  Tracking URI: {tracking_uri}")
         print(f"  Experiment ID: {exp_id}")
         print(f"  Run ID: {run_id}")
@@ -103,7 +103,7 @@ def test_run_summary_formatting():
 
 def test_status_filtering(tracking_uri="http://127.0.0.1:5000"):
     """Test status-based run filtering."""
-    print(f"\n=== Testing Status Filtering ===")
+    print("\n=== Testing Status Filtering ===")
 
     try:
         reader = MLflowReader(tracking_uri)
@@ -121,7 +121,7 @@ def test_status_filtering(tracking_uri="http://127.0.0.1:5000"):
         successful_runs = reader.get_successful_runs([exp_id], max_results=5)
         running_runs = reader.get_runs_by_status([exp_id], "RUNNING", max_results=5)
 
-        print(f"✅ Status filtering successful:")
+        print("✅ Status filtering successful:")
         print(f"  Failed runs: {len(failed_runs)}")
         print(f"  Successful runs: {len(successful_runs)}")
         print(f"  Running runs: {len(running_runs)}")
@@ -134,7 +134,7 @@ def test_status_filtering(tracking_uri="http://127.0.0.1:5000"):
 
 def test_error_extraction(tracking_uri="http://127.0.0.1:5000"):
     """Test error file reading functionality."""
-    print(f"\n=== Testing Error Extraction ===")
+    print("\n=== Testing Error Extraction ===")
 
     try:
         reader = MLflowReader(tracking_uri)
@@ -197,7 +197,7 @@ def main():
     passed = sum(results)
     total = len(results)
 
-    print(f"\n=== Test Results ===")
+    print("\n=== Test Results ===")
     print(f"Passed: {passed}/{total}")
 
     if passed == total:

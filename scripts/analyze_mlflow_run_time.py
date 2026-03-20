@@ -7,7 +7,6 @@ Calculates timing statistics for all runs in a given experiment.
 import argparse
 import sys
 from datetime import datetime
-from typing import Optional
 
 import mlflow
 import numpy as np
@@ -16,7 +15,7 @@ from mlflow.tracking import MlflowClient
 
 def analyze_experiment(
     experiment_name: str, mlflow_uri: str = "http://127.0.0.1:5001"
-) -> Optional[dict]:
+) -> dict | None:
     """
     Analyze timing statistics for all runs in an MLFlow experiment.
 
@@ -131,7 +130,7 @@ def print_results(results: dict):
     print(f"   Total runs: {results['total_runs']}")
     print(f"   Completed runs: {results['completed_runs']}")
 
-    print(f"\n⏰ Timing Summary:")
+    print("\n⏰ Timing Summary:")
     print(f"   Start time (earliest): {results['min_start_time']}")
     print(f"   End time (latest): {results['max_end_time']}")
     print(f"   Total running time: {results['total_running_time_hours']:.2f} hours")
@@ -142,7 +141,7 @@ def print_results(results: dict):
         f"                       ({results['total_running_time_seconds']:.1f} seconds)"
     )
 
-    print(f"\n📈 Run Duration Statistics:")
+    print("\n📈 Run Duration Statistics:")
     print(
         f"   Mean duration: {results['mean_duration_minutes']:.2f} ± {results['std_duration_minutes']:.2f} minutes"
     )
@@ -159,7 +158,7 @@ def print_results(results: dict):
     print(f"   Max duration: {max(durations_min):.2f} minutes")
 
     # Show device information
-    print(f"\n💻 Device Information:")
+    print("\n💻 Device Information:")
     devices = results["devices"]
 
     if devices:
@@ -178,27 +177,27 @@ def print_results(results: dict):
                 f"   CUDA_VISIBLE_DEVICES: {', '.join(sorted(cuda_visible_devices_set))}"
             )
         else:
-            print(f"   CUDA_VISIBLE_DEVICES: Not logged")
+            print("   CUDA_VISIBLE_DEVICES: Not logged")
 
         if model_devices_set:
             print(f"   Model devices: {', '.join(sorted(model_devices_set))}")
         else:
-            print(f"   Model devices: Not logged")
+            print("   Model devices: Not logged")
 
         # Show detailed breakdown for first few runs
         if any(
             d["cuda_visible_devices"] != "unknown" or d["model_device"] != "unknown"
             for d in devices
         ):
-            print(f"\n   📊 Per-run device breakdown:")
+            print("\n   📊 Per-run device breakdown:")
             for i, device_info in enumerate(devices[:5]):  # Show first 5 runs
                 cuda_vis = device_info["cuda_visible_devices"]
                 model_dev = device_info["model_device"]
-                print(f"      Run {i+1}: CUDA_VISIBLE={cuda_vis}, model={model_dev}")
+                print(f"      Run {i + 1}: CUDA_VISIBLE={cuda_vis}, model={model_dev}")
             if len(devices) > 5:
-                print(f"      ... and {len(devices)-5} more runs")
+                print(f"      ... and {len(devices) - 5} more runs")
     else:
-        print(f"   No device information available")
+        print("   No device information available")
 
 
 def main():

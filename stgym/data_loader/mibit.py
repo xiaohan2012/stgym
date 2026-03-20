@@ -43,9 +43,9 @@ class MIBITNBCDataSet(InMemoryDataset):
         super().__init__(root, transform, pre_transform, pre_filter)
         self.load(self.processed_paths[0])
 
-        assert np.isclose(
-            sum(train_val_test_split_ratios), 1.0
-        ), f"{sum(train_val_test_split_ratios)} != 1"
+        assert np.isclose(sum(train_val_test_split_ratios), 1.0), (
+            f"{sum(train_val_test_split_ratios)} != 1"
+        )
 
         np.random.seed(42)
 

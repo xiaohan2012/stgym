@@ -10,7 +10,6 @@ import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Dict, List
 
 
 class ArtifactFetcher:
@@ -58,7 +57,7 @@ class ArtifactFetcher:
             print(f"Connectivity test failed: {e}", file=sys.stderr)
             return False
 
-    def check_run_artifacts(self, experiment_id: str, run_id: str) -> Dict[str, bool]:
+    def check_run_artifacts(self, experiment_id: str, run_id: str) -> dict[str, bool]:
         """
         Check which artifacts are available for a specific run.
 
@@ -98,7 +97,7 @@ class ArtifactFetcher:
 
     def fetch_single_artifact(
         self, experiment_id: str, run_id: str, artifact_name: str, local_path: str
-    ) -> Dict:
+    ) -> dict:
         """
         Fetch a single artifact file using SCP.
 
@@ -161,8 +160,8 @@ class ArtifactFetcher:
             }
 
     def fetch_batch_artifacts(
-        self, experiment_id: str, run_ids: List[str], local_base_dir: str
-    ) -> Dict:
+        self, experiment_id: str, run_ids: list[str], local_base_dir: str
+    ) -> dict:
         """
         Fetch artifacts for multiple runs in parallel.
 
@@ -200,13 +199,13 @@ class ArtifactFetcher:
         fetch_tasks = []
         for i, run_id in enumerate(run_ids):
             # Error file task
-            error_local_path = errors_dir / f"error_{i+1}.txt"
+            error_local_path = errors_dir / f"error_{i + 1}.txt"
             fetch_tasks.append(
                 (experiment_id, run_id, "training_error.txt", str(error_local_path))
             )
 
             # Config file task
-            config_local_path = configs_dir / f"config_{i+1}.yaml"
+            config_local_path = configs_dir / f"config_{i + 1}.yaml"
             fetch_tasks.append(
                 (
                     experiment_id,
@@ -282,7 +281,7 @@ class ArtifactFetcher:
 
         return results
 
-    def generate_report(self, fetch_results: Dict) -> str:
+    def generate_report(self, fetch_results: dict) -> str:
         """
         Generate a human-readable report from fetch results.
 

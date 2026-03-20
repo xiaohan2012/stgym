@@ -9,6 +9,7 @@ Usage:
     python scripts/ensure_data_processed.py --data-root ./data
     python scripts/ensure_data_processed.py --force-reprocess
 """
+
 import argparse
 import shutil
 import sys
@@ -83,7 +84,7 @@ def main():
         except FileNotFoundError as e:
             failed.append((ds_name, f"Data files not found: {e}"))
             if args.verbose:
-                print(f"❌ Data files not found")
+                print("❌ Data files not found")
             else:
                 print(f"❌ {ds_name} - Data files not found")
 

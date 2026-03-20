@@ -1,5 +1,3 @@
-from typing import Union
-
 from torch_geometric.data import Data, HeteroData
 from torch_geometric.transforms import BaseTransform
 
@@ -12,8 +10,8 @@ class AssignSparseCSC(BaseTransform):
 
     def forward(
         self,
-        data: Union[Data, HeteroData],
-    ) -> Union[Data, HeteroData]:
+        data: Data | HeteroData,
+    ) -> Data | HeteroData:
         for store in data.edge_stores:
             if "adj_t" not in store:
                 continue
@@ -29,8 +27,8 @@ class AssignSparseCSR(BaseTransform):
 
     def forward(
         self,
-        data: Union[Data, HeteroData],
-    ) -> Union[Data, HeteroData]:
+        data: Data | HeteroData,
+    ) -> Data | HeteroData:
         for store in data.edge_stores:
             if "adj_t" not in store:
                 continue

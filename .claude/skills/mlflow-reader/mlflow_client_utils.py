@@ -9,7 +9,7 @@ Designed to support the mlflow-reader Claude Code skill with common operations.
 import json
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 from urllib.parse import urlparse
 
 import mlflow
@@ -32,7 +32,7 @@ class MLflowReader:
         self.client = MlflowClient()
 
     @staticmethod
-    def parse_mlflow_url(url: str) -> Tuple[str, str, str]:
+    def parse_mlflow_url(url: str) -> tuple[str, str, str]:
         """Parse MLflow URL to extract components.
 
         Args:
@@ -59,7 +59,7 @@ class MLflowReader:
 
         return tracking_uri, experiment_id, run_id
 
-    def list_experiments(self, view_type: str = "ACTIVE_ONLY") -> List[Experiment]:
+    def list_experiments(self, view_type: str = "ACTIVE_ONLY") -> list[Experiment]:
         """List all experiments on the tracking server.
 
         Args:
@@ -70,9 +70,7 @@ class MLflowReader:
         """
         return self.client.search_experiments(view_type=view_type)
 
-    def get_experiment(
-        self, experiment_name_or_id: Union[str, int]
-    ) -> Optional[Experiment]:
+    def get_experiment(self, experiment_name_or_id: str | int) -> Experiment | None:
         """Get experiment by name or ID.
 
         Args:
@@ -95,11 +93,11 @@ class MLflowReader:
 
     def search_runs(
         self,
-        experiment_ids: List[str],
+        experiment_ids: list[str],
         filter_string: str = "",
-        order_by: Optional[List[str]] = None,
+        order_by: list[str] | None = None,
         max_results: int = 1000,
-    ) -> List[Run]:
+    ) -> list[Run]:
         """Search runs across experiments.
 
         Args:
@@ -120,11 +118,11 @@ class MLflowReader:
 
     def get_runs_by_status(
         self,
-        experiment_ids: List[str],
+        experiment_ids: list[str],
         status: str,
-        order_by: Optional[List[str]] = None,
+        order_by: list[str] | None = None,
         max_results: int = 1000,
-    ) -> List[Run]:
+    ) -> list[Run]:
         """Get runs filtered by status.
 
         Args:
@@ -146,10 +144,10 @@ class MLflowReader:
 
     def get_failed_runs(
         self,
-        experiment_ids: List[str],
-        order_by: Optional[List[str]] = None,
+        experiment_ids: list[str],
+        order_by: list[str] | None = None,
         max_results: int = 1000,
-    ) -> List[Run]:
+    ) -> list[Run]:
         """Get all failed runs from experiments.
 
         Args:
@@ -170,10 +168,10 @@ class MLflowReader:
 
     def get_successful_runs(
         self,
-        experiment_ids: List[str],
-        order_by: Optional[List[str]] = None,
+        experiment_ids: list[str],
+        order_by: list[str] | None = None,
         max_results: int = 1000,
-    ) -> List[Run]:
+    ) -> list[Run]:
         """Get all successfully finished runs from experiments.
 
         Args:
@@ -192,7 +190,7 @@ class MLflowReader:
             max_results=max_results,
         )
 
-    def get_run_data(self, run_id: str, include_error: bool = False) -> Dict[str, Any]:
+    def get_run_data(self, run_id: str, include_error: bool = False) -> dict[str, Any]:
         """Get complete run data including params, metrics, and metadata.
 
         Args:
@@ -233,7 +231,7 @@ class MLflowReader:
 
         return run_data
 
-    def get_run_from_url(self, url: str) -> Dict[str, Any]:
+    def get_run_from_url(self, url: str) -> dict[str, Any]:
         """Get run data from MLflow URL.
 
         Args:
@@ -251,7 +249,7 @@ class MLflowReader:
 
         return self.get_run_data(run_id)
 
-    def compare_runs(self, run_ids: List[str]) -> pd.DataFrame:
+    def compare_runs(self, run_ids: list[str]) -> pd.DataFrame:
         """Compare multiple runs with their parameters and metrics.
 
         Args:
@@ -277,10 +275,10 @@ class MLflowReader:
 
     def export_experiment_data(
         self,
-        experiment_name_or_id: Union[str, int],
+        experiment_name_or_id: str | int,
         format: str = "json",
-        output_path: Optional[Path] = None,
-    ) -> Union[str, Path]:
+        output_path: Path | None = None,
+    ) -> str | Path:
         """Export experiment data to file or return as string.
 
         Args:
@@ -338,7 +336,7 @@ class MLflowReader:
         else:
             raise ValueError(f"Unsupported format: {format}")
 
-    def get_metric_history(self, run_id: str, metric_key: str) -> List[Dict]:
+    def get_metric_history(self, run_id: str, metric_key: str) -> list[dict]:
         """Get metric history for a run.
 
         Args:
@@ -354,7 +352,7 @@ class MLflowReader:
             for point in history
         ]
 
-    def get_training_error(self, run_id: str) -> Optional[str]:
+    def get_training_error(self, run_id: str) -> str | None:
         """Get training error content from training_error.txt artifact.
 
         Args:
@@ -384,7 +382,7 @@ class MLflowReader:
             print(f"Error reading training_error.txt for run {run_id}: {e}")
             return None
 
-    def read_artifact_file(self, run_id: str, artifact_path: str) -> Optional[str]:
+    def read_artifact_file(self, run_id: str, artifact_path: str) -> str | None:
         """Read any artifact file content from local filesystem.
 
         Args:
@@ -415,7 +413,7 @@ class MLflowReader:
             print(f"Error reading artifact {artifact_path} for run {run_id}: {e}")
             return None
 
-    def list_artifacts(self, run_id: str, path: str = "") -> List[Dict]:
+    def list_artifacts(self, run_id: str, path: str = "") -> list[dict]:
         """List artifacts for a run.
 
         Args:
@@ -436,7 +434,7 @@ class MLflowReader:
         ]
 
 
-def create_mlflow_reader(tracking_uri: Optional[str] = None) -> MLflowReader:
+def create_mlflow_reader(tracking_uri: str | None = None) -> MLflowReader:
     """Factory function to create MLflowReader instance.
 
     Args:
@@ -450,8 +448,8 @@ def create_mlflow_reader(tracking_uri: Optional[str] = None) -> MLflowReader:
 
 
 def get_failed_runs_with_errors(
-    reader: MLflowReader, experiment_ids: List[str], max_results: int = 100
-) -> List[Dict[str, Any]]:
+    reader: MLflowReader, experiment_ids: list[str], max_results: int = 100
+) -> list[dict[str, Any]]:
     """Get failed runs with their error information.
 
     Args:
@@ -472,7 +470,7 @@ def get_failed_runs_with_errors(
     return runs_with_errors
 
 
-def format_run_summary(run_data: Dict[str, Any]) -> str:
+def format_run_summary(run_data: dict[str, Any]) -> str:
     """Format run data as human-readable summary.
 
     Args:
@@ -507,7 +505,7 @@ def format_run_summary(run_data: Dict[str, Any]) -> str:
             lines.append(f"  {key}: {value}")
 
     if run_data.get("training_error"):
-        lines.append(f"\nTraining Error:")
+        lines.append("\nTraining Error:")
         error_lines = run_data["training_error"].strip().split("\n")
         for line in error_lines[:10]:  # Show first 10 lines
             lines.append(f"  {line}")

@@ -191,9 +191,9 @@ def test_data_stays_on_cpu_and_lightning_transfers_to_device(
 
     # 1. Verify dataset stays on CPU after construction
     for data in data_module.ds:
-        assert data.x.device == torch.device(
-            "cpu"
-        ), f"Dataset should stay on CPU, but found {data.x.device}"
+        assert data.x.device == torch.device("cpu"), (
+            f"Dataset should stay on CPU, but found {data.x.device}"
+        )
         break  # checking one sample is sufficient
 
     # 2. Verify batches arrive on the expected device during training
@@ -221,8 +221,8 @@ def test_data_stays_on_cpu_and_lightning_transfers_to_device(
     assert len(observed_devices) > 0, "training_step was never called"
     expected_type = torch.device(TORCH_DEVICE).type
     for dev in observed_devices:
-        assert (
-            dev.type == expected_type
-        ), f"Batch should be on {expected_type}, but found {dev}"
+        assert dev.type == expected_type, (
+            f"Batch should be on {expected_type}, but found {dev}"
+        )
 
     rm_dir_if_exists("tests/data/brca-test/processed")

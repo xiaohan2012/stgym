@@ -6,7 +6,6 @@ to/from cache files to speed up memory estimation.
 
 import json
 from pathlib import Path
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -43,7 +42,7 @@ def generate_cache_key(
 
 def load_cached_statistics(
     cache_key: str, cache_dir: Path = None, raise_on_error: bool = False
-) -> Optional[DatasetStatistics]:
+) -> DatasetStatistics | None:
     """Load dataset statistics from cache.
 
     Args:

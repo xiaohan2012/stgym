@@ -86,12 +86,12 @@ def test_spatial_vdj_dataset(mock_df):
         cancer_samples = [data for data in ds if data.y.item() == 1]
         normal_samples = [data for data in ds if data.y.item() == 0]
 
-        assert (
-            len(cancer_samples) == 2
-        ), f"Expected 2 cancer samples but got {len(cancer_samples)}"
-        assert (
-            len(normal_samples) == 1
-        ), f"Expected 1 normal sample but got {len(normal_samples)}"
+        assert len(cancer_samples) == 2, (
+            f"Expected 2 cancer samples but got {len(cancer_samples)}"
+        )
+        assert len(normal_samples) == 1, (
+            f"Expected 1 normal sample but got {len(normal_samples)}"
+        )
 
         # Test first cancer sample (P1_RegC2)
         cancer_sample_1 = [data for data in ds if data.sample_id == "P1_RegC2"][0]
@@ -136,9 +136,9 @@ def test_spatial_vdj_dataset(mock_df):
         # Test feature values are reasonable (non-negative)
         for data in ds:
             assert (data.x >= 0).all(), "All feature values should be non-negative"
-            assert (
-                data.x.shape[1] == 16
-            ), f"Each sample should have 16 features, got {data.x.shape[1]}"
+            assert data.x.shape[1] == 16, (
+                f"Each sample should have 16 features, got {data.x.shape[1]}"
+            )
 
         # Clean up test directory
         rm_dir_if_exists(data_root / "processed")

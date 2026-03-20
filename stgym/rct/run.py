@@ -55,7 +55,7 @@ TL_TRAIN_CFG = {
 def run_exp(
     exp_cfg: ExperimentConfig,
     mlflow_cfg: MLFlowConfig,
-    metadata_for_tag: Optional[dict[str, primitive_type]] = None,
+    metadata_for_tag: dict[str, primitive_type] | None = None,
 ):
     logz_logger.debug(OmegaConf.to_yaml(exp_cfg.model_dump()))
 

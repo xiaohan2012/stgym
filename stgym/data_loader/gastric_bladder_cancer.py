@@ -58,9 +58,9 @@ class GastricBladderCancerDataset(AbstractDataset):
 
             # Extract label and convert to integer using mapping
             cancer_type = sample_df[LABEL_COL].unique()
-            assert (
-                len(cancer_type) == 1
-            ), f"Sample {sample_id} has multiple labels: {cancer_type}"
+            assert len(cancer_type) == 1, (
+                f"Sample {sample_id} has multiple labels: {cancer_type}"
+            )
 
             cancer_type = cancer_type[0]
             assert cancer_type in LABEL_MAPPING, f"Unknown cancer type: {cancer_type}"
@@ -70,9 +70,9 @@ class GastricBladderCancerDataset(AbstractDataset):
             x = torch.Tensor(sample_df[feature_cols].values)
 
             # Validate data shapes
-            assert (
-                x.shape[0] == pos.shape[0]
-            ), f"Feature and position shape mismatch for {sample_id}"
+            assert x.shape[0] == pos.shape[0], (
+                f"Feature and position shape mismatch for {sample_id}"
+            )
             assert pos.shape[1] == 2, f"Position should be 2D for {sample_id}"
 
             data_list.append(Data(x=x, y=y, pos=pos))
