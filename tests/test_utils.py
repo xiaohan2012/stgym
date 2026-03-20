@@ -1,8 +1,9 @@
+from unittest.mock import MagicMock
+
 import numpy as np
 import pytest
 import torch
 from torch_geometric.data import Data
-from unittest.mock import MagicMock
 
 from stgym.utils import (
     batch2ptr,
