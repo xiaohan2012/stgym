@@ -1,19 +1,19 @@
 {
   "permissions": {
     "allow": [
-      "Bash(gh issue view:*)",
-      "Bash(gh pr view:*)",
-      "Bash(git checkout:*)",
-      "Bash(gh issue comment:*)",
-      "Bash(gh pr comment:*)",
-      "Bash(gh issue close:*)",
-      "Read(/tmp/:*)",
-      "Bash(scp cyy2:*)"
+      "Bash(gh issue view *)",
+      "Bash(gh pr view *)",
+      "Bash(git checkout *)",
+      "Bash(gh issue comment *)",
+      "Bash(gh pr comment *)",
+      "Bash(gh issue close *)",
+      "Read(/tmp/ *)",
+      "Bash(scp cyy2 *)"
     ],
     "deny": [
-      "Bash(git add .:*)",
-      "Bash(git add -A:*)",
-      "Bash(git add --all:*)"
+      "Bash(git add . *)",
+      "Bash(git add -A *)",
+      "Bash(git add --all *)"
     ]
   }
 }
