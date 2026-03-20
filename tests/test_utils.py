@@ -1,12 +1,17 @@
+from unittest.mock import MagicMock
+
 import numpy as np
 import pytest
 import torch
+from torch_geometric.data import Data
 
 from stgym.utils import (
     batch2ptr,
     collapse_ptr_list,
     flatten_dict,
+    get_coord_span,
     hsplit_and_vstack,
+    log_experiment_config_as_artifact,
     mask_diagonal_sp,
     rand_ints,
     stacked_blocks_to_block_diagonal,
@@ -140,3 +145,48 @@ def test_collapse_ptr_list(ptr_list, expected):
     actual = collapse_ptr_list(ptr_list)
 
     assert torch.allclose(expected, actual)
+
+
+class TestGetCoordSpan:
+    def test_multiple_graphs(self):
+        ds = [
+            Data(pos=torch.tensor([[0.0, 0.0], [1.0, 1.0]])),  # span=1
+            Data(pos=torch.tensor([[0.0, 0.0], [5.0, 3.0]])),  # span=5
+        ]
+        result = get_coord_span(ds)
+        assert result["min_span"] == pytest.approx(1.0)
+        assert result["max_span"] == pytest.approx(5.0)
+        assert isinstance(result["min_span"], float)
+        assert isinstance(result["max_span"], float)
+
+
+class TestLogExperimentConfigAsArtifact:
+    @property
+    def config_dict(self):
+        return {"lr": 0.01, "model": {"layers": 3}}
+
+    def _make_logger(self, run_id="test-run-id"):
+        logger = MagicMock()
+        logger.run_id = run_id
+        return logger
+
+    @pytest.mark.parametrize(
+        "filename, expected_suffix",
+        [
+            (None, "experiment_config.yaml"),
+            ("my_config.yaml", "my_config.yaml"),
+        ],
+    )
+    def test_filename(self, filename, expected_suffix):
+        logger = self._make_logger()
+        kwargs = {"filename": filename} if filename is not None else {}
+        log_experiment_config_as_artifact(logger, self.config_dict, **kwargs)
+        logger.experiment.log_artifact.assert_called_once()
+        path_arg = logger.experiment.log_artifact.call_args[0][1]
+        assert path_arg.endswith(expected_suffix)
+
+    def test_run_id_passed_correctly(self):
+        logger = self._make_logger(run_id="my-run-42")
+        log_experiment_config_as_artifact(logger, self.config_dict)
+        run_id_arg = logger.experiment.log_artifact.call_args[0][0]
+        assert run_id_arg == "my-run-42"
