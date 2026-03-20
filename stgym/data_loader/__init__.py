@@ -155,9 +155,9 @@ def create_loader(
 
 def create_kfold_loader(ds, cfg: DataLoaderConfig):
     """Create data loader with kfold split at fold k."""
-    assert isinstance(
-        cfg.split, DataLoaderConfig.KFoldSplitConfig
-    ), f"Wrong split type {type(cfg.split)}"
+    assert isinstance(cfg.split, DataLoaderConfig.KFoldSplitConfig), (
+        f"Wrong split type {type(cfg.split)}"
+    )
     k = cfg.split.split_index
     # do validation
     DataLoaderConfig.KFoldSplitConfig.model_validate(cfg.split.model_dump())
@@ -210,7 +210,7 @@ class STDataModuleBase(LightningDataModule):
         total = self.ds.x.numel()
         if nan_count > 0:
             raise ValueError(
-                f"Dataset has {nan_count}/{total} ({nan_count/total*100:.1f}%) NaN feature values"
+                f"Dataset has {nan_count}/{total} ({nan_count / total * 100:.1f}%) NaN feature values"
             )
 
     @property

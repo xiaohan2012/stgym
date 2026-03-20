@@ -1,4 +1,4 @@
-from typing import Iterator
+from collections.abc import Iterator
 
 import pydash as _
 from torch.nn import Parameter

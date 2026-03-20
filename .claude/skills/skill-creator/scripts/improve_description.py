@@ -124,7 +124,7 @@ Current scores ({scores_summary}):
                     status = "PASS" if r["pass"] else "FAIL"
                     prompt += f'  [{status}] "{r["query"][:80]}" (triggered {r["triggers"]}/{r["runs"]})\n'
             if h.get("note"):
-                prompt += f'Note: {h["note"]}\n'
+                prompt += f"Note: {h['note']}\n"
             prompt += "</attempt>\n\n"
 
     prompt += f"""</scores_summary>

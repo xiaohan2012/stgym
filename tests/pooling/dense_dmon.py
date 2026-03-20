@@ -1,5 +1,3 @@
-from typing import Optional, Tuple
-
 import torch
 from torch import Tensor
 from torch_geometric.nn.dense.mincut_pool import _rank3_trace
@@ -10,8 +8,8 @@ EPS = 1e-12
 def dense_dmon_pool(
     s: Tensor,
     adj: Tensor,
-    mask: Optional[Tensor] = None,
-) -> Tuple[Tensor, Tensor, Tensor, Tensor, Tensor, Tensor]:
+    mask: Tensor | None = None,
+) -> tuple[Tensor, Tensor, Tensor, Tensor, Tensor, Tensor]:
     r"""Forward pass.
 
     Args:

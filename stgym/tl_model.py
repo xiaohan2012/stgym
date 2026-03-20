@@ -1,7 +1,7 @@
 import os
 import time
 from dataclasses import dataclass
-from typing import Any, Dict, Tuple
+from typing import Any
 
 import pydash as _
 import pytorch_lightning as pl
@@ -86,7 +86,7 @@ class STGymModule(pl.LightningModule):
     def forward(self, *args, **kwargs):
         return self.model(*args, **kwargs)
 
-    def configure_optimizers(self) -> Tuple[Any, Any]:
+    def configure_optimizers(self) -> tuple[Any, Any]:
         optimizer = create_optimizer_from_cfg(self.train_cfg.optim)(
             self.model.parameters()
         )
@@ -94,7 +94,7 @@ class STGymModule(pl.LightningModule):
         scheduler = create_scheduler(optimizer, self.train_cfg.lr_schedule)
         return [optimizer], [scheduler]
 
-    def _shared_step(self, batch: Data, split: str) -> Dict:
+    def _shared_step(self, batch: Data, split: str) -> dict:
         batch.split = split
 
         if self.task_cfg.type == "graph-classification":

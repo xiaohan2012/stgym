@@ -15,7 +15,7 @@ Features:
     - Uses cached dataset statistics when available for faster computation
 """
 
-from typing import Any, Dict, Optional, Tuple
+from typing import Any
 
 import torch
 
@@ -123,8 +123,8 @@ def estimate_batch_memory(
     avg_nodes: float,
     avg_edges: float,
     use_max: bool = False,
-    max_nodes: Optional[int] = None,
-    max_edges: Optional[int] = None,
+    max_nodes: int | None = None,
+    max_edges: int | None = None,
 ) -> float:
     """Estimate memory consumption for a single batch in GB.
 
@@ -197,9 +197,9 @@ def get_actual_model_memory(
     model_cfg: GraphClassifierModelConfig | NodeClassifierModelConfig,
     task_cfg: TaskConfig,
     num_features: int,
-    num_classes: Optional[int] = None,
+    num_classes: int | None = None,
     device: str = "cpu",
-) -> Tuple[float, int]:
+) -> tuple[float, int]:
     """Get actual model memory by constructing the model directly.
 
     Args:
@@ -237,7 +237,7 @@ def get_actual_model_memory(
             except RuntimeError as e:
                 if "uninitialized" in str(e).lower():
                     # Skip uninitialized parameters, they don't contribute to memory yet
-                    print(f"Skipping uninitialized parameter")
+                    print("Skipping uninitialized parameter")
                     continue
                 else:
                     raise e
@@ -280,7 +280,7 @@ def estimate_optimizer_memory(model_memory_gb: float, optimizer_type: str) -> fl
 def estimate_memory_usage(
     exp_cfg: ExperimentConfig,
     use_conservative: bool = True,
-) -> Tuple[float, Dict[str, Any]]:
+) -> tuple[float, dict[str, Any]]:
     """Estimate memory needed for experiment (CPU or GPU) with detailed breakdown.
 
     Args:

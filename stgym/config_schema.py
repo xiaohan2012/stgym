@@ -1,6 +1,6 @@
 import inspect
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Literal, Self
 
 import pydash as _
 import torch
@@ -19,7 +19,6 @@ from pydantic import (
 )
 from pydantic.json_schema import SkipJsonSchema
 from pytorch_lightning.loggers import MLFlowLogger
-from typing_extensions import Self
 
 # from stgym.data_loader.const import DatasetName
 from stgym.utils import YamlLoaderMixin
@@ -93,7 +92,7 @@ class LayerConfig(BaseModel):
 class MessagePassingConfig(LayerConfig):
     normalize_adj: bool = False
 
-    pooling: Optional[PoolingConfig] = None
+    pooling: PoolingConfig | None = None
 
     readout: GlobalPoolingType | None = "mean"
 
@@ -324,7 +323,7 @@ class ExperimentConfig(MyBaseModel):
     data_loader: DataLoaderConfig
     model: GraphClassifierModelConfig | NodeClassifierModelConfig
     train: TrainConfig
-    group_id: Optional[int] = None
+    group_id: int | None = None
 
     @model_validator(mode="after")
     def override_eval_mode(self) -> Self:
@@ -348,8 +347,8 @@ class MLFlowConfig(BaseModel, YamlLoaderMixin):
     track: bool = True
     tracking_uri: HttpUrl = "http://127.0.0.1:8080"
     experiment_name: str = Field(default="test", min_length=1)
-    run_name: Optional[str] = None
-    tags: Optional[dict[str, str]] = None
+    run_name: str | None = None
+    tags: dict[str, str] | None = None
 
     def create_tl_logger(self) -> MLFlowLogger | None:
         return (
@@ -365,8 +364,8 @@ class MLFlowConfig(BaseModel, YamlLoaderMixin):
 
 
 class ResourceConfig(BaseModel, YamlLoaderMixin):
-    num_cpus: Optional[PositiveInt] = None
-    num_gpus: Optional[NonNegativeInt] = None
+    num_cpus: PositiveInt | None = None
+    num_gpus: NonNegativeInt | None = None
     num_cpus_per_trial: PositiveFloat = 1.0
     num_gpus_per_trial: NonNegativeFloat = 0.25
     gpu_memory_gb: PositiveFloat = (

@@ -49,9 +49,10 @@ def test_create_loader(mock_task_cfg, mock_dl_cfg):
 
 def test_create_kfold_loader(mock_task_cfg, mock_dl_cfg):
     # Use 2 folds for simple validation
-    mock_dl_cfg_0, mock_dl_cfg_1 = mock_dl_cfg.model_copy(
-        deep=True
-    ), mock_dl_cfg.model_copy(deep=True)
+    mock_dl_cfg_0, mock_dl_cfg_1 = (
+        mock_dl_cfg.model_copy(deep=True),
+        mock_dl_cfg.model_copy(deep=True),
+    )
     mock_dl_cfg_0.split = DataLoaderConfig.KFoldSplitConfig(num_folds=2, split_index=0)
     mock_dl_cfg_1.split = DataLoaderConfig.KFoldSplitConfig(num_folds=2, split_index=1)
     dataset = load_dataset(mock_task_cfg, mock_dl_cfg)
@@ -248,9 +249,9 @@ class TestDropLastBehavior:
 
         # Count actual samples to verify expected behavior
         val_samples = sum(len(batch) for batch in val_loader)
-        assert (
-            val_samples == expected_val_samples
-        ), f"Expected {expected_val_samples} validation samples, got {val_samples}"
+        assert val_samples == expected_val_samples, (
+            f"Expected {expected_val_samples} validation samples, got {val_samples}"
+        )
 
         # Verify we can iterate through data (simulates PyTorch Lightning training)
         for batch in val_loader:

@@ -69,7 +69,7 @@ class HumanPancreasDataset(AbstractDataset):
                 nan_count = np.isnan(features).sum()
                 total_features = features.shape[0] * features.shape[1]
                 print(
-                    f"Warning: Sample {name} has {nan_count}/{total_features} ({nan_count/total_features*100:.1f}%) NaN feature values"
+                    f"Warning: Sample {name} has {nan_count}/{total_features} ({nan_count / total_features * 100:.1f}%) NaN feature values"
                 )
 
                 # Strategy: Fill NaN with 0 (common for gene expression data)
@@ -79,9 +79,9 @@ class HumanPancreasDataset(AbstractDataset):
             x = torch.Tensor(features)
 
             # Verify dimensions match
-            assert (
-                x.shape[0] == y.shape[0] == pos.shape[0]
-            ), f"Shape mismatch: x={x.shape}, y={y.shape}, pos={pos.shape}"
+            assert x.shape[0] == y.shape[0] == pos.shape[0], (
+                f"Shape mismatch: x={x.shape}, y={y.shape}, pos={pos.shape}"
+            )
 
             # Create PyTorch Geometric Data object
             data_list.append(Data(x=x, y=y, pos=pos))

@@ -8,7 +8,7 @@ import json
 import sys
 from collections import Counter, defaultdict
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import yaml
 
@@ -45,7 +45,7 @@ class ConfigurationAnalyzer:
             "task.num_classes",
         ]
 
-    def extract_nested_value(self, config: Dict, key_path: str) -> Any:
+    def extract_nested_value(self, config: dict, key_path: str) -> Any:
         """
         Extract value from nested dictionary using dot notation.
 
@@ -71,7 +71,7 @@ class ConfigurationAnalyzer:
         except (KeyError, IndexError, TypeError):
             return None
 
-    def analyze_single_config(self, config: Dict) -> Dict:
+    def analyze_single_config(self, config: dict) -> dict:
         """
         Analyze a single configuration file.
 
@@ -111,7 +111,7 @@ class ConfigurationAnalyzer:
 
         return analysis
 
-    def analyze_config_directory(self, config_dir: str) -> Dict:
+    def analyze_config_directory(self, config_dir: str) -> dict:
         """
         Analyze all configuration files in a directory.
 
@@ -179,7 +179,7 @@ class ConfigurationAnalyzer:
 
         return results
 
-    def _identify_patterns(self, results: Dict):
+    def _identify_patterns(self, results: dict):
         """Identify common configuration patterns and correlations."""
         if results["total_configs"] == 0:
             return
@@ -214,8 +214,8 @@ class ConfigurationAnalyzer:
                 ]
 
     def correlate_with_errors(
-        self, config_analysis: Dict, error_analysis: Dict
-    ) -> Dict:
+        self, config_analysis: dict, error_analysis: dict
+    ) -> dict:
         """
         Correlate configuration patterns with error types.
 
@@ -294,7 +294,7 @@ class ConfigurationAnalyzer:
         return correlations
 
     def generate_report(
-        self, analysis_results: Dict, correlation_results: Optional[Dict] = None
+        self, analysis_results: dict, correlation_results: dict | None = None
     ) -> str:
         """
         Generate a human-readable report from analysis results.
@@ -322,7 +322,7 @@ class ConfigurationAnalyzer:
                 [
                     "## Data Splitting Configuration",
                     f"- **K-fold experiments**: {kfold_stats['kfold_count']} ({kfold_rate:.1f}%)",
-                    f"- **Regular split experiments**: {kfold_stats['regular_split_count']} ({100-kfold_rate:.1f}%)",
+                    f"- **Regular split experiments**: {kfold_stats['regular_split_count']} ({100 - kfold_rate:.1f}%)",
                     "",
                 ]
             )

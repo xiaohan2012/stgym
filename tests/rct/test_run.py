@@ -203,8 +203,9 @@ class TestRunExp:
         """Test that binary classification uses dim_out=1 while multiclass uses num_classes"""
         exp_cfg = self._create_experiment_config(task_key, model_key="graph_clf")
 
-        with patch("stgym.rct.run.STGymModule") as mock_module_class, patch(
-            "stgym.rct.run.train"
+        with (
+            patch("stgym.rct.run.STGymModule") as mock_module_class,
+            patch("stgym.rct.run.train"),
         ):
             mock_module_class.return_value = Mock()
             run_exp(exp_cfg, mlflow_config, metadata_for_tag=self.metadata_for_tag)

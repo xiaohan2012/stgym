@@ -15,7 +15,7 @@ def train(
     datamodule: STDataModule | STKfoldDataModule,
     train_cfg: TrainConfig,
     mlflow_config: MLFlowConfig,
-    tl_train_config: Optional[dict[str, any]] = None,
+    tl_train_config: dict[str, any] | None = None,
     logger: Optional = None,
 ):
     r"""Trains a GraphGym model using PyTorch Lightning.

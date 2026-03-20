@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 from unittest.mock import patch
 
 import numpy as np
@@ -16,7 +16,7 @@ class TestGlioblastomaDataset:
     """Test GlioblastomaDataset class."""
 
     @property
-    def base_gene_expr_data(self) -> Dict[str, Any]:
+    def base_gene_expr_data(self) -> dict[str, Any]:
         """Base gene expression test data with 3 samples, 2 spots each, 10 genes."""
         gene_names = [f"GENE_{i}" for i in range(10)]
 
@@ -76,7 +76,7 @@ class TestGlioblastomaDataset:
         return data
 
     @property
-    def known_values_data(self) -> Dict[str, Any]:
+    def known_values_data(self) -> dict[str, Any]:
         """Test data with known gene expression values for validation."""
         return {
             "barcode": ["BARCODE001-1", "BARCODE002-1"],
@@ -94,7 +94,7 @@ class TestGlioblastomaDataset:
         }
 
     @property
-    def metadata_filtering_data(self) -> Dict[str, Any]:
+    def metadata_filtering_data(self) -> dict[str, Any]:
         """Test data to verify metadata columns are properly excluded from features."""
         return {
             "barcode": ["BARCODE001-1"],
@@ -110,7 +110,7 @@ class TestGlioblastomaDataset:
         }
 
     @property
-    def inconsistent_labels_data(self) -> Dict[str, Any]:
+    def inconsistent_labels_data(self) -> dict[str, Any]:
         """Test data with inconsistent labels within the same sample (should fail)."""
         return {
             "barcode": ["BARCODE001-1", "BARCODE002-1"],

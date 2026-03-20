@@ -39,9 +39,9 @@ class BRCAPTNMMDataset(AbstractDataset):
         for name, sample_df in groups:
             # Verify that each sample has only one unique label
             unique_labels = sample_df[LABEL_COL].unique()
-            assert (
-                len(unique_labels) == 1
-            ), f"Sample has inconsistent labels: {unique_labels}"
+            assert len(unique_labels) == 1, (
+                f"Sample has inconsistent labels: {unique_labels}"
+            )
 
             pos = torch.Tensor(sample_df[POS_COLS].values)
             y = torch.tensor(unique_labels[0], dtype=torch.long)

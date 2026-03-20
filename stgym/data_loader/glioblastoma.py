@@ -109,12 +109,12 @@ class GlioblastomaDataset(AbstractDataset):
             x = torch.tensor(feature_data, dtype=torch.float)
 
             # Validate feature matrix
-            assert not torch.isnan(
-                x
-            ).any(), f"NaN values found in features for sample {sample_id}"
-            assert not torch.isinf(
-                x
-            ).any(), f"Infinite values found in features for sample {sample_id}"
+            assert not torch.isnan(x).any(), (
+                f"NaN values found in features for sample {sample_id}"
+            )
+            assert not torch.isinf(x).any(), (
+                f"Infinite values found in features for sample {sample_id}"
+            )
 
             # Create PyTorch Geometric Data object
             data = Data(x=x, y=y, pos=pos)

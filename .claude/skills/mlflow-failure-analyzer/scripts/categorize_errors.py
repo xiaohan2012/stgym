@@ -9,7 +9,6 @@ import re
 import sys
 from collections import Counter, defaultdict
 from pathlib import Path
-from typing import Dict
 
 
 class ErrorCategorizer:
@@ -106,7 +105,7 @@ class ErrorCategorizer:
             },
         }
 
-    def categorize_error(self, error_text: str) -> Dict:
+    def categorize_error(self, error_text: str) -> dict:
         """
         Categorize a single error text into failure types.
 
@@ -172,7 +171,7 @@ class ErrorCategorizer:
             "severity": self.error_patterns[best_category]["severity"],
         }
 
-    def analyze_error_directory(self, error_dir: str) -> Dict:
+    def analyze_error_directory(self, error_dir: str) -> dict:
         """
         Analyze all error files in a directory.
 
@@ -247,7 +246,7 @@ class ErrorCategorizer:
 
         return results
 
-    def generate_report(self, analysis_results: Dict) -> str:
+    def generate_report(self, analysis_results: dict) -> str:
         """
         Generate a human-readable report from analysis results.
 

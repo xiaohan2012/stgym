@@ -94,12 +94,12 @@ class SpatialVDJDataset(AbstractDataset):
             x = torch.tensor(feature_data, dtype=torch.float)
 
             # Validate data shapes
-            assert len(pos) == len(
-                x
-            ), f"Position and feature matrices have different lengths: {len(pos)} vs {len(x)}"
-            assert x.shape[1] == len(
-                FEATURE_COLS
-            ), f"Feature matrix has wrong number of columns: {x.shape[1]} vs {len(FEATURE_COLS)}"
+            assert len(pos) == len(x), (
+                f"Position and feature matrices have different lengths: {len(pos)} vs {len(x)}"
+            )
+            assert x.shape[1] == len(FEATURE_COLS), (
+                f"Feature matrix has wrong number of columns: {x.shape[1]} vs {len(FEATURE_COLS)}"
+            )
 
             # Create graph data object
             data = Data(x=x, y=y, pos=pos)
@@ -116,7 +116,7 @@ class SpatialVDJDataset(AbstractDataset):
         normal_samples = sum(1 for data in data_list if data.y.item() == 0)
         total_spots = sum(data.num_spots for data in data_list)
 
-        print(f"Dataset summary:")
+        print("Dataset summary:")
         print(f"  Cancer samples: {cancer_samples}")
         print(f"  Normal samples: {normal_samples}")
         print(f"  Total spots: {total_spots}")

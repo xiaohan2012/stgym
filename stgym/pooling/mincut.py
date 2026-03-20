@@ -114,7 +114,9 @@ def mincut_pool(
         1e-12 + torch.einsum("ij->i", out_adj).sqrt().to_dense()
     )  # 2nd operand is sparse
     d_norm = torch.sparse_coo_tensor(
-        diagonal_indices, (1 / d), requires_grad=False  # , device=device
+        diagonal_indices,
+        (1 / d),
+        requires_grad=False,  # , device=device
     )
     out_adj_normalized = d_norm @ out_adj @ d_norm
 

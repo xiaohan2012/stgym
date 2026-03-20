@@ -50,9 +50,9 @@ def sample_across_dimensions(
 
     if zipped_fields:
         # ensure that the length of the values in zipped fields match
-        assert (
-            len(_.uniq(_.map_(zip_values, len))) == 1
-        ), f"Array length mismatch: {zip_values}"
+        assert len(_.uniq(_.map_(zip_values, len))) == 1, (
+            f"Array length mismatch: {zip_values}"
+        )
 
         sampled_zip_values = random.choice(_.zip_(*zip_values))
         ret = dict(zip(zipped_fields, sampled_zip_values))

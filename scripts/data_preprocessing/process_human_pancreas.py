@@ -169,7 +169,7 @@ def process_all_data(input_dir):
         print(f"  Common barcodes: {len(common_barcodes)}")
 
         if len(common_barcodes) == 0:
-            raise ValueError(f"No common barcodes found.")
+            raise ValueError("No common barcodes found.")
 
         # Convert to list for pandas indexing
         common_barcodes_list = list(common_barcodes)
@@ -217,7 +217,7 @@ def process_all_data(input_dir):
     # Combine all samples
     final_df = pd.concat(all_data, ignore_index=True)
     print(f"\nFinal dataset shape: {final_df.shape}")
-    print(f"Cell types distribution:")
+    print("Cell types distribution:")
     print(final_df["cell_type"].value_counts())
     return final_df
 
