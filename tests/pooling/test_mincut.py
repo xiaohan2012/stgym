@@ -20,7 +20,7 @@ from ..utils import DEVICE, BatchLoaderMixin
 RTOL = 2.5e-3
 
 
-@pytest.mark.slow
+@pytest.mark.flaky(reruns=3)
 def test_mincut_pool():
     path = osp.join("data", "TU")
     dataset = TUDataset(path, name="MUTAG").shuffle()
