@@ -80,8 +80,8 @@ def compute_exp_stats(runs: list, now_ms: float) -> dict:
 
     def _completed_in_last(hours: float) -> int:
         cutoff_ms = now_ms - hours * 3_600_000
-        return sum(
-            1 for r in terminal if r.info.end_time and r.info.end_time >= cutoff_ms
+        return len(
+            [r for r in terminal if r.info.end_time and r.info.end_time >= cutoff_ms]
         )
 
     return {
