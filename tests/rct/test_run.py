@@ -230,6 +230,23 @@ class TestRunExp:
         assert result is True
         mock_train.assert_called_once()
 
+    @pytest.mark.parametrize("split_type", ["regular", "kfold"])
+    @patch("stgym.rct.run.os._exit")
+    @patch("stgym.rct.run.logz_logger")
+    def test_oom_kills_worker_process(
+        self, mock_logger, mock_exit, split_type, mlflow_config
+    ):
+        """OOM should force-kill the worker process so Ray releases the GPU slot"""
+        exp_cfg = self._create_experiment_config(
+            "graph_clf", data_loader_type=split_type
+        )
+
+        with patch("stgym.rct.run.train") as mock_train:
+            mock_train.side_effect = torch.cuda.OutOfMemoryError("OOM")
+            run_exp(exp_cfg, mlflow_config)
+
+        mock_exit.assert_called_with(1)
+
     @pytest.mark.parametrize(
         "mock_target,exception_msg",
         [

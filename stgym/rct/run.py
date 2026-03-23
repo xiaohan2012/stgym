@@ -1,5 +1,8 @@
+import os
 import traceback
 from typing import Optional
+
+import torch
 
 from logzero import logger as logz_logger
 from omegaconf import OmegaConf
@@ -105,6 +108,8 @@ def run_exp(
             )
         except Exception as e:
             log_training_error(e, logger)
+            if isinstance(e, torch.cuda.OutOfMemoryError):
+                os._exit(1)
     else:
         logz_logger.info("Evaluation mode: k-fold cross validation.")
         # k-fold split - create separate logger for each fold
@@ -149,5 +154,7 @@ def run_exp(
                 )
             except Exception as e:
                 log_training_error(e, fold_logger, f" in fold {fold}")
+                if isinstance(e, torch.cuda.OutOfMemoryError):
+                    os._exit(1)
 
     return True
