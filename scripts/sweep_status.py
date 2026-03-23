@@ -15,6 +15,7 @@ run) when its age exceeds --stale-threshold minutes.
 """
 
 import argparse
+import datetime
 import glob
 import os
 import sys
@@ -65,9 +66,38 @@ def load_expected_dims(conf_dir: str) -> dict[str, str]:
     return result
 
 
-def classify_dims(runs: list, stale_threshold_min: float) -> dict:
+def compute_exp_stats(runs: list, now_ms: float) -> dict:
+    """Compute experiment-level timing and throughput statistics."""
+    terminal = [r for r in runs if r.info.status in ("FINISHED", "FAILED")]
+    finished = [r for r in runs if r.info.status == "FINISHED"]
+    failed = [r for r in runs if r.info.status == "FAILED"]
+
+    if not runs:
+        return {}
+
+    exp_start_ms = min(r.info.start_time for r in runs)
+    exp_duration_h = (now_ms - exp_start_ms) / 3_600_000
+
+    def _completed_in_last(hours: float) -> int:
+        cutoff_ms = now_ms - hours * 3_600_000
+        return len(
+            [r for r in terminal if r.info.end_time and r.info.end_time >= cutoff_ms]
+        )
+
+    return {
+        "exp_start_ms": exp_start_ms,
+        "exp_duration_h": exp_duration_h,
+        "total_finished": len(finished),
+        "total_failed": len(failed),
+        "throughput_per_h": len(finished) / exp_duration_h if exp_duration_h > 0 else 0,
+        "completed_2h": _completed_in_last(2),
+        "completed_12h": _completed_in_last(12),
+        "completed_24h": _completed_in_last(24),
+    }
+
+
+def classify_dims(runs: list, stale_threshold_min: float, now_ms: float) -> dict:
     """Group runs by design_dimension and compute per-dimension stats."""
-    now_ms = time.time() * 1000
     buckets = defaultdict(
         lambda: {
             "finished": 0,
@@ -77,6 +107,8 @@ def classify_dims(runs: list, stale_threshold_min: float) -> dict:
             "durations": [],
             "runs": [],
             "task_types": set(),
+            "min_start_ms": float("inf"),
+            "max_end_ms": 0,
         }
     )
 
@@ -87,6 +119,9 @@ def classify_dims(runs: list, stale_threshold_min: float) -> dict:
         age_min = (now_ms - r.info.start_time) / 60_000
         b = buckets[dim]
         b["runs"].append(r)
+        b["min_start_ms"] = min(b["min_start_ms"], r.info.start_time)
+        end_ms = r.info.end_time if r.info.end_time else now_ms
+        b["max_end_ms"] = max(b["max_end_ms"], end_ms)
         task_type = r.data.tags.get("task_type", "")
         if task_type:
             b["task_types"].add(task_type)
@@ -107,8 +142,10 @@ def classify_dims(runs: list, stale_threshold_min: float) -> dict:
         choices = _get_choices(b["runs"])
         num_choices = len(choices.split("|")) if choices != "?" else None
         avg_dur = sum(b["durations"]) / len(b["durations"]) if b["durations"] else None
+        time_span_min = (b["max_end_ms"] - b["min_start_ms"]) / 60_000
+        total_runs = b["finished"] + b["failed"] + b["active"] + b["stale"]
         result[dim] = {
-            "state": "IN PROGRESS" if b["active"] > 0 else "DONE",
+            "state": "STARTED",
             "task_types": b["task_types"],
             "choices": choices,
             "num_choices": num_choices,
@@ -116,9 +153,10 @@ def classify_dims(runs: list, stale_threshold_min: float) -> dict:
             "failed": b["failed"],
             "active": b["active"],
             "stale": b["stale"],
-            "done": b["finished"] + b["failed"],
+            "total_runs": total_runs,
             "avg_dur_min": avg_dur,
-            "total_dur_min": sum(b["durations"]),
+            "cumul_min": sum(b["durations"]),
+            "time_span_min": time_span_min,
         }
     return result
 
@@ -128,28 +166,29 @@ def build_sweep_status_df(
 ) -> pd.DataFrame:
     """Build a DataFrame summarising sweep progress per design dimension.
 
-    Rows cover DONE and IN PROGRESS dims (from MLflow) plus PENDING dims
-    (from expected_dims but not yet seen in MLflow).  Columns include run
-    counts, timing, and the expected total number of runs per dimension.
+    Rows cover STARTED dims (from MLflow) plus PENDING dims (from expected_dims
+    but not yet seen in MLflow).  Columns include run counts by status, timing,
+    and the expected number of logical trials per dimension.
     """
     rows = []
 
     for dim, s in dim_stats.items():
-        total_expected = sample_size * s["num_choices"] if s["num_choices"] else None
+        trials = sample_size * s["num_choices"] if s["num_choices"] else None
         rows.append(
             {
                 "dimension": dim,
                 "state": s["state"],
                 "task": _fmt_task_types(s["task_types"]),
                 "choices": s["choices"],
+                "trials": trials,
+                "total_runs": s["total_runs"],
                 "finished": s["finished"],
                 "failed": s["failed"],
                 "active": s["active"],
                 "stale": s["stale"],
-                "done": s["done"],
-                "total": total_expected,
                 "avg_min": round(s["avg_dur_min"], 1) if s["avg_dur_min"] else None,
-                "total_min": round(s["total_dur_min"], 1),
+                "cumul_min": round(s["cumul_min"], 1),
+                "time_span_min": round(s["time_span_min"], 1),
             }
         )
 
@@ -164,14 +203,15 @@ def build_sweep_status_df(
                     "state": "PENDING",
                     "task": "?",
                     "choices": choices_str,
+                    "trials": sample_size * num_choices if num_choices else None,
+                    "total_runs": 0,
                     "finished": 0,
                     "failed": 0,
                     "active": 0,
                     "stale": 0,
-                    "done": 0,
-                    "total": sample_size * num_choices if num_choices else None,
                     "avg_min": None,
-                    "total_min": None,
+                    "cumul_min": None,
+                    "time_span_min": None,
                 }
             )
 
@@ -181,55 +221,69 @@ def build_sweep_status_df(
     return df
 
 
-def print_summary(exp_name: str, exp_id: str, df: pd.DataFrame, sample_size: int):
-    n_done = (df["state"] == "DONE").sum()
-    n_in_progress = (df["state"] == "IN PROGRESS").sum()
+def print_summary(
+    exp_name: str,
+    exp_id: str,
+    df: pd.DataFrame,
+    sample_size: int,
+    exp_stats: dict,
+):
+    n_started = (df["state"] == "STARTED").sum()
     n_pending = (df["state"] == "PENDING").sum()
     sep = "=" * 80
 
     print(f"\nExperiment : {exp_name}")
     print(f"ID         : {exp_id}")
     print(f"Sample size: {sample_size} groups/dimension")
-    print(
-        f"Dimensions : {n_done} done, {n_in_progress} in progress, {n_pending} pending"
-    )
+    print(f"Dimensions : {n_started} started, {n_pending} pending")
+
+    if exp_stats:
+        start_dt = datetime.datetime.fromtimestamp(
+            exp_stats["exp_start_ms"] / 1000, tz=datetime.UTC
+        ).strftime("%Y-%m-%d %H:%M UTC")
+        print(
+            f"\nExp duration: {exp_stats['exp_duration_h']:.1f} h  (started {start_dt})"
+        )
+        print(
+            f"Finished    : {exp_stats['total_finished']} ok"
+            f"  /  {exp_stats['total_failed']} failed"
+        )
+        print(f"Throughput  : ~{exp_stats['throughput_per_h']:.1f} runs/h")
+        print(f"\nCompleted last  2 h : {exp_stats['completed_2h']:>5}")
+        print(f"Completed last 12 h : {exp_stats['completed_12h']:>5}")
+        print(f"Completed last 24 h : {exp_stats['completed_24h']:>5}")
 
     display_cols = {
-        "DONE": [
+        "STARTED": [
             "dimension",
             "task",
             "choices",
+            "trials",
+            "total_runs",
             "finished",
             "failed",
+            "active",
             "stale",
             "avg_min",
-            "total_min",
+            "cumul_min",
+            "time_span_min",
         ],
-        "IN PROGRESS": [
-            "dimension",
-            "task",
-            "choices",
-            "done",
-            "total",
-            "active",
-            "failed",
-            "stale",
-        ],
-        "PENDING": ["dimension", "choices", "total"],
+        "PENDING": ["dimension", "choices", "trials"],
     }
 
-    for state in ["DONE", "IN PROGRESS", "PENDING"]:
+    for state in ["STARTED", "PENDING"]:
         sub = df[df["state"] == state]
         if sub.empty:
             continue
         print(f"\n{sep}")
         print(state)
         print(sep)
-        cols = display_cols[state]
-        print(sub[cols].to_string(index=False))
+        print(sub[display_cols[state]].to_string(index=False))
 
     print(
-        "\nNote: total_min = total wall time for all finished runs in that dimension."
+        "\nNote: trials = sample_size × num_choices (one k-fold CV job = 1 trial).\n"
+        "      cumul_min = sum of individual run durations; "
+        "time_span_min = wall-clock span (first start to last end)."
     )
 
 
@@ -286,7 +340,15 @@ def main():
             "Increase --max-results to fetch more."
         )
 
-    dim_stats = classify_dims(runs, args.stale_threshold)
+    # Derive server-side "now" from the latest known run timestamp to avoid
+    # clock skew between the local machine and the remote MLflow server.
+    _ts = [r.info.start_time for r in runs]
+    _ts += [r.info.end_time for r in runs if r.info.end_time]
+    now_ms = max(_ts) if _ts else time.time() * 1000
+
+    exp_stats = compute_exp_stats(runs, now_ms)
+
+    dim_stats = classify_dims(runs, args.stale_threshold, now_ms)
     if not dim_stats:
         print("No runs with 'design_dimension' tag found.")
         return 1
@@ -300,7 +362,7 @@ def main():
         )
 
     df = build_sweep_status_df(dim_stats, args.sample_size, expected_dims)
-    print_summary(exp.name, exp.experiment_id, df, args.sample_size)
+    print_summary(exp.name, exp.experiment_id, df, args.sample_size, exp_stats)
     return 0
 
 
