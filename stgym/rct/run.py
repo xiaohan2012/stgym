@@ -3,7 +3,6 @@ import traceback
 from typing import Optional
 
 import torch
-
 from logzero import logger as logz_logger
 from omegaconf import OmegaConf
 
