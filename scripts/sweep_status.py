@@ -239,7 +239,7 @@ def print_summary(
 
     if exp_stats:
         start_dt = datetime.datetime.fromtimestamp(
-            exp_stats["exp_start_ms"] / 1000, tz=datetime.timezone.utc
+            exp_stats["exp_start_ms"] / 1000, tz=datetime.UTC
         ).strftime("%Y-%m-%d %H:%M UTC")
         print(
             f"\nExp duration: {exp_stats['exp_duration_h']:.1f} h  (started {start_dt})"
