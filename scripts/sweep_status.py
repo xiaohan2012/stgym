@@ -3,11 +3,12 @@
 Summarize sweep progress by design dimension from an MLflow experiment.
 
 Usage:
-    python scripts/sweep_status.py --experiment-id <id>
-    python scripts/sweep_status.py --experiment-name sweep-all-20260323
-    python scripts/sweep_status.py --experiment-id <id> --sample-size 50
-    python scripts/sweep_status.py --experiment-id <id> --stale-threshold 30
-    python scripts/sweep_status.py --experiment-id <id> --conf-dir conf/exp
+    python scripts/sweep_status.py -i <id>
+    python scripts/sweep_status.py -n sweep-all-20260323
+    python scripts/sweep_status.py -i <id> --sample-size 50
+    python scripts/sweep_status.py -i <id> --stale-threshold 30
+    python scripts/sweep_status.py -i <id> --conf-dir conf/exp
+    python scripts/sweep_status.py -i <id> --max-results 100
 
 A RUNNING run is considered stale (OOM-killed worker that never closed its MLflow
 run) when its age exceeds --stale-threshold minutes.
@@ -122,9 +123,15 @@ def classify_dims(runs: list, stale_threshold_min: float) -> dict:
     return result
 
 
-def build_dataframe(
+def build_sweep_status_df(
     dim_stats: dict, sample_size: int, expected_dims: dict
 ) -> pd.DataFrame:
+    """Build a DataFrame summarising sweep progress per design dimension.
+
+    Rows cover DONE and IN PROGRESS dims (from MLflow) plus PENDING dims
+    (from expected_dims but not yet seen in MLflow).  Columns include run
+    counts, timing, and the expected total number of runs per dimension.
+    """
     rows = []
 
     for dim, s in dim_stats.items():
@@ -231,8 +238,8 @@ def main():
         description="Summarize sweep progress by design dimension from MLflow"
     )
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--experiment-id", type=str)
-    group.add_argument("--experiment-name", type=str)
+    group.add_argument("-i", "--experiment-id", type=str)
+    group.add_argument("-n", "--experiment-name", type=str)
     parser.add_argument("--tracking-uri", default=_DEFAULT_TRACKING_URI)
     parser.add_argument("--sample-size", type=int, default=_DEFAULT_SAMPLE_SIZE)
     parser.add_argument(
@@ -246,6 +253,12 @@ def main():
         "--conf-dir",
         default=_DEFAULT_CONF_DIR,
         help=f"Directory with exp YAML configs for PENDING inference (default: {_DEFAULT_CONF_DIR})",
+    )
+    parser.add_argument(
+        "--max-results",
+        type=int,
+        default=5000,
+        help="Max MLflow runs to fetch (default: 5000; set to 0 for unlimited)",
     )
 
     args = parser.parse_args()
@@ -262,7 +275,10 @@ def main():
         print("Experiment not found.")
         return 1
 
-    runs = client.search_runs(experiment_ids=[exp.experiment_id], max_results=5000)
+    max_results = args.max_results if args.max_results > 0 else None
+    runs = client.search_runs(
+        experiment_ids=[exp.experiment_id], max_results=max_results
+    )
     print(f"Fetched {len(runs)} runs from '{exp.name}'.")
 
     dim_stats = classify_dims(runs, args.stale_threshold)
@@ -278,7 +294,7 @@ def main():
             f"Note: --conf-dir '{args.conf_dir}' not found; skipping PENDING inference."
         )
 
-    df = build_dataframe(dim_stats, args.sample_size, expected_dims)
+    df = build_sweep_status_df(dim_stats, args.sample_size, expected_dims)
     print_summary(exp.name, exp.experiment_id, df, args.sample_size)
     return 0
 
