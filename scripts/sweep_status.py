@@ -144,8 +144,9 @@ def classify_dims(runs: list, stale_threshold_min: float) -> dict:
         num_choices = len(choices.split("|")) if choices != "?" else None
         avg_dur = sum(b["durations"]) / len(b["durations"]) if b["durations"] else None
         time_span_min = (b["max_end_ms"] - b["min_start_ms"]) / 60_000
+        total_runs = b["finished"] + b["failed"] + b["active"] + b["stale"]
         result[dim] = {
-            "state": "IN PROGRESS" if b["active"] > 0 else "DONE",
+            "state": "STARTED",
             "task_types": b["task_types"],
             "choices": choices,
             "num_choices": num_choices,
@@ -153,7 +154,7 @@ def classify_dims(runs: list, stale_threshold_min: float) -> dict:
             "failed": b["failed"],
             "active": b["active"],
             "stale": b["stale"],
-            "done": b["finished"] + b["failed"],
+            "total_runs": total_runs,
             "avg_dur_min": avg_dur,
             "cumul_min": sum(b["durations"]),
             "time_span_min": time_span_min,
@@ -166,26 +167,26 @@ def build_sweep_status_df(
 ) -> pd.DataFrame:
     """Build a DataFrame summarising sweep progress per design dimension.
 
-    Rows cover DONE and IN PROGRESS dims (from MLflow) plus PENDING dims
-    (from expected_dims but not yet seen in MLflow).  Columns include run
-    counts, timing, and the expected total number of runs per dimension.
+    Rows cover STARTED dims (from MLflow) plus PENDING dims (from expected_dims
+    but not yet seen in MLflow).  Columns include run counts by status, timing,
+    and the expected number of logical trials per dimension.
     """
     rows = []
 
     for dim, s in dim_stats.items():
-        total_expected = sample_size * s["num_choices"] if s["num_choices"] else None
+        trials = sample_size * s["num_choices"] if s["num_choices"] else None
         rows.append(
             {
                 "dimension": dim,
                 "state": s["state"],
                 "task": _fmt_task_types(s["task_types"]),
                 "choices": s["choices"],
+                "trials": trials,
+                "total_runs": s["total_runs"],
                 "finished": s["finished"],
                 "failed": s["failed"],
                 "active": s["active"],
                 "stale": s["stale"],
-                "done": s["done"],
-                "total": total_expected,
                 "avg_min": round(s["avg_dur_min"], 1) if s["avg_dur_min"] else None,
                 "cumul_min": round(s["cumul_min"], 1),
                 "time_span_min": round(s["time_span_min"], 1),
@@ -203,12 +204,12 @@ def build_sweep_status_df(
                     "state": "PENDING",
                     "task": "?",
                     "choices": choices_str,
+                    "trials": sample_size * num_choices if num_choices else None,
+                    "total_runs": 0,
                     "finished": 0,
                     "failed": 0,
                     "active": 0,
                     "stale": 0,
-                    "done": 0,
-                    "total": sample_size * num_choices if num_choices else None,
                     "avg_min": None,
                     "cumul_min": None,
                     "time_span_min": None,
@@ -228,17 +229,14 @@ def print_summary(
     sample_size: int,
     exp_stats: dict,
 ):
-    n_done = (df["state"] == "DONE").sum()
-    n_in_progress = (df["state"] == "IN PROGRESS").sum()
+    n_started = (df["state"] == "STARTED").sum()
     n_pending = (df["state"] == "PENDING").sum()
     sep = "=" * 80
 
     print(f"\nExperiment : {exp_name}")
     print(f"ID         : {exp_id}")
     print(f"Sample size: {sample_size} groups/dimension")
-    print(
-        f"Dimensions : {n_done} done, {n_in_progress} in progress, {n_pending} pending"
-    )
+    print(f"Dimensions : {n_started} started, {n_pending} pending")
 
     if exp_stats:
         start_dt = datetime.datetime.utcfromtimestamp(
@@ -257,44 +255,35 @@ def print_summary(
         print(f"Completed last 24 h : {exp_stats['completed_24h']:>5}")
 
     display_cols = {
-        "DONE": [
+        "STARTED": [
             "dimension",
             "task",
             "choices",
+            "trials",
+            "total_runs",
             "finished",
             "failed",
+            "active",
             "stale",
             "avg_min",
             "cumul_min",
             "time_span_min",
         ],
-        "IN PROGRESS": [
-            "dimension",
-            "task",
-            "choices",
-            "done",
-            "total",
-            "active",
-            "failed",
-            "stale",
-            "cumul_min",
-            "time_span_min",
-        ],
-        "PENDING": ["dimension", "choices", "total"],
+        "PENDING": ["dimension", "choices", "trials"],
     }
 
-    for state in ["DONE", "IN PROGRESS", "PENDING"]:
+    for state in ["STARTED", "PENDING"]:
         sub = df[df["state"] == state]
         if sub.empty:
             continue
         print(f"\n{sep}")
         print(state)
         print(sep)
-        cols = display_cols[state]
-        print(sub[cols].to_string(index=False))
+        print(sub[display_cols[state]].to_string(index=False))
 
     print(
-        "\nNote: cumul_min = sum of individual run durations; "
+        "\nNote: trials = sample_size × num_choices (one k-fold CV job = 1 trial).\n"
+        "      cumul_min = sum of individual run durations; "
         "time_span_min = wall-clock span (first start to last end)."
     )
 
