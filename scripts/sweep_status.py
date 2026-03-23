@@ -283,7 +283,7 @@ def main():
     if args.max_results > 0 and len(runs) == args.max_results:
         print(
             f"WARNING: results may be truncated at {args.max_results} runs. "
-            "Use --max-results 0 to fetch all."
+            "Increase --max-results to fetch more."
         )
 
     dim_stats = classify_dims(runs, args.stale_threshold)
