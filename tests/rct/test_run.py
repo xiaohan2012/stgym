@@ -230,6 +230,32 @@ class TestRunExp:
         assert result is True
         mock_train.assert_called_once()
 
+    @pytest.mark.parametrize("split_type", ["regular", "kfold"])
+    @patch("stgym.rct.run.os._exit")
+    @patch("stgym.rct.run.logz_logger")
+    @patch("stgym.rct.run.log_params_and_config_in_mlflow")
+    def test_oom_kills_worker_process(
+        self, mock_log_params, mock_logger, mock_exit, split_type
+    ):
+        """OOM should close the MLflow run then force-kill the worker process"""
+        exp_cfg = self._create_experiment_config(
+            "graph_clf", data_loader_type=split_type
+        )
+        mlflow_cfg = MLFlowConfig(track=True)
+        mock_tl_logger = Mock()
+
+        with (
+            patch.object(MLFlowConfig, "create_tl_logger", return_value=mock_tl_logger),
+            patch("stgym.rct.run.train") as mock_train,
+        ):
+            mock_train.side_effect = torch.cuda.OutOfMemoryError("OOM")
+            run_exp(exp_cfg, mlflow_cfg)
+
+        mock_tl_logger.experiment.set_terminated.assert_called_with(
+            mock_tl_logger.run_id, status="FAILED"
+        )
+        mock_exit.assert_called_with(1)
+
     @pytest.mark.parametrize(
         "mock_target,exception_msg",
         [
