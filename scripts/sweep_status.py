@@ -96,9 +96,8 @@ def compute_exp_stats(runs: list, now_ms: float) -> dict:
     }
 
 
-def classify_dims(runs: list, stale_threshold_min: float) -> dict:
+def classify_dims(runs: list, stale_threshold_min: float, now_ms: float) -> dict:
     """Group runs by design_dimension and compute per-dimension stats."""
-    now_ms = time.time() * 1000
     buckets = defaultdict(
         lambda: {
             "finished": 0,
@@ -239,8 +238,8 @@ def print_summary(
     print(f"Dimensions : {n_started} started, {n_pending} pending")
 
     if exp_stats:
-        start_dt = datetime.datetime.utcfromtimestamp(
-            exp_stats["exp_start_ms"] / 1000
+        start_dt = datetime.datetime.fromtimestamp(
+            exp_stats["exp_start_ms"] / 1000, tz=datetime.timezone.utc
         ).strftime("%Y-%m-%d %H:%M UTC")
         print(
             f"\nExp duration: {exp_stats['exp_duration_h']:.1f} h  (started {start_dt})"
@@ -341,10 +340,15 @@ def main():
             "Increase --max-results to fetch more."
         )
 
-    now_ms = time.time() * 1000
+    # Derive server-side "now" from the latest known run timestamp to avoid
+    # clock skew between the local machine and the remote MLflow server.
+    _ts = [r.info.start_time for r in runs]
+    _ts += [r.info.end_time for r in runs if r.info.end_time]
+    now_ms = max(_ts) if _ts else time.time() * 1000
+
     exp_stats = compute_exp_stats(runs, now_ms)
 
-    dim_stats = classify_dims(runs, args.stale_threshold)
+    dim_stats = classify_dims(runs, args.stale_threshold, now_ms)
     if not dim_stats:
         print("No runs with 'design_dimension' tag found.")
         return 1
