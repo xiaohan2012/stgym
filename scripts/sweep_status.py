@@ -280,6 +280,11 @@ def main():
         experiment_ids=[exp.experiment_id], max_results=max_results
     )
     print(f"Fetched {len(runs)} runs from '{exp.name}'.")
+    if args.max_results > 0 and len(runs) == args.max_results:
+        print(
+            f"WARNING: results may be truncated at {args.max_results} runs. "
+            "Use --max-results 0 to fetch all."
+        )
 
     dim_stats = classify_dims(runs, args.stale_threshold)
     if not dim_stats:
