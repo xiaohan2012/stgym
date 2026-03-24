@@ -1,0 +1,25 @@
+{
+  "skill_name": "run-on-cyy2",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Run the sweep script on cyy2: python run_rct.py +exp=bn design_space=graph_clf resource=gpu-4 sample_size=50",
+      "expected_output": "Command sent to the 'run' screen on cyy2 after git pull and venv activation"
+    },
+    {
+      "id": 2,
+      "prompt": "How many Ray jobs are currently running on cyy2?",
+      "expected_output": "Run ray status on cyy2 and report the results"
+    },
+    {
+      "id": 3,
+      "prompt": "Sync the latest code to cyy2",
+      "expected_output": "Check local branch, git push, then ssh cyy2 to confirm branch matches and git pull"
+    },
+    {
+      "id": 4,
+      "prompt": "Get the training_error.txt artifact from MLflow run abc123 on cyy2",
+      "expected_output": "SCP the artifact from cyy2's mlruns directory and display its contents"
+    }
+  ]
+}
