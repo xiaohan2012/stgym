@@ -53,11 +53,7 @@ Run comprehensive tests:
 
 ```bash
 pytest tests/ -v
-```
 
-
-Skip slow tests
-
-```bash
+# or skip slow tests
 pytest tests/ -m "not slow"
 ```
