@@ -1,3 +1,4 @@
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -31,6 +32,12 @@ def mock_task_cfg():
 def test_load_dataset(mock_task_cfg, mock_dl_cfg):
     dataset = load_dataset(mock_task_cfg, mock_dl_cfg)
     assert isinstance(dataset, BRCADataset)
+
+
+def test_load_dataset_creates_tagged_processed_file(mock_task_cfg, mock_dl_cfg):
+    load_dataset(mock_task_cfg, mock_dl_cfg)
+    # Default dl_cfg: graph_const="knn", knn_k=10 → tag "knn10"
+    assert Path("tests/data/brca-test/processed/data_knn10.pt").exists()
 
 
 def test_create_loader(mock_task_cfg, mock_dl_cfg):

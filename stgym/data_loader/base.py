@@ -2,7 +2,16 @@ from torch_geometric.data import InMemoryDataset  # , download_url
 
 
 class AbstractDataset(InMemoryDataset):
-    def __init__(self, root, transform=None, pre_transform=None, pre_filter=None):
+    def __init__(
+        self,
+        root,
+        transform=None,
+        pre_transform=None,
+        pre_filter=None,
+        graph_construction_tag: str | None = None,
+    ):
+        # Must be set before super().__init__() — PyG calls processed_file_names during init
+        self._graph_construction_tag = graph_construction_tag
         super().__init__(root, transform, pre_transform, pre_filter)
         self.load(self.processed_paths[0])
 
@@ -12,6 +21,8 @@ class AbstractDataset(InMemoryDataset):
 
     @property
     def processed_file_names(self):
+        if self._graph_construction_tag:
+            return [f"data_{self._graph_construction_tag}.pt"]
         return ["data.pt"]
 
     def download(self):
