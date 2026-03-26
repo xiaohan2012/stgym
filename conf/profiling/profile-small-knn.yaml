@@ -1,0 +1,56 @@
+# Profiling config: small dataset (gastric-bladder-cancer) + KNN graph construction
+# gastric-bladder-cancer: num_graphs=~50, max_span=223 (small graphs)
+data_loader:
+  batch_size: 16
+  device: cuda
+  graph_const: knn
+  knn_k: 10
+  num_workers: 0
+  radius_ratio: 0.1
+  split:
+    test_ratio: 0.15
+    train_ratio: 0.7
+    val_ratio: 0.15
+model:
+  global_pooling: mean
+  mem:
+    inplace: false
+  mp_layers:
+  - act: relu
+    bn_eps: 1.0e-05
+    bn_momentum: 0.1
+    dim_inner: 64
+    dropout: 0.0
+    has_bias: false
+    l2norm: false
+    layer_type: gcnconv
+    normalize_adj: false
+    pooling: null
+    readout: mean
+    use_batchnorm: true
+  post_mp_layer:
+    act: relu
+    bn_eps: 1.0e-05
+    bn_momentum: 0.1
+    dims:
+    - 32
+    - 1
+    dropout: 0.0
+    has_bias: false
+    l2norm: false
+    use_batchnorm: true
+task:
+  dataset_name: gastric-bladder-cancer
+  num_classes: 2
+  type: graph-classification
+train:
+  early_stopping: null
+  lr_schedule:
+    max_epoch: 5
+    type: null
+  max_epoch: 5
+  optim:
+    base_lr: 0.001
+    momentum: 0.9
+    optimizer: adam
+    weight_decay: 0.0005

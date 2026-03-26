@@ -62,6 +62,11 @@ def main():
         action="store_true",
         help="Disable float32 matmul precision optimization (default: enabled for GPU)",
     )
+    parser.add_argument(
+        "--profile",
+        action="store_true",
+        help="Enable PyTorch profiler; traces saved to /tmp/stgym_profile/",
+    )
 
     args = parser.parse_args()
 
@@ -110,7 +115,7 @@ def main():
 
     # Memory recording disabled for performance - uncomment to enable debugging:
     # start_record_memory_history()
-    success = run_exp(exp_cfg, mlflow_cfg)
+    success = run_exp(exp_cfg, mlflow_cfg, profile=args.profile)
     # stop_record_memory_history()
     # export_memory_snapshot()
     if success:
