@@ -34,7 +34,6 @@ model:
     bn_momentum: 0.1
     dims:
     - 32
-    - 3
     dropout: 0.0
     has_bias: false
     l2norm: false
