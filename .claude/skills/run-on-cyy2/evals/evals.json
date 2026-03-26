@@ -20,6 +20,18 @@
       "id": 4,
       "prompt": "Get the training_error.txt artifact from MLflow run abc123 on cyy2",
       "expected_output": "SCP the artifact from cyy2's mlruns directory and display its contents"
+    },
+    {
+      "id": 5,
+      "prompt": "Run a single experiment on cyy2 using conf/adhoc/test.yaml",
+      "expected_output": "Push code, pull on server, then send 'python run_experiment_by_yaml.py conf/adhoc/test.yaml' to the 'run' screen session",
+      "expectations": [
+        "Uses run_experiment_by_yaml.py (not run_rct.py) as the entry point",
+        "Sends command to the screen session named 'run'",
+        "Syncs code before running (git push locally + git pull on server)",
+        "Activates the venv before running the command",
+        "Passes conf/adhoc/test.yaml as the config path argument"
+      ]
     }
   ]
 }
