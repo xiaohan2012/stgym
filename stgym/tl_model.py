@@ -168,6 +168,17 @@ class STGymModule(pl.LightningModule):
                 f"allocated={torch.cuda.memory_allocated() / 1e9:.3f}GB "
                 f"reserved={torch.cuda.memory_reserved() / 1e9:.3f}GB"
             )
+        import os
+
+        rss_mb = (
+            int(open("/proc/self/status").read().split("VmRSS:")[1].split()[0]) / 1024
+        )
+        loss_grad_fn = str(output["loss"].grad_fn)
+        logger.info(
+            f"[leak_check] val_step {len(self.val_step_outputs)}: "
+            f"loss.grad_fn={loss_grad_fn} "
+            f"process_rss={rss_mb:.1f}MB"
+        )
         self.log(
             "val_loss",
             output["loss"],
