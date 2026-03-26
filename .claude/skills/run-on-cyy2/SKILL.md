@@ -86,7 +86,7 @@ ssh cyy2 "pgrep -a python"
 ssh cyy2 "df -h /root"
 ```
 
-## Typical Workflow: Run a Single Experiment
+## Typical Workflow 1: Run a Single Experiment
 
 ```bash
 # 1. Push code
@@ -99,7 +99,7 @@ ssh cyy2 "cd /root/stgym && \
   screen -S run -X stuff 'python run_experiment_by_yaml.py <config_path> [--no-tracking] [--mlflow-uri URI]\n'"
 ```
 
-## Typical Workflow: Run a Sweep
+## Typical Workflow 2: Run a Sweep
 
 ```bash
 # 1. Push code
