@@ -45,7 +45,6 @@ task:
   num_classes: 3
   type: graph-classification
 train:
-  early_stopping: null
   lr_schedule:
     max_epoch: 5
     type: null
