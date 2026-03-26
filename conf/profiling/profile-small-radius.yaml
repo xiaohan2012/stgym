@@ -1,5 +1,5 @@
-# Profiling config: small dataset (gastric-bladder-cancer) + radius graph construction
-# gastric-bladder-cancer: max_span=223, min_span=94
+# Profiling config: small dataset (inflammatory-skin) + radius graph construction
+# inflammatory-skin: 82 graphs, mean 723 nodes/graph
 data_loader:
   batch_size: 16
   device: cuda
@@ -40,7 +40,7 @@ model:
     l2norm: false
     use_batchnorm: true
 task:
-  dataset_name: gastric-bladder-cancer
+  dataset_name: inflammatory-skin
   num_classes: 2
   type: graph-classification
 train:
