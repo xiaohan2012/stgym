@@ -1,5 +1,5 @@
-# Profiling config: large dataset (glioblastoma) + KNN graph construction
-# glioblastoma: max_span=12748 (large graphs, many nodes per slide)
+# Profiling config: large dataset (mouse-kidney) + KNN graph construction
+# mouse-kidney: 85 graphs, mean 23757 nodes/graph
 data_loader:
   batch_size: 16
   device: cuda
@@ -34,14 +34,14 @@ model:
     bn_momentum: 0.1
     dims:
     - 32
-    - 1
+    - 3
     dropout: 0.0
     has_bias: false
     l2norm: false
     use_batchnorm: true
 task:
-  dataset_name: glioblastoma
-  num_classes: 2
+  dataset_name: mouse-kidney
+  num_classes: 3
   type: graph-classification
 train:
   early_stopping: null
