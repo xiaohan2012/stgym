@@ -162,6 +162,12 @@ class STGymModule(pl.LightningModule):
     def validation_step(self, batch: Data, *args, **kwargs):
         output = self._shared_step(batch, split=Split.val)
         self.val_step_outputs.append(output)
+        if torch.cuda.is_available():
+            logger.info(
+                f"[memory_check] val_step {len(self.val_step_outputs)}: "
+                f"allocated={torch.cuda.memory_allocated() / 1e9:.3f}GB "
+                f"reserved={torch.cuda.memory_reserved() / 1e9:.3f}GB"
+            )
         self.log(
             "val_loss",
             output["loss"],
