@@ -131,9 +131,9 @@ def main():
 
     # Dataset B: raw data on disk (data.pt), transform applied per __getitem__
     # Load B first to test page cache effect on load times
-    print(f"  B: transform     → data.pt        ...", flush=True)
+    print("  B: transform     → data.pt        ...", flush=True)
     t0 = time.perf_counter()
-    print(f"    [B] calling ds_cls()...", flush=True)
+    print("    [B] calling ds_cls()...", flush=True)
     ds_b = ds_cls(
         root=root,
         transform=full_transform,
@@ -147,7 +147,7 @@ def main():
 
     # Dataset A: graph pre-built on disk (data_knn10.pt)
     print(f"  A: pre_transform → data_{tag}.pt  ...", flush=True)
-    print(f"    [A] calling ds_cls()...", flush=True)
+    print("    [A] calling ds_cls()...", flush=True)
     t0 = time.perf_counter()
     ds_a = ds_cls(
         root=root,
@@ -183,7 +183,7 @@ def main():
                 mb_a, mb_b = mb_a_w, mb_b_w
 
     if mb_a is not None:
-        print(f"\nMean batch size:")
+        print("\nMean batch size:")
         print(f"  A (pre_transform, data_{tag}.pt): {mb_a:.3f} MB")
         print(f"  B (transform,     data.pt):       {mb_b:.3f} MB")
 

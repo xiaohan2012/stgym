@@ -89,7 +89,7 @@ def run_exp(
             row_limit=25,
             export_to_chrome=True,
         )
-        logz_logger.info(f"PyTorchProfiler enabled — traces → /tmp/stgym_profile/")
+        logz_logger.info("PyTorchProfiler enabled — traces → /tmp/stgym_profile/")
 
     if not use_kfold_cv:
         logz_logger.info("Evaluation mode: train/validation/test split.")

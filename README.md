@@ -42,7 +42,12 @@ python run_experiment_by_yaml.py conf/adhoc/test.yaml --mlflow-uri http://127.0.
 
 ### Distributed Experiments
 
-Run randomized controlled trials with distributed training:
+Before running sweeps, pre-generate the graph-constructed datasets so that each experiment loads pre-built graphs from disk instead of rebuilding them on the fly:
+```bash
+python scripts/preprocess_datasets.py --design-space conf/design_space/graph_clf.yaml --device cuda
+```
+
+Then run randomized controlled trials with distributed training:
 ```bash
 python run_rct.py +exp=bn design_space=graph_clf resource=gpu-4 sample_size=64
 ```
