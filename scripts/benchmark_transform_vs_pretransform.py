@@ -129,6 +129,22 @@ def main():
     )
     print()
 
+    # Dataset B: raw data on disk (data.pt), transform applied per __getitem__
+    # Load B first to test page cache effect on load times
+    print(f"  B: transform     → data.pt        ...", flush=True)
+    t0 = time.perf_counter()
+    print(f"    [B] calling ds_cls()...", flush=True)
+    ds_b = ds_cls(
+        root=root,
+        transform=full_transform,
+        pre_filter=pre_filter,
+        # no graph_construction_tag → data.pt
+    )
+    t1 = time.perf_counter()
+    print(
+        f"    [B] ds_cls() done in {t1 - t0:.2f}s, len={len(ds_b)} graphs", flush=True
+    )
+
     # Dataset A: graph pre-built on disk (data_knn10.pt)
     print(f"  A: pre_transform → data_{tag}.pt  ...", flush=True)
     print(f"    [A] calling ds_cls()...", flush=True)
@@ -142,21 +158,6 @@ def main():
     t1 = time.perf_counter()
     print(
         f"    [A] ds_cls() done in {t1 - t0:.2f}s, len={len(ds_a)} graphs", flush=True
-    )
-
-    # Dataset B: raw data on disk (data.pt), transform applied per __getitem__
-    print(f"  B: transform     → data.pt        ...", flush=True)
-    t0 = time.perf_counter()
-    print(f"    [B] calling ds_cls()...", flush=True)
-    ds_b = ds_cls(
-        root=root,
-        transform=full_transform,
-        pre_filter=pre_filter,
-        # no graph_construction_tag → data.pt
-    )
-    t1 = time.perf_counter()
-    print(
-        f"    [B] ds_cls() done in {t1 - t0:.2f}s, len={len(ds_b)} graphs", flush=True
     )
 
     loader_a = DataLoader(
