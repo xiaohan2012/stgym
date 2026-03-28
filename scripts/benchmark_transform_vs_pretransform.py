@@ -58,10 +58,20 @@ def batch_size_mb(batch) -> float:
     return total / (1024**2)
 
 
-def run_epoch(loader, device: str, label: str = "", verbose: bool = False) -> float:
+def run_epoch(
+    loader,
+    device: str,
+    label: str = "",
+    verbose: bool = False,
+    measure_mb: bool = False,
+) -> tuple[float, float | None]:
+    """Run one epoch. Returns (total_time, mean_batch_mb or None)."""
     t0 = time.perf_counter()
     n_batches = len(loader)
+    mb_samples = []
     for i, batch in enumerate(loader):
+        if measure_mb:
+            mb_samples.append(batch_size_mb(batch))
         batch = batch.to(device)
         if device == "cuda":
             torch.cuda.synchronize()
@@ -71,7 +81,9 @@ def run_epoch(loader, device: str, label: str = "", verbose: bool = False) -> fl
                 f"    {label} batch {i + 1}/{n_batches}  elapsed={elapsed:.2f}s",
                 flush=True,
             )
-    return time.perf_counter() - t0
+    total = time.perf_counter() - t0
+    mean_mb = statistics.mean(mb_samples) if mb_samples else None
+    return total, mean_mb
 
 
 def main():
@@ -144,21 +156,21 @@ def main():
         ds_b, batch_size=args.batch_size, shuffle=False, num_workers=0
     )
 
-    # Measure mean batch size in MB
-    mb_a = statistics.mean(batch_size_mb(batch) for batch in loader_a)
-    mb_b = statistics.mean(batch_size_mb(batch) for batch in loader_b)
-
-    print()
-    print(f"Mean batch size:")
-    print(f"  A (pre_transform, data_{tag}.pt): {mb_a:.3f} MB")
-    print(f"  B (transform,     data.pt):       {mb_b:.3f} MB")
-
-    # Warmup
+    # Warmup (also measures batch size on first warmup epoch)
+    mb_a = mb_b = None
     if args.warmup > 0:
         print(f"\nWarming up ({args.warmup} epoch(s))...")
-        for _ in range(args.warmup):
-            run_epoch(loader_a, device)
-            run_epoch(loader_b, device)
+        for w in range(args.warmup):
+            measure = w == 0
+            _, mb_a_w = run_epoch(loader_a, device, measure_mb=measure)
+            _, mb_b_w = run_epoch(loader_b, device, measure_mb=measure)
+            if measure:
+                mb_a, mb_b = mb_a_w, mb_b_w
+
+    if mb_a is not None:
+        print(f"\nMean batch size:")
+        print(f"  A (pre_transform, data_{tag}.pt): {mb_a:.3f} MB")
+        print(f"  B (transform,     data.pt):       {mb_b:.3f} MB")
 
     # Timed runs
     times_a = []
@@ -173,8 +185,8 @@ def main():
 
     for epoch in range(1, args.epochs + 1):
         print(f"  Epoch {epoch}:")
-        t_a = run_epoch(loader_a, device, label="A", verbose=True)
-        t_b = run_epoch(loader_b, device, label="B", verbose=True)
+        t_a, _ = run_epoch(loader_a, device, label="A", verbose=True)
+        t_b, _ = run_epoch(loader_b, device, label="B", verbose=True)
         times_a.append(t_a)
         times_b.append(t_b)
         print(f"  {epoch:>5}  {t_a:>{col_w}.3f}  {t_b:>{col_w}.3f}")
