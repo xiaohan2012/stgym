@@ -73,6 +73,19 @@ def get_dataset_class(ds_name: str):
         raise NotImplementedError(f"{ds_name} is not available yet.")
 
 
+def build_graph_construction_tag(
+    graph_const: str, knn_k: int | None, radius_ratio: float | None
+) -> str:
+    """Return a filesystem-safe tag encoding the graph construction parameters.
+
+    Examples: "knn10", "knn20", "radius0.05", "radius0.1"
+    """
+    if graph_const == "knn":
+        return f"knn{knn_k}"
+    else:  # radius
+        return f"radius{radius_ratio:g}"  # :g strips trailing zeros
+
+
 def load_dataset(task_cfg: TaskConfig, dl_cfg: DataLoaderConfig):
     """load dataset by name"""
 
@@ -83,30 +96,35 @@ def load_dataset(task_cfg: TaskConfig, dl_cfg: DataLoaderConfig):
         logger.debug(f"Setting radius to {radius}")
 
     ds_name = task_cfg.dataset_name.lower()
-    transform = T.compose.Compose(
+    graph_transform = (
+        T.KNNGraph(k=dl_cfg.knn_k)
+        if dl_cfg.graph_const == "knn"
+        else T.RadiusGraph(r=radius)
+    )
+    pre_transform = T.Compose(
         [
-            (
-                T.KNNGraph(k=dl_cfg.knn_k)
-                if dl_cfg.graph_const == "knn"
-                else T.RadiusGraph(r=radius)
-            ),
-            T.ToSparseTensor(
-                remove_edge_index=False, layout=torch.sparse_coo
-            ),  # keep edge_index
+            graph_transform,
+            T.ToSparseTensor(remove_edge_index=False, layout=torch.sparse_coo),
         ]
+    )
+    tag = build_graph_construction_tag(
+        dl_cfg.graph_const, dl_cfg.knn_k, dl_cfg.radius_ratio
     )
 
     ds_cls = get_dataset_class(ds_name)
     if ds_name.endswith("-test"):
-        print(f"./tests/data/{ds_name}")
         return ds_cls(
             root=f"./tests/data/{ds_name}",
-            transform=transform,
-            # keep only small graphs
+            pre_transform=pre_transform,
             pre_filter=lambda g: g.num_nodes <= 500,
+            graph_construction_tag=tag,
         )
     else:
-        return ds_cls(root=f"./data/{ds_name}", transform=transform)
+        return ds_cls(
+            root=f"./data/{ds_name}",
+            pre_transform=pre_transform,
+            graph_construction_tag=tag,
+        )
 
 
 def should_drop_last_batch(num_sample: int, batch_size: int):

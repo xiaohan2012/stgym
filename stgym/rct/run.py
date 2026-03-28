@@ -5,6 +5,7 @@ from typing import Optional
 import torch
 from logzero import logger as logz_logger
 from omegaconf import OmegaConf
+from pytorch_lightning.profilers import PyTorchProfiler
 
 from stgym.config_schema import ExperimentConfig, MLFlowConfig, TaskConfig
 from stgym.data_loader import STDataModule, STKfoldDataModule
@@ -58,6 +59,7 @@ def run_exp(
     exp_cfg: ExperimentConfig,
     mlflow_cfg: MLFlowConfig,
     metadata_for_tag: dict[str, primitive_type] | None = None,
+    profile: bool = False,
 ):
     logz_logger.debug(OmegaConf.to_yaml(exp_cfg.model_dump()))
 
@@ -76,6 +78,18 @@ def run_exp(
         mlflow_cfg.tags |= metadata_for_tag
 
     print(f"mlflow_cfg: {mlflow_cfg}")
+
+    profiler = None
+    if profile:
+        sort_key = "cuda_time_total" if torch.cuda.is_available() else "cpu_time_total"
+        profiler = PyTorchProfiler(
+            dirpath="/tmp/stgym_profile",
+            filename=exp_cfg.task.dataset_name,
+            sort_by_key=sort_key,
+            row_limit=25,
+            export_to_chrome=True,
+        )
+        logz_logger.info("PyTorchProfiler enabled — traces → /tmp/stgym_profile/")
 
     if not use_kfold_cv:
         logz_logger.info("Evaluation mode: train/validation/test split.")
@@ -104,6 +118,7 @@ def run_exp(
                 mlflow_cfg,
                 tl_train_config=TL_TRAIN_CFG,
                 logger=logger,
+                profiler=profiler,
             )
         except Exception as e:
             log_training_error(e, logger)
@@ -156,6 +171,7 @@ def run_exp(
                     mlflow_cfg,
                     tl_train_config=TL_TRAIN_CFG,
                     logger=fold_logger,
+                    profiler=profiler,
                 )
             except Exception as e:
                 log_training_error(e, fold_logger, f" in fold {fold}")
