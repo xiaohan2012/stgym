@@ -58,12 +58,19 @@ def batch_size_mb(batch) -> float:
     return total / (1024**2)
 
 
-def run_epoch(loader, device: str) -> float:
+def run_epoch(loader, device: str, label: str = "", verbose: bool = False) -> float:
     t0 = time.perf_counter()
-    for batch in loader:
+    n_batches = len(loader)
+    for i, batch in enumerate(loader):
         batch = batch.to(device)
         if device == "cuda":
             torch.cuda.synchronize()
+        if verbose:
+            elapsed = time.perf_counter() - t0
+            print(
+                f"    {label} batch {i + 1}/{n_batches}  elapsed={elapsed:.2f}s",
+                flush=True,
+            )
     return time.perf_counter() - t0
 
 
@@ -165,8 +172,9 @@ def main():
     print(f"  {'-' * 5}  {'-' * col_w}  {'-' * col_w}")
 
     for epoch in range(1, args.epochs + 1):
-        t_a = run_epoch(loader_a, device)
-        t_b = run_epoch(loader_b, device)
+        print(f"  Epoch {epoch}:")
+        t_a = run_epoch(loader_a, device, label="A", verbose=True)
+        t_b = run_epoch(loader_b, device, label="B", verbose=True)
         times_a.append(t_a)
         times_b.append(t_b)
         print(f"  {epoch:>5}  {t_a:>{col_w}.3f}  {t_b:>{col_w}.3f}")
