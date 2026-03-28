@@ -17,7 +17,8 @@ from pathlib import Path
 
 import torch
 import torch_geometric.transforms as T
-import yaml
+from hydra import compose, initialize_config_dir
+from omegaconf import OmegaConf
 
 # Ensure project root is on the path when running as a script
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -26,48 +27,13 @@ from stgym.data_loader import build_graph_construction_tag, get_dataset_class
 from stgym.data_loader.ds_info import get_info
 
 
-def load_merged_design_space(yaml_path: str) -> dict:
-    """Load a design space YAML, resolving Hydra-style defaults from the same directory."""
-    yaml_path = Path(yaml_path)
-    with open(yaml_path) as f:
-        cfg = yaml.safe_load(f) or {}
-
-    # Resolve `defaults` list (Hydra convention: load base files first, then override)
-    defaults = cfg.pop("defaults", [])
-    merged = {}
-    for item in defaults:
-        if item == "_self_":
-            # _self_ means "apply this file's values here" — handled by the final merge
-            continue
-        if isinstance(item, str):
-            base_name = item
-        elif isinstance(item, dict):
-            # e.g. {override: value} — skip non-file entries
-            if len(item) == 1 and list(item.keys())[0] not in ("override", "override/"):
-                base_name = list(item.values())[0]
-            else:
-                continue
-        else:
-            continue
-
-        base_path = yaml_path.parent / f"{base_name}.yaml"
-        if base_path.exists():
-            with open(base_path) as f:
-                base_cfg = yaml.safe_load(f) or {}
-            _deep_merge(merged, base_cfg)
-
-    _deep_merge(merged, cfg)
-    return merged
-
-
-def _deep_merge(base: dict, override: dict) -> dict:
-    """Merge override into base in-place."""
-    for k, v in override.items():
-        if k in base and isinstance(base[k], dict) and isinstance(v, dict):
-            _deep_merge(base[k], v)
-        else:
-            base[k] = v
-    return base
+def load_design_space(yaml_path: str) -> dict:
+    """Load a design space YAML using Hydra's config composition."""
+    config_dir = str(Path(yaml_path).parent.resolve())
+    config_name = Path(yaml_path).stem
+    with initialize_config_dir(config_dir=config_dir, version_base=None):
+        cfg = compose(config_name=config_name)
+    return OmegaConf.to_container(cfg, resolve=True)
 
 
 def _as_list(val) -> list:
@@ -192,7 +158,7 @@ def main():
         device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Using device: {device}")
 
-    cfg = load_merged_design_space(args.design_space)
+    cfg = load_design_space(args.design_space)
     combos = extract_combos(cfg)
 
     if not combos:
@@ -205,6 +171,7 @@ def main():
         tag = build_graph_construction_tag(graph_const, knn_k, radius_ratio)
         label = f"{ds_name} / {tag}"
         try:
+            print(f"Processing {label}.")
             result = process_combo(ds_name, graph_const, knn_k, radius_ratio, device)
             print(f"  [{result:4s}] {label}")
         except Exception as e:
