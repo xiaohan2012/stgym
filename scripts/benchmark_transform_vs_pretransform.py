@@ -99,9 +99,9 @@ def main():
     parser.add_argument("--knn-k", type=int, default=10)
     parser.add_argument("--radius-ratio", type=float, default=0.1)
     parser.add_argument("--batch-size", type=int, default=16)
-    parser.add_argument("--epochs", type=int, default=5)
+    parser.add_argument("--epochs", type=int, default=1)
     parser.add_argument(
-        "--warmup", type=int, default=1, help="Warmup epochs (excluded from timing)"
+        "--warmup", type=int, default=0, help="Warmup epochs (excluded from timing)"
     )
     parser.add_argument("--device", default=None, choices=["cpu", "cuda"])
     args = parser.parse_args()
@@ -130,14 +130,19 @@ def main():
     print()
 
     # Dataset A: graph pre-built on disk (data_knn10.pt)
-    print(f"  A: pre_transform → data_{tag}.pt  ...", end=" ", flush=True)
+    print(f"  A: pre_transform → data_{tag}.pt  ...", flush=True)
+    print(f"    [A] calling ds_cls()...", flush=True)
+    t0 = time.perf_counter()
     ds_a = ds_cls(
         root=root,
         pre_transform=full_transform,
         pre_filter=pre_filter,
         graph_construction_tag=tag,
     )
-    print(f"{len(ds_a)} graphs")
+    t1 = time.perf_counter()
+    print(
+        f"    [A] ds_cls() done in {t1 - t0:.2f}s, len={len(ds_a)} graphs", flush=True
+    )
 
     # Dataset B: raw data on disk (data.pt), transform applied per __getitem__
     print(f"  B: transform     → data.pt        ...", flush=True)
