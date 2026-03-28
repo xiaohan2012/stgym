@@ -140,14 +140,19 @@ def main():
     print(f"{len(ds_a)} graphs")
 
     # Dataset B: raw data on disk (data.pt), transform applied per __getitem__
-    print(f"  B: transform     → data.pt        ...", end=" ", flush=True)
+    print(f"  B: transform     → data.pt        ...", flush=True)
+    t0 = time.perf_counter()
+    print(f"    [B] calling ds_cls()...", flush=True)
     ds_b = ds_cls(
         root=root,
         transform=full_transform,
         pre_filter=pre_filter,
         # no graph_construction_tag → data.pt
     )
-    print(f"{len(ds_b)} graphs")
+    t1 = time.perf_counter()
+    print(
+        f"    [B] ds_cls() done in {t1 - t0:.2f}s, len={len(ds_b)} graphs", flush=True
+    )
 
     loader_a = DataLoader(
         ds_a, batch_size=args.batch_size, shuffle=False, num_workers=0
