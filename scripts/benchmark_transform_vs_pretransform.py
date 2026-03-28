@@ -167,8 +167,12 @@ def main():
         print(f"\nWarming up ({args.warmup} epoch(s))...")
         for w in range(args.warmup):
             measure = w == 0
-            _, mb_a_w = run_epoch(loader_a, device, measure_mb=measure)
-            _, mb_b_w = run_epoch(loader_b, device, measure_mb=measure)
+            _, mb_a_w = run_epoch(
+                loader_a, device, label="A warmup", verbose=True, measure_mb=measure
+            )
+            _, mb_b_w = run_epoch(
+                loader_b, device, label="B warmup", verbose=True, measure_mb=measure
+            )
             if measure:
                 mb_a, mb_b = mb_a_w, mb_b_w
 
