@@ -371,3 +371,4 @@ class ResourceConfig(BaseModel, YamlLoaderMixin):
     gpu_memory_gb: PositiveFloat = (
         24.0  # TODO: use torch.cuda.get_device_properties(0).total_memory / 1024**3
     )
+    omp_num_threads: PositiveInt | None = None

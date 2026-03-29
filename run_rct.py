@@ -3,6 +3,8 @@ import os
 # Disable CUDA memory caching to prevent NVML errors on virtual GPU environments (#48)
 os.environ["PYTORCH_NO_CUDA_MEMORY_CACHING"] = "1"
 
+import torch
+
 import hydra
 import pydash as pyd
 import ray
@@ -38,6 +40,10 @@ def main(cfg: DictConfig):
     design_chocies = cfg.design_choices
     res_cfg = ResourceConfig(**cfg.resource)
     mlflow_cfg = MLFlowConfig(**cfg.mlflow)
+
+    if res_cfg.omp_num_threads is not None:
+        os.environ["OMP_NUM_THREADS"] = str(res_cfg.omp_num_threads)
+        torch.set_num_threads(res_cfg.omp_num_threads)
 
     # create the experiment if needed, before experiment starts
     # to avoid duplicate experiments being created
