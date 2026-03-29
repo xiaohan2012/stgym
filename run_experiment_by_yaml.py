@@ -67,8 +67,16 @@ def main():
         action="store_true",
         help="Enable PyTorch profiler; traces saved to /tmp/stgym_profile/",
     )
+    parser.add_argument(
+        "--omp-num-threads",
+        type=int,
+        default=4,
+        help="Set OMP_NUM_THREADS for PyTorch (default: 4)",
+    )
 
     args = parser.parse_args()
+
+    torch.set_num_threads(args.omp_num_threads)
 
     # Validate config file exists
     config_path = Path(args.config_path)
