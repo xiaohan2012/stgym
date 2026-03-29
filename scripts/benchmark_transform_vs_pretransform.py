@@ -27,6 +27,9 @@ import time
 from pathlib import Path
 
 import torch
+
+torch.set_num_threads(4)
+
 import torch_geometric.transforms as T
 from torch_geometric.loader import DataLoader
 
