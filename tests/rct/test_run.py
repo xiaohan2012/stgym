@@ -264,22 +264,27 @@ class TestRunExp:
         ],
     )
     @patch("stgym.rct.run.logz_logger")
+    @patch("stgym.rct.run.log_params_and_config_in_mlflow")
     def test_error_handling(
         self,
+        mock_log_params,
         mock_logger,
-        mlflow_config,
         mock_target,
         exception_msg,
     ):
-        """Test error handling during training and data loading"""
+        """Non-OOM exceptions should mark the MLflow run as FAILED."""
         exp_cfg = self._create_experiment_config("graph_clf")
+        mlflow_cfg = MLFlowConfig(track=True)
+        mock_tl_logger = Mock()
 
-        # Mock the specified target to raise an exception
-        with patch(mock_target) as mock_component:
+        with (
+            patch.object(MLFlowConfig, "create_tl_logger", return_value=mock_tl_logger),
+            patch(mock_target) as mock_component,
+        ):
             mock_component.side_effect = RuntimeError(exception_msg)
 
             result = run_exp(
-                exp_cfg, mlflow_config, metadata_for_tag=self.metadata_for_tag
+                exp_cfg, mlflow_cfg, metadata_for_tag=self.metadata_for_tag
             )
 
             # Should still return True even with error
@@ -288,3 +293,8 @@ class TestRunExp:
             mock_logger.error.assert_called_once()
             error_call = mock_logger.error.call_args[0][0]
             assert exception_msg in error_call
+
+        # MLflow run should be marked as FAILED
+        mock_tl_logger.experiment.set_terminated.assert_called_with(
+            mock_tl_logger.run_id, status="FAILED"
+        )

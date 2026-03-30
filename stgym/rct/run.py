@@ -122,13 +122,13 @@ def run_exp(
             )
         except Exception as e:
             log_training_error(e, logger)
+            if logger is not None:
+                logger.experiment.set_terminated(logger.run_id, status="FAILED")
             if isinstance(e, torch.cuda.OutOfMemoryError):
                 # Force-kill the Ray worker process so its CUDA context is destroyed
                 # and the GPU slot is released. A normal raise only returns the worker
                 # to the pool, permanently claiming the slot.
                 # https://github.com/xiaohan2012/stgym/pull/99
-                if logger is not None:
-                    logger.experiment.set_terminated(logger.run_id, status="FAILED")
                 os._exit(1)
     else:
         logz_logger.info("Evaluation mode: k-fold cross validation.")
@@ -175,12 +175,12 @@ def run_exp(
                 )
             except Exception as e:
                 log_training_error(e, fold_logger, f" in fold {fold}")
+                if fold_logger is not None:
+                    fold_logger.experiment.set_terminated(
+                        fold_logger.run_id, status="FAILED"
+                    )
                 if isinstance(e, torch.cuda.OutOfMemoryError):
                     # https://github.com/xiaohan2012/stgym/pull/99
-                    if fold_logger is not None:
-                        fold_logger.experiment.set_terminated(
-                            fold_logger.run_id, status="FAILED"
-                        )
                     os._exit(1)
 
     return True
