@@ -372,3 +372,9 @@ class ResourceConfig(BaseModel, YamlLoaderMixin):
         24.0  # TODO: use torch.cuda.get_device_properties(0).total_memory / 1024**3
     )
     omp_num_threads: PositiveInt | None = None
+    dataset_memory_gb: dict[str, float] = {}
+
+    def get_memory_bytes(self, dataset_name: str) -> int | None:
+        """Return Ray memory reservation in bytes for a dataset, or None if unconfigured."""
+        gb = self.dataset_memory_gb.get(dataset_name)
+        return int(gb * 1024**3) if gb is not None else None
