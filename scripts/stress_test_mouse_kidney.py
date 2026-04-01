@@ -56,7 +56,7 @@ def main():
     print(f"knn_k   : {args.knn_k}")
     print()
 
-    ray.init(num_cpus=args.n_workers)
+    ray.init(num_cpus=args.n_workers, num_gpus=0)
 
     opts = {}
     if args.memory_gb is not None:
