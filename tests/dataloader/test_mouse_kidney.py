@@ -1,5 +1,5 @@
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pandas as pd
@@ -69,8 +69,21 @@ def test_mouse_kidney_dataset(mock_df):
             return mock_df[columns]
         return mock_df
 
+    def mock_parquet_file_class(_path):
+        mock_pf = MagicMock()
+
+        def iter_batches(batch_size=None, columns=None):
+            subset = mock_df[columns] if columns is not None else mock_df
+            mock_batch = MagicMock()
+            mock_batch.to_pandas.return_value = subset
+            yield mock_batch
+
+        mock_pf.iter_batches.side_effect = iter_batches
+        return mock_pf
+
     with (
         patch("pyarrow.parquet.read_schema", return_value=mock_schema),
+        patch("pyarrow.parquet.ParquetFile", side_effect=mock_parquet_file_class),
         patch("pandas.read_parquet", side_effect=mock_read_parquet),
     ):
         data_root = Path("./tests/data/mouse-kidney")
