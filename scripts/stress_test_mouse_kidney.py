@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 """
-Level 2 stress test for PR #136: verify that the Ray memory constraint
-prevents concurrent OOM kills when loading the mouse-kidney dataset.
+Level 2 stress test: verify that a hard CPU concurrency limit prevents OOM kills
+when loading the mouse-kidney dataset.
 
 Usage:
-    # Baseline — no constraint, workers compete for RAM (expect kills)
+    # Baseline — no constraint, all workers compete for RAM (expect kills)
     python scripts/stress_test_mouse_kidney.py --n-workers 6
 
-    # With fix — Ray limits concurrency to floor(RAM / memory_gb)
-    python scripts/stress_test_mouse_kidney.py --n-workers 6 --memory-gb 40
+    # With fix — hard CPU limit caps concurrency to floor(n_workers / cpus_per_worker)
+    python scripts/stress_test_mouse_kidney.py --n-workers 6 --cpus-per-worker 3
 """
 
 import argparse
@@ -39,31 +39,48 @@ def main():
         "--n-workers", type=int, default=6, help="Number of concurrent Ray workers"
     )
     parser.add_argument(
-        "--memory-gb",
-        type=float,
+        "--cpus-per-worker",
+        type=int,
         default=None,
-        help="Memory reservation per worker in GB (omit to run without constraint)",
+        help="CPUs to reserve per worker (hard constraint); "
+        "max concurrency = floor(n_workers / cpus_per_worker)",
+    )
+    parser.add_argument(
+        "--max-retries",
+        type=int,
+        default=0,
+        help="Ray max_retries per worker (0 = no retry, gives clean first-pass kill count)",
     )
     parser.add_argument(
         "--knn-k", type=int, default=20, help="KNN k for graph construction"
     )
     args = parser.parse_args()
 
-    mode = f"memory={args.memory_gb} GB/worker" if args.memory_gb else "no constraint"
+    if args.cpus_per_worker is not None:
+        max_concurrent = args.n_workers // args.cpus_per_worker
+        mode = (
+            f"cpus_per_worker={args.cpus_per_worker} (max {max_concurrent} concurrent)"
+        )
+    else:
+        mode = "no constraint"
+
     print(f"\n=== mouse-kidney stress test ===")
-    print(f"Workers : {args.n_workers}")
-    print(f"Mode    : {mode}")
-    print(f"knn_k   : {args.knn_k}")
+    print(f"Workers     : {args.n_workers}")
+    print(f"Mode        : {mode}")
+    print(f"Max retries : {args.max_retries}")
+    print(f"knn_k       : {args.knn_k}")
     print()
 
     ray.init(num_cpus=args.n_workers, num_gpus=0)
 
     opts = {}
-    if args.memory_gb is not None:
-        opts["memory"] = int(args.memory_gb * 1024**3)
+    if args.cpus_per_worker is not None:
+        opts["num_cpus"] = args.cpus_per_worker
 
     futures = [
-        load_dataset.options(**opts).remote(knn_k=args.knn_k)
+        load_dataset.options(max_retries=args.max_retries, **opts).remote(
+            knn_k=args.knn_k
+        )
         for _ in range(args.n_workers)
     ]
 
