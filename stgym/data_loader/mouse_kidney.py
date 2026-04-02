@@ -28,12 +28,29 @@ POS_COLS = ["xcoord", "ycoord"]
 COLS_TO_DROP = ["cell_type", "Tissue", "Age"]
 RAW_FILE_NAME = "GSE190094.parquet"
 N_TOP_GENES = 1000
+HVG_SAMPLE_SIZE = 100_000  # rows sampled for variance estimation (~5% of 2M cells)
 
 
 def select_hvg(gene_df: pd.DataFrame, n_top: int) -> list[str]:
     """Select top n_top highly variable genes by variance across all cells."""
     variances = gene_df.var()
     return variances.nlargest(n_top).index.tolist()
+
+
+def _select_hvg_from_sample(
+    data_path: Path, gene_cols: list[str], n_top: int, sample_size: int
+) -> tuple[list[str], set[str]]:
+    """Sample rows to estimate gene variances; return (top_gene_cols, nan_cols)."""
+    pf = pq.ParquetFile(data_path)
+    batch = next(pf.iter_batches(batch_size=sample_size, columns=gene_cols))
+    sample_df = batch.to_pandas()
+
+    nan_cols = {c for c in sample_df.columns if sample_df[c].isna().any()}
+    if nan_cols:
+        logger.info(f"Dropping NaN columns (detected from sample): {nan_cols}")
+        sample_df = sample_df.drop(columns=nan_cols)
+
+    return select_hvg(sample_df, n_top), nan_cols
 
 
 class MouseKidneyDataset(AbstractDataset):
@@ -49,12 +66,32 @@ class MouseKidneyDataset(AbstractDataset):
 
     def process_data(self):
         data_path = Path(self.raw_dir) / RAW_FILE_NAME
-        logger.info(f"[mem {_mem_gb():.1f} GB] reading parquet...")
-
-        # Read only needed columns to avoid loading metadata into memory
         all_cols = pq.read_schema(data_path).names
         cols_to_skip = set(COLS_TO_DROP + [ID_COL])
-        cols_to_read = [c for c in all_cols if c not in cols_to_skip]
+        non_feature_cols = set(GROUP_COLS + POS_COLS + [LABEL_COL])
+        all_gene_cols = [
+            c for c in all_cols if c not in cols_to_skip | non_feature_cols
+        ]
+
+        # Pass 1: sample rows to select HVGs and detect NaN columns
+        logger.info(
+            f"[mem {_mem_gb():.1f} GB] pass 1: sampling {HVG_SAMPLE_SIZE} rows for HVG selection..."
+        )
+        feature_cols, nan_cols = _select_hvg_from_sample(
+            data_path, all_gene_cols, N_TOP_GENES, HVG_SAMPLE_SIZE
+        )
+        logger.info(f"[mem {_mem_gb():.1f} GB] selected {len(feature_cols)} HVGs")
+
+        # Pass 2: load all rows but only selected columns
+        cols_to_read = [
+            c
+            for c in all_cols
+            if c not in cols_to_skip | nan_cols
+            and (c in non_feature_cols or c in feature_cols)
+        ]
+        logger.info(
+            f"[mem {_mem_gb():.1f} GB] pass 2: reading {len(cols_to_read)} columns..."
+        )
         df = pd.read_parquet(data_path, columns=cols_to_read)
         logger.info(
             f"[mem {_mem_gb():.1f} GB] loaded DataFrame: "
@@ -63,20 +100,6 @@ class MouseKidneyDataset(AbstractDataset):
 
         # Encode labels in-place
         df[LABEL_COL] = pd.Categorical(df[LABEL_COL]).codes
-
-        # Identify feature columns and drop NaN columns in-place
-        non_feature_cols = set(GROUP_COLS + POS_COLS + [LABEL_COL])
-        feature_cols = [c for c in df.columns if c not in non_feature_cols]
-        nan_cols = [c for c in feature_cols if df[c].isna().any()]
-        if nan_cols:
-            logger.info(f"Dropping columns containing NaN values: {nan_cols}")
-            df.drop(columns=nan_cols, inplace=True)
-            feature_cols = [c for c in feature_cols if c not in nan_cols]
-
-        feature_cols = select_hvg(df[feature_cols], N_TOP_GENES)
-        logger.info(
-            f"Selected top {N_TOP_GENES} HVGs; {len(feature_cols)} feature columns remaining"
-        )
 
         logger.info(f"[mem {_mem_gb():.1f} GB] before building graphs")
 
