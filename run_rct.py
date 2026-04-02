@@ -37,10 +37,7 @@ def main(cfg: DictConfig):
     design_space = DesignSpace.model_validate(cfg.design_space)
     design_dimension = cfg.design_dimension
     design_chocies = cfg.design_choices
-    res_cfg = ResourceConfig(
-        **cfg.resource,
-        dataset_memory_gb=OmegaConf.to_container(cfg.dataset_memory_gb, resolve=True),
-    )
+    res_cfg = ResourceConfig(**cfg.resource)
     mlflow_cfg = MLFlowConfig(**cfg.mlflow)
 
     if res_cfg.omp_num_threads is not None:
@@ -67,12 +64,9 @@ def main(cfg: DictConfig):
     for i, exp_cfg in enumerate(configs):
         # Use configured GPU allocation instead of memory-based estimation
         gpu_allocation = res_cfg.num_gpus_per_trial
-        memory_bytes = res_cfg.get_memory_bytes(exp_cfg.task.dataset_name)
 
         run_exp_remote = ray.remote(run_exp).options(
-            num_cpus=res_cfg.num_cpus_per_trial,
-            num_gpus=gpu_allocation,
-            **({"memory": memory_bytes} if memory_bytes is not None else {}),
+            num_cpus=res_cfg.num_cpus_per_trial, num_gpus=gpu_allocation
         )
         promises.append(
             run_exp_remote.remote(
