@@ -65,6 +65,12 @@ class MouseKidneyDataset(AbstractDataset):
         return [RAW_FILE_NAME]
 
     def process_data(self):
+        # Two-pass loading strategy to avoid OOM:
+        # Loading all 2M cells × 2,000 genes as a dense float32 DataFrame requires ~33 GB
+        # RSS (parquet decompresses ~100x in memory), which exceeds available RAM under
+        # concurrent workloads. Pass 1 uses a small row sample (~800 MB) to identify the
+        # top-N_TOP_GENES by variance; pass 2 re-reads the full dataset with only those
+        # columns via parquet column pruning, reducing peak memory to ~8 GB.
         data_path = Path(self.raw_dir) / RAW_FILE_NAME
         all_cols = pq.read_schema(data_path).names
         cols_to_skip = set(COLS_TO_DROP + [ID_COL])
