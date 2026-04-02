@@ -27,6 +27,13 @@ LABEL_COL = "Disease-Status"
 POS_COLS = ["xcoord", "ycoord"]
 COLS_TO_DROP = ["cell_type", "Tissue", "Age"]
 RAW_FILE_NAME = "GSE190094.parquet"
+N_TOP_GENES = 1000
+
+
+def select_hvg(gene_df: pd.DataFrame, n_top: int) -> list[str]:
+    """Select top n_top highly variable genes by variance across all cells."""
+    variances = gene_df.var()
+    return variances.nlargest(n_top).index.tolist()
 
 
 class MouseKidneyDataset(AbstractDataset):
@@ -65,6 +72,11 @@ class MouseKidneyDataset(AbstractDataset):
             logger.info(f"Dropping columns containing NaN values: {nan_cols}")
             df.drop(columns=nan_cols, inplace=True)
             feature_cols = [c for c in feature_cols if c not in nan_cols]
+
+        feature_cols = select_hvg(df[feature_cols], N_TOP_GENES)
+        logger.info(
+            f"Selected top {N_TOP_GENES} HVGs; {len(feature_cols)} feature columns remaining"
+        )
 
         logger.info(f"[mem {_mem_gb():.1f} GB] before building graphs")
 
