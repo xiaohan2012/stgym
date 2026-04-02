@@ -28,7 +28,7 @@ POS_COLS = ["xcoord", "ycoord"]
 COLS_TO_DROP = ["cell_type", "Tissue", "Age"]
 RAW_FILE_NAME = "GSE190094.parquet"
 N_TOP_GENES = 1000
-HVG_SAMPLE_SIZE = 100_000  # rows sampled for variance estimation (~5% of 2M cells)
+HVG_SAMPLE_SIZE = 500_000  # rows sampled for variance estimation (~25% of 2M cells)
 
 
 def select_hvg(gene_df: pd.DataFrame, n_top: int) -> list[str]:
