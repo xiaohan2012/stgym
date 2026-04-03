@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 """
-Level 2 stress test: verify that a hard CPU concurrency limit prevents OOM kills
-when loading the mouse-kidney dataset.
+Level 2 stress test: verify that DatasetLoadGate prevents OOM kills
+when loading the mouse-kidney dataset concurrently.
 
 Usage:
-    # Baseline — no constraint, all workers compete for RAM (expect kills)
+    # Baseline — no gate, all workers load simultaneously (expect OOM kills)
     python scripts/stress_test_mouse_kidney.py --n-workers 6
 
-    # With fix — hard CPU limit caps concurrency to floor(n_workers / cpus_per_worker)
-    python scripts/stress_test_mouse_kidney.py --n-workers 6 --cpus-per-worker 3
+    # With gate — workers serialize through DatasetLoadGate (expect all survive)
+    python scripts/stress_test_mouse_kidney.py --n-workers 6 --use-gate
 """
 
 import argparse
@@ -18,33 +18,42 @@ import ray
 
 from stgym.config_schema import DataLoaderConfig, TaskConfig
 from stgym.data_loader import STDataModule
+from stgym.utils import DatasetLoadGate, gated_load
+
+DATASET_NAME = "mouse-kidney"
 
 
 @ray.remote
-def load_dataset(knn_k: int) -> bool:
+def load_dataset(knn_k: int, gated_datasets: frozenset) -> bool:
     """Load mouse-kidney dataset only — no training."""
-
     task = TaskConfig(
-        dataset_name="mouse-kidney",
+        dataset_name=DATASET_NAME,
         type="graph-classification",
-        num_classes=2,
+        num_classes=3,
     )
     dl = DataLoaderConfig(graph_const="knn", knn_k=knn_k, batch_size=8)
-    STDataModule(task, dl)
+    with gated_load(DATASET_NAME, gated_datasets):
+        STDataModule(task, dl)
     return True
 
 
 def main():
-    parser = argparse.ArgumentParser(description="mouse-kidney concurrency stress test")
+    parser = argparse.ArgumentParser(
+        description="mouse-kidney DatasetLoadGate stress test"
+    )
     parser.add_argument(
         "--n-workers", type=int, default=6, help="Number of concurrent Ray workers"
     )
     parser.add_argument(
+        "--use-gate",
+        action="store_true",
+        help="Serialize loads via DatasetLoadGate (the fix being tested)",
+    )
+    parser.add_argument(
         "--cpus-per-worker",
         type=int,
-        default=None,
-        help="CPUs to reserve per worker (hard constraint); "
-        "max concurrency = floor(n_workers / cpus_per_worker)",
+        default=1,
+        help="CPUs reserved per worker (controls Ray parallelism budget)",
     )
     parser.add_argument(
         "--max-retries",
@@ -57,31 +66,26 @@ def main():
     )
     args = parser.parse_args()
 
-    if args.cpus_per_worker is not None:
-        max_concurrent = args.n_workers // args.cpus_per_worker
-        mode = (
-            f"cpus_per_worker={args.cpus_per_worker} (max {max_concurrent} concurrent)"
-        )
-    else:
-        mode = "no constraint"
+    mode = "gate ON (serialized loads)" if args.use_gate else "gate OFF (baseline)"
 
     print(f"\n=== mouse-kidney stress test ===")
-    print(f"Workers     : {args.n_workers}")
-    print(f"Mode        : {mode}")
-    print(f"Max retries : {args.max_retries}")
-    print(f"knn_k       : {args.knn_k}")
+    print(f"Workers        : {args.n_workers}")
+    print(f"Mode           : {mode}")
+    print(f"CPUs per worker: {args.cpus_per_worker}")
+    print(f"Max retries    : {args.max_retries}")
+    print(f"knn_k          : {args.knn_k}")
     print()
 
-    ray.init(num_cpus=args.n_workers, num_gpus=0)
+    ray.init(num_cpus=args.n_workers * args.cpus_per_worker, num_gpus=0)
 
-    opts = {}
-    if args.cpus_per_worker is not None:
-        opts["num_cpus"] = args.cpus_per_worker
+    gated_datasets = frozenset([DATASET_NAME]) if args.use_gate else frozenset()
+    if args.use_gate:
+        DatasetLoadGate.options(name="dataset_load_gate").remote(max_concurrent=1)
 
     futures = [
-        load_dataset.options(max_retries=args.max_retries, **opts).remote(
-            knn_k=args.knn_k
-        )
+        load_dataset.options(
+            num_cpus=args.cpus_per_worker, max_retries=args.max_retries
+        ).remote(knn_k=args.knn_k, gated_datasets=gated_datasets)
         for _ in range(args.n_workers)
     ]
 
