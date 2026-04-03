@@ -3,3 +3,6 @@ num_gpus: 2
 num_cpus_per_trial: 8
 num_gpus_per_trial: 1
 omp_num_threads: 8
+dataset_memory_gb:
+  mouse-kidney: 51.0
+  breast-cancer: 18.0

@@ -13,7 +13,7 @@ from stgym.config_schema import MLFlowConfig, ResourceConfig
 from stgym.design_space.schema import DesignSpace
 from stgym.mem_utils import estimate_memory_usage
 from stgym.rct import generate_experiment_configs, run_exp
-from stgym.utils import RayProgressBar, create_mlflow_experiment
+from stgym.utils import DatasetLoadGate, RayProgressBar, create_mlflow_experiment
 
 
 def estimate_gpu_requirements(exp_cfg, gpu_memory_gb: float) -> float:
@@ -54,6 +54,10 @@ def main(cfg: DictConfig):
     if not ray.is_initialized():
         ray.init(num_cpus=res_cfg.num_cpus, num_gpus=res_cfg.num_gpus)
 
+    gated_datasets = frozenset(res_cfg.dataset_memory_gb.keys())
+    if gated_datasets:
+        DatasetLoadGate.options(name="dataset_load_gate").remote(max_concurrent=1)
+
     configs = generate_experiment_configs(
         design_space,
         design_dimension,
@@ -78,6 +82,7 @@ def main(cfg: DictConfig):
             run_exp_remote.remote(
                 exp_cfg,
                 mlflow_cfg,
+                gated_datasets=gated_datasets,
                 # add additional mlflow tags
                 metadata_for_tag={
                     "design_dimension": design_dimension,
