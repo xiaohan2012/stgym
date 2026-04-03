@@ -54,12 +54,22 @@ def main():
         action="store_true",
         help="Serialize loads via DatasetLoadGate (the fix being tested)",
     )
+    parser.add_argument(
+        "--max-concurrent",
+        type=int,
+        default=1,
+        help="Max concurrent loads allowed by the gate (only used with --use-gate)",
+    )
     args = parser.parse_args()
 
     cpus_per_worker = 1
     knn_k = 20
 
-    mode = "gate ON (serialized loads)" if args.use_gate else "gate OFF (baseline)"
+    mode = (
+        f"gate ON (max_concurrent={args.max_concurrent})"
+        if args.use_gate
+        else "gate OFF (baseline)"
+    )
 
     print("\n=== mouse-kidney stress test ===")
     print(f"Workers        : {args.n_workers}")
@@ -70,7 +80,9 @@ def main():
 
     gated_datasets = frozenset([DATASET_NAME]) if args.use_gate else frozenset()
     if args.use_gate:
-        DatasetLoadGate.options(name="dataset_load_gate").remote(max_concurrent=1)
+        DatasetLoadGate.options(name="dataset_load_gate").remote(
+            max_concurrent=args.max_concurrent
+        )
 
     futures = [
         load_dataset.options(num_cpus=cpus_per_worker, max_retries=0).remote(
