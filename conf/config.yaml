@@ -7,5 +7,5 @@ defaults:
 sample_size: 128
 random_seed: 42
 gated_datasets:
-  - mouse-kidney
-  - breast-cancer
+  - mouse-kidney   # ~17 GB file, ~51 GB peak during torch.load()
+  - breast-cancer  # ~6 GB file,  ~18 GB peak during torch.load()
