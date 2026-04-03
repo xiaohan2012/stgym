@@ -13,7 +13,6 @@ from stgym.config_schema import (
     NodeClassifierModelConfig,
     PoolingConfig,
     PostMPConfig,
-    ResourceConfig,
     TaskConfig,
     TrainConfig,
     dataset_eval_mode,

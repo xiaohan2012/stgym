@@ -61,7 +61,7 @@ def main():
 
     mode = "gate ON (serialized loads)" if args.use_gate else "gate OFF (baseline)"
 
-    print(f"\n=== mouse-kidney stress test ===")
+    print("\n=== mouse-kidney stress test ===")
     print(f"Workers        : {args.n_workers}")
     print(f"Mode           : {mode}")
     print()
@@ -69,11 +69,8 @@ def main():
     ray.init(num_cpus=args.n_workers * cpus_per_worker, num_gpus=0)
 
     gated_datasets = frozenset([DATASET_NAME]) if args.use_gate else frozenset()
-    gate_actor = None
     if args.use_gate:
-        gate_actor = DatasetLoadGate.options(name="dataset_load_gate").remote(
-            max_concurrent=1
-        )
+        DatasetLoadGate.options(name="dataset_load_gate").remote(max_concurrent=1)
 
     futures = [
         load_dataset.options(num_cpus=cpus_per_worker, max_retries=0).remote(
