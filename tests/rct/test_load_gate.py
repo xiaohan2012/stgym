@@ -1,6 +1,5 @@
 """Tests for DatasetLoadGate actor and gated_datasets integration in run_exp."""
 
-import asyncio
 from unittest.mock import Mock, patch
 
 import pytest
@@ -72,114 +71,71 @@ class TestDatasetLoadGate:
 # ---------------------------------------------------------------------------
 
 
-@pytest.fixture
-def exp_cfg_gated():
-    """ExperimentConfig whose dataset_name is in gated_datasets."""
-    task = TaskConfig(
-        dataset_name="mouse-kidney", type="graph-classification", num_classes=3
-    )
-    dl_cfg = DataLoaderConfig(batch_size=4)
-    dl_cfg.split = DataLoaderConfig.DataSplitConfig(
-        train_ratio=0.7, val_ratio=0.15, test_ratio=0.15
-    )
-    model = GraphClassifierModelConfig(
-        mp_layers=[
-            MessagePassingConfig(
-                layer_type="gcnconv",
-                pooling=PoolingConfig(type="dmon", n_clusters=8),
-            )
-        ],
-        global_pooling="mean",
-        post_mp_layer=PostMPConfig(dims=[16, 8]),
-    )
-    train_cfg = TrainConfig(
-        optim=OptimizerConfig(),
-        lr_schedule=LRScheduleConfig(type=None),
-        max_epoch=1,
-        early_stopping={"metric": "val_roc_auc", "mode": "max"},
-    )
-    return ExperimentConfig(task=task, data_loader=dl_cfg, model=model, train=train_cfg)
-
-
-@pytest.fixture
-def exp_cfg_ungated():
-    """ExperimentConfig whose dataset_name is NOT in gated_datasets."""
-    task = TaskConfig(
-        dataset_name="brca-test", type="graph-classification", num_classes=2
-    )
-    dl_cfg = DataLoaderConfig(batch_size=4)
-    dl_cfg.split = DataLoaderConfig.DataSplitConfig(
-        train_ratio=0.7, val_ratio=0.15, test_ratio=0.15
-    )
-    model = GraphClassifierModelConfig(
-        mp_layers=[
-            MessagePassingConfig(
-                layer_type="gcnconv",
-                pooling=PoolingConfig(type="dmon", n_clusters=8),
-            )
-        ],
-        global_pooling="mean",
-        post_mp_layer=PostMPConfig(dims=[16, 8]),
-    )
-    train_cfg = TrainConfig(
-        optim=OptimizerConfig(),
-        lr_schedule=LRScheduleConfig(type=None),
-        max_epoch=1,
-        early_stopping={"metric": "val_roc_auc", "mode": "max"},
-    )
-    return ExperimentConfig(task=task, data_loader=dl_cfg, model=model, train=train_cfg)
-
-
 @pytest.fixture(autouse=True)
 def teardown():
     yield
     rm_dir_if_exists("tests/data/brca-test/processed")
 
 
+@patch("stgym.rct.run.train")
+@patch("stgym.rct.run.STGymModule")
+@patch("stgym.rct.run.STDataModule")
+@patch("stgym.rct.run.gated_load")
 class TestRunExpGating:
     """Verify that run_exp calls gated_load with the correct arguments."""
 
     GATED = frozenset(["mouse-kidney"])
 
-    @patch("stgym.rct.run.train")
-    @patch("stgym.rct.run.STGymModule")
-    @patch("stgym.rct.run.STDataModule")
-    @patch("stgym.rct.run.gated_load")
-    def test_gate_used_for_gated_dataset(
+    @staticmethod
+    def _make_exp_cfg(dataset_name: str, num_classes: int) -> ExperimentConfig:
+        task = TaskConfig(
+            dataset_name=dataset_name,
+            type="graph-classification",
+            num_classes=num_classes,
+        )
+        dl_cfg = DataLoaderConfig(batch_size=4)
+        dl_cfg.split = DataLoaderConfig.DataSplitConfig(
+            train_ratio=0.7, val_ratio=0.15, test_ratio=0.15
+        )
+        model = GraphClassifierModelConfig(
+            mp_layers=[
+                MessagePassingConfig(
+                    layer_type="gcnconv",
+                    pooling=PoolingConfig(type="dmon", n_clusters=8),
+                )
+            ],
+            global_pooling="mean",
+            post_mp_layer=PostMPConfig(dims=[16, 8]),
+        )
+        train_cfg = TrainConfig(
+            optim=OptimizerConfig(),
+            lr_schedule=LRScheduleConfig(type=None),
+            max_epoch=1,
+            early_stopping={"metric": "val_roc_auc", "mode": "max"},
+        )
+        return ExperimentConfig(
+            task=task, data_loader=dl_cfg, model=model, train=train_cfg
+        )
+
+    @pytest.mark.parametrize(
+        "dataset_name,num_classes",
+        [
+            ("mouse-kidney", 3),
+            ("brca-test", 2),
+        ],
+    )
+    def test_gated_load_called_with_dataset_name(
         self,
         mock_gated_load,
         mock_data_module,
         mock_model,
         mock_train,
-        exp_cfg_gated,
+        dataset_name,
+        num_classes,
     ):
-        run_exp(
-            exp_cfg_gated,
-            MLFlowConfig(track=False),
-            gated_datasets=self.GATED,
-        )
-
-        mock_gated_load.assert_called_once_with("mouse-kidney", self.GATED)
-
-    @patch("stgym.rct.run.train")
-    @patch("stgym.rct.run.STGymModule")
-    @patch("stgym.rct.run.STDataModule")
-    @patch("stgym.rct.run.gated_load")
-    def test_gate_used_for_ungated_dataset(
-        self,
-        mock_gated_load,
-        mock_data_module,
-        mock_model,
-        mock_train,
-        exp_cfg_ungated,
-    ):
-        run_exp(
-            exp_cfg_ungated,
-            MLFlowConfig(track=False),
-            gated_datasets=self.GATED,
-        )
-
-        mock_gated_load.assert_called_once_with("brca-test", self.GATED)
+        exp_cfg = self._make_exp_cfg(dataset_name, num_classes)
+        run_exp(exp_cfg, MLFlowConfig(track=False), gated_datasets=self.GATED)
+        mock_gated_load.assert_called_once_with(dataset_name, self.GATED)
 
 
 class TestGatedLoad:
