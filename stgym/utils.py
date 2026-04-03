@@ -170,9 +170,10 @@ def gated_load(dataset_name: str, gated_datasets: frozenset[str]):
     if dataset_name not in gated_datasets:
         yield
         return
-    gate = DatasetLoadGate.options(
-        name="dataset_load_gate", get_if_exists=True
-    ).remote()
+    # max_concurrent=1: only one worker loads at a time to prevent concurrent OOM kills
+    gate = DatasetLoadGate.options(name="dataset_load_gate", get_if_exists=True).remote(
+        max_concurrent=1
+    )
     ray.get(gate.acquire.remote())
     try:
         yield
