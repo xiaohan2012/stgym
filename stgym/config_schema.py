@@ -372,6 +372,3 @@ class ResourceConfig(BaseModel, YamlLoaderMixin):
         24.0  # TODO: use torch.cuda.get_device_properties(0).total_memory / 1024**3
     )
     omp_num_threads: PositiveInt | None = None
-    # datasets whose peak RAM during torch.load() exceeds safe concurrent limits;
-    # keys are dataset_name strings, values are approximate peak GB (informational only)
-    dataset_memory_gb: dict[str, float] = {}

@@ -37,10 +37,7 @@ def main(cfg: DictConfig):
     design_space = DesignSpace.model_validate(cfg.design_space)
     design_dimension = cfg.design_dimension
     design_chocies = cfg.design_choices
-    res_cfg = ResourceConfig(
-        **cfg.resource,
-        dataset_memory_gb=OmegaConf.to_container(cfg.dataset_memory_gb, resolve=True),
-    )
+    res_cfg = ResourceConfig(**cfg.resource)
     mlflow_cfg = MLFlowConfig(**cfg.mlflow)
 
     if res_cfg.omp_num_threads is not None:
@@ -54,7 +51,7 @@ def main(cfg: DictConfig):
     if not ray.is_initialized():
         ray.init(num_cpus=res_cfg.num_cpus, num_gpus=res_cfg.num_gpus)
 
-    gated_datasets = frozenset(res_cfg.dataset_memory_gb.keys())
+    gated_datasets = frozenset(cfg.gated_datasets)
     if gated_datasets:
         DatasetLoadGate.options(name="dataset_load_gate").remote(max_concurrent=1)
 

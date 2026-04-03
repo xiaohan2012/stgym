@@ -6,5 +6,6 @@ defaults:
 
 sample_size: 128
 random_seed: 42
-dataset_memory_gb:
-  mouse-kidney: 40.0
+gated_datasets:
+  - mouse-kidney
+  - breast-cancer

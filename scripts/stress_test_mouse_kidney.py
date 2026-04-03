@@ -16,12 +16,13 @@ import sys
 
 import ray
 
+from stgym.config_schema import DataLoaderConfig, TaskConfig
+from stgym.data_loader import STDataModule
+
 
 @ray.remote
 def load_dataset(knn_k: int) -> bool:
     """Load mouse-kidney dataset only — no training."""
-    from stgym.config_schema import DataLoaderConfig, TaskConfig
-    from stgym.data_loader import STDataModule
 
     task = TaskConfig(
         dataset_name="mouse-kidney",

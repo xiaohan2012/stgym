@@ -1,7 +1,7 @@
 """Tests for DatasetLoadGate actor and gated_datasets integration in run_exp."""
 
 import asyncio
-from unittest.mock import Mock, call, patch
+from unittest.mock import Mock, patch
 
 import pytest
 import ray
@@ -26,14 +26,6 @@ from stgym.utils import DatasetLoadGate, rm_dir_if_exists
 # ---------------------------------------------------------------------------
 # Gate actor tests (require a live Ray cluster)
 # ---------------------------------------------------------------------------
-
-
-@pytest.fixture(scope="module", autouse=True)
-def ray_cluster():
-    if not ray.is_initialized():
-        ray.init(num_cpus=2, ignore_reinit_error=True)
-    yield
-    ray.shutdown()
 
 
 class TestDatasetLoadGate:
