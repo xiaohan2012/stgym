@@ -17,19 +17,21 @@ import sys
 import ray
 
 from stgym.config_schema import DataLoaderConfig, TaskConfig
-from stgym.data_loader import STDataModule
+from stgym.data_loader import STDataModule, get_info
+from stgym.data_loader.const import DatasetName
 from stgym.utils import DatasetLoadGate, gated_load
 
-DATASET_NAME = "mouse-kidney"
+DATASET_NAME = DatasetName.mouse_kidney
 
 
 @ray.remote
 def load_dataset(knn_k: int, gated_datasets: frozenset) -> bool:
     """Load mouse-kidney dataset only — no training."""
+    info = get_info(DATASET_NAME)
     task = TaskConfig(
         dataset_name=DATASET_NAME,
-        type="graph-classification",
-        num_classes=3,
+        type=info["task_type"],
+        num_classes=info["num_classes"],
     )
     dl = DataLoaderConfig(graph_const="knn", knn_k=knn_k, batch_size=8)
     with gated_load(DATASET_NAME, gated_datasets):
@@ -79,8 +81,11 @@ def main():
     ray.init(num_cpus=args.n_workers * args.cpus_per_worker, num_gpus=0)
 
     gated_datasets = frozenset([DATASET_NAME]) if args.use_gate else frozenset()
+    gate_actor = None
     if args.use_gate:
-        DatasetLoadGate.options(name="dataset_load_gate").remote(max_concurrent=1)
+        gate_actor = DatasetLoadGate.options(name="dataset_load_gate").remote(
+            max_concurrent=1
+        )
 
     futures = [
         load_dataset.options(
