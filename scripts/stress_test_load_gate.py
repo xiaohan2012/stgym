@@ -5,10 +5,10 @@ when loading the mouse-kidney dataset concurrently.
 
 Usage:
     # Baseline — no gate, all workers load simultaneously (expect OOM kills)
-    python scripts/stress_test_mouse_kidney.py --n-workers 6
+    python scripts/stress_test_load_gate.py --n-workers 6
 
     # With gate — workers serialize through DatasetLoadGate (expect all survive)
-    python scripts/stress_test_mouse_kidney.py --n-workers 6 --use-gate
+    python scripts/stress_test_load_gate.py --n-workers 6 --use-gate
 """
 
 import argparse
