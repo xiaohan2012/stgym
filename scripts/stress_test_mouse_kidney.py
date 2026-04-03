@@ -51,34 +51,19 @@ def main():
         action="store_true",
         help="Serialize loads via DatasetLoadGate (the fix being tested)",
     )
-    parser.add_argument(
-        "--cpus-per-worker",
-        type=int,
-        default=1,
-        help="CPUs reserved per worker (controls Ray parallelism budget)",
-    )
-    parser.add_argument(
-        "--max-retries",
-        type=int,
-        default=0,
-        help="Ray max_retries per worker (0 = no retry, gives clean first-pass kill count)",
-    )
-    parser.add_argument(
-        "--knn-k", type=int, default=20, help="KNN k for graph construction"
-    )
     args = parser.parse_args()
+
+    cpus_per_worker = 1
+    knn_k = 20
 
     mode = "gate ON (serialized loads)" if args.use_gate else "gate OFF (baseline)"
 
     print(f"\n=== mouse-kidney stress test ===")
     print(f"Workers        : {args.n_workers}")
     print(f"Mode           : {mode}")
-    print(f"CPUs per worker: {args.cpus_per_worker}")
-    print(f"Max retries    : {args.max_retries}")
-    print(f"knn_k          : {args.knn_k}")
     print()
 
-    ray.init(num_cpus=args.n_workers * args.cpus_per_worker, num_gpus=0)
+    ray.init(num_cpus=args.n_workers * cpus_per_worker, num_gpus=0)
 
     gated_datasets = frozenset([DATASET_NAME]) if args.use_gate else frozenset()
     gate_actor = None
@@ -88,9 +73,9 @@ def main():
         )
 
     futures = [
-        load_dataset.options(
-            num_cpus=args.cpus_per_worker, max_retries=args.max_retries
-        ).remote(knn_k=args.knn_k, gated_datasets=gated_datasets)
+        load_dataset.options(num_cpus=cpus_per_worker, max_retries=0).remote(
+            knn_k=knn_k, gated_datasets=gated_datasets
+        )
         for _ in range(args.n_workers)
     ]
 
