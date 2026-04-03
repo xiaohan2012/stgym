@@ -2,7 +2,6 @@ import os
 import traceback
 from typing import Optional
 
-import ray
 import torch
 from logzero import logger as logz_logger
 from omegaconf import OmegaConf
@@ -13,7 +12,7 @@ from stgym.data_loader import STDataModule, STKfoldDataModule
 from stgym.tl_model import STGymModule
 from stgym.train import train
 from stgym.types import primitive_type
-from stgym.utils import DatasetLoadGate, log_params_and_config_in_mlflow
+from stgym.utils import gated_load, log_params_and_config_in_mlflow
 
 
 def log_training_error(e: Exception, logger: Optional, error_context: str = ""):
@@ -103,19 +102,8 @@ def run_exp(
             logger = None
 
         try:
-            # regular train/val/test split
-            gate_acquired = False
-            if exp_cfg.task.dataset_name in gated_datasets:
-                gate = DatasetLoadGate.options(
-                    name="dataset_load_gate", get_if_exists=True
-                ).remote()
-                ray.get(gate.acquire.remote())
-                gate_acquired = True
-            try:
+            with gated_load(exp_cfg.task.dataset_name, gated_datasets):
                 data_module = STDataModule(exp_cfg.task, exp_cfg.data_loader)
-            finally:
-                if gate_acquired:
-                    gate.release.remote()
             model_module = STGymModule(
                 dim_in=data_module.num_features,
                 dim_out=dim_out,
@@ -164,19 +152,8 @@ def run_exp(
                 fold_logger = None
 
             try:
-                # Create data module for this fold
-                fold_gate_acquired = False
-                if exp_cfg.task.dataset_name in gated_datasets:
-                    fold_gate = DatasetLoadGate.options(
-                        name="dataset_load_gate", get_if_exists=True
-                    ).remote()
-                    ray.get(fold_gate.acquire.remote())
-                    fold_gate_acquired = True
-                try:
+                with gated_load(exp_cfg.task.dataset_name, gated_datasets):
                     fold_data_module = STKfoldDataModule(exp_cfg.task, fold_dl_cfg)
-                finally:
-                    if fold_gate_acquired:
-                        fold_gate.release.remote()
 
                 # Create model module for this fold
                 fold_model_module = STGymModule(

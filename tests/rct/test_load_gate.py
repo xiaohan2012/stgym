@@ -20,7 +20,7 @@ from stgym.config_schema import (
     TrainConfig,
 )
 from stgym.rct.run import run_exp
-from stgym.utils import DatasetLoadGate, rm_dir_if_exists
+from stgym.utils import DatasetLoadGate, gated_load, rm_dir_if_exists
 
 
 # ---------------------------------------------------------------------------
@@ -137,56 +137,37 @@ def teardown():
 
 
 class TestRunExpGating:
-    """Verify that run_exp acquires/releases the gate iff dataset is gated."""
+    """Verify that run_exp calls gated_load with the correct arguments."""
 
     GATED = frozenset(["mouse-kidney"])
-
-    def _make_mock_gate(self):
-        mock_gate = Mock()
-        mock_acquire_ref = Mock()
-        mock_gate.acquire.return_value = mock_acquire_ref
-        return mock_gate
 
     @patch("stgym.rct.run.train")
     @patch("stgym.rct.run.STGymModule")
     @patch("stgym.rct.run.STDataModule")
-    @patch("stgym.rct.run.ray")
-    @patch("stgym.rct.run.DatasetLoadGate")
-    def test_gate_acquired_for_gated_dataset(
+    @patch("stgym.rct.run.gated_load")
+    def test_gate_used_for_gated_dataset(
         self,
-        mock_gate_cls,
-        mock_ray,
+        mock_gated_load,
         mock_data_module,
         mock_model,
         mock_train,
         exp_cfg_gated,
     ):
-        mock_gate = self._make_mock_gate()
-        mock_gate_cls.options.return_value.remote.return_value = mock_gate
-        mock_ray.get = Mock()
-
         run_exp(
             exp_cfg_gated,
             MLFlowConfig(track=False),
             gated_datasets=self.GATED,
         )
 
-        mock_gate_cls.options.assert_called_once_with(
-            name="dataset_load_gate", get_if_exists=True
-        )
-        # Gate uses Ray remote pattern: acquire.remote() and release.remote()
-        mock_gate.acquire.remote.assert_called_once()
-        mock_gate.release.remote.assert_called_once()
+        mock_gated_load.assert_called_once_with("mouse-kidney", self.GATED)
 
     @patch("stgym.rct.run.train")
     @patch("stgym.rct.run.STGymModule")
     @patch("stgym.rct.run.STDataModule")
-    @patch("stgym.rct.run.ray")
-    @patch("stgym.rct.run.DatasetLoadGate")
-    def test_gate_not_used_for_ungated_dataset(
+    @patch("stgym.rct.run.gated_load")
+    def test_gate_used_for_ungated_dataset(
         self,
-        mock_gate_cls,
-        mock_ray,
+        mock_gated_load,
         mock_data_module,
         mock_model,
         mock_train,
@@ -198,32 +179,29 @@ class TestRunExpGating:
             gated_datasets=self.GATED,
         )
 
-        mock_gate_cls.options.assert_not_called()
+        mock_gated_load.assert_called_once_with("brca-test", self.GATED)
 
-    @patch("stgym.rct.run.train")
-    @patch("stgym.rct.run.STGymModule")
-    @patch("stgym.rct.run.STDataModule")
-    @patch("stgym.rct.run.ray")
-    @patch("stgym.rct.run.DatasetLoadGate")
-    def test_gate_released_even_if_data_load_raises(
-        self,
-        mock_gate_cls,
-        mock_ray,
-        mock_data_module,
-        mock_model,
-        mock_train,
-        exp_cfg_gated,
-    ):
-        mock_gate = self._make_mock_gate()
+
+class TestGatedLoad:
+    """Verify gated_load context manager acquires/releases the gate correctly."""
+
+    GATED = frozenset(["mouse-kidney"])
+
+    def test_noop_for_ungated_dataset(self):
+        """Ungated dataset passes through without touching any actor."""
+        with gated_load("brca-test", self.GATED):
+            pass  # no error, no actor needed
+
+    @patch("stgym.utils.ray")
+    @patch("stgym.utils.DatasetLoadGate")
+    def test_releases_even_on_exception(self, mock_gate_cls, mock_ray):
+        """Gate is released via finally even when the body raises."""
+        mock_gate = Mock()
         mock_gate_cls.options.return_value.remote.return_value = mock_gate
         mock_ray.get = Mock()
-        mock_data_module.side_effect = RuntimeError("load failed")
 
-        run_exp(
-            exp_cfg_gated,
-            MLFlowConfig(track=False),
-            gated_datasets=self.GATED,
-        )
+        with pytest.raises(RuntimeError):
+            with gated_load("mouse-kidney", self.GATED):
+                raise RuntimeError("load failed")
 
-        # Gate must be released even when data loading raises.
         mock_gate.release.remote.assert_called_once()
