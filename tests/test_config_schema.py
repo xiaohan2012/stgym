@@ -230,25 +230,3 @@ class TestExperimentConfig:
             train=TrainConfig(max_epoch=100),
         )
         assert cfg.data_loader.split == dataset_eval_mode[ds_name]
-
-
-class TestResourceConfigMemory:
-    def test_get_memory_bytes_returns_none_when_unconfigured(self):
-        cfg = ResourceConfig()
-        assert cfg.get_memory_bytes("mouse-kidney") is None
-
-    def test_get_memory_bytes_converts_gb_to_bytes(self):
-        cfg = ResourceConfig(dataset_memory_gb={"mouse-kidney": 40.0})
-        assert cfg.get_memory_bytes("mouse-kidney") == int(40.0 * 1024**3)
-
-    def test_get_memory_bytes_returns_none_for_unknown_dataset(self):
-        cfg = ResourceConfig(dataset_memory_gb={"mouse-kidney": 40.0})
-        assert cfg.get_memory_bytes("brca") is None
-
-    def test_get_memory_bytes_multiple_datasets(self):
-        cfg = ResourceConfig(
-            dataset_memory_gb={"mouse-kidney": 40.0, "glioblastoma": 20.0}
-        )
-        assert cfg.get_memory_bytes("mouse-kidney") == int(40.0 * 1024**3)
-        assert cfg.get_memory_bytes("glioblastoma") == int(20.0 * 1024**3)
-        assert cfg.get_memory_bytes("brca") is None

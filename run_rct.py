@@ -71,12 +71,9 @@ def main(cfg: DictConfig):
     for i, exp_cfg in enumerate(configs):
         # Use configured GPU allocation instead of memory-based estimation
         gpu_allocation = res_cfg.num_gpus_per_trial
-        memory_bytes = res_cfg.get_memory_bytes(exp_cfg.task.dataset_name)
 
         run_exp_remote = ray.remote(run_exp).options(
-            num_cpus=res_cfg.num_cpus_per_trial,
-            num_gpus=gpu_allocation,
-            **({"memory": memory_bytes} if memory_bytes is not None else {}),
+            num_cpus=res_cfg.num_cpus_per_trial, num_gpus=gpu_allocation
         )
         promises.append(
             run_exp_remote.remote(

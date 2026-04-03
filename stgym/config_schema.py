@@ -375,8 +375,3 @@ class ResourceConfig(BaseModel, YamlLoaderMixin):
     # datasets whose peak RAM during torch.load() exceeds safe concurrent limits;
     # keys are dataset_name strings, values are approximate peak GB (informational only)
     dataset_memory_gb: dict[str, float] = {}
-
-    def get_memory_bytes(self, dataset_name: str) -> int | None:
-        """Return Ray memory reservation in bytes for a dataset, or None if unconfigured."""
-        gb = self.dataset_memory_gb.get(dataset_name)
-        return int(gb * 1024**3) if gb is not None else None
