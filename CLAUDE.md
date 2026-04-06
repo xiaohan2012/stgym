@@ -72,9 +72,17 @@ python run_experiment_by_yaml.py <config_path> [--mlflow-uri URI] [--experiment-
 
 ### Running RCT Sweeps
 
+Run a single design dimension:
 ```bash
 python run_rct.py +exp=<experiment> design_space=<space> resource=<resource> sample_size=<n>
 ```
+
+Run all design dimensions across both task types (the typical full sweep):
+```bash
+# defaults: RESOURCE=gpu-6, SAMPLE_SIZE=100
+RESOURCE=gpu-4 SAMPLE_SIZE=50 ./scripts/design-dimension-sweep-all.sh
+```
+This sweeps every `conf/exp/*.yaml` dimension for `graph_clf` and `node_clf` (excluding pooling dimensions for node_clf), grouping all runs under a single timestamped MLflow experiment.
 
 ### Testing
 
