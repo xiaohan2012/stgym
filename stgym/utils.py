@@ -173,15 +173,10 @@ def gated_load(dataset_name: str, gated_datasets: frozenset[str]):
     gate = DatasetLoadGate.options(
         name="dataset_load_gate", get_if_exists=True
     ).remote()
-    import logging
-
-    logging.warning("[gated_load] %s: acquiring gate", dataset_name)
     ray.get(gate.acquire.remote())
-    logging.warning("[gated_load] %s: acquired gate, loading", dataset_name)
     try:
         yield
     finally:
-        logging.warning("[gated_load] %s: releasing gate", dataset_name)
         gate.release.remote()
 
 
