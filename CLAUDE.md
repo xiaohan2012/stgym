@@ -97,6 +97,14 @@ bash scripts/test_on_gpu.sh    # quick GPU smoke test
 
 Default local MLflow URI is `http://127.0.0.1:5000`. Start the server with the launch script if needed (see `scripts/`).
 
+## Claude Code Skills
+
+Several project-specific skills are available via `/skill-name`:
+
+- **`/mlflow-reader`** — Query MLflow servers, list/filter experiments and runs, extract metrics/parameters, read artifact files. Activates automatically when given MLflow URLs or asked about experiment results.
+- **`/mlflow-failure-analyzer`** — Analyze failed MLflow runs: retrieves `training_error.txt` and `experiment_config.yaml` artifacts (including via SCP from cyy2), categorizes errors, and produces a structured debugging report.
+- **`/run-on-cyy2`** — Run commands, sync code, and manage long-running jobs on the `cyy2` GPU server. Handles screen session management, `git pull` + launch workflows for single experiments and sweeps, and fetching MLflow artifacts from the remote `mlruns/` store.
+
 ## Key Conventions
 
 - Dataset names use kebab-case strings (e.g., `mouse-kidney`, `gastric-bladder-cancer`). The canonical list is in `stgym/data_loader/const.py:DatasetName` and `stgym/data_loader/ds_info.py`.
