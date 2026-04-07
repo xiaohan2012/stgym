@@ -1,6 +1,10 @@
+import gc
 import os
 import traceback
 from typing import Optional
+
+import objgraph
+import psutil
 
 import torch
 from logzero import logger as logz_logger
@@ -62,6 +66,11 @@ def run_exp(
     profile: bool = False,
     gated_datasets: frozenset[str] = frozenset(),
 ):
+    _proc = psutil.Process(os.getpid())
+    _rss_start_gb = _proc.memory_info().rss / 1e9
+    logz_logger.info(f"[mem-diag] PID={_proc.pid} rss_start={_rss_start_gb:.2f} GB")
+    objgraph.show_growth(limit=10)
+
     logz_logger.debug(OmegaConf.to_yaml(exp_cfg.model_dump()))
 
     dim_out = get_dim_out(exp_cfg.task)
@@ -183,5 +192,14 @@ def run_exp(
                             fold_logger.run_id, status="FAILED"
                         )
                     os._exit(1)
+
+    gc.collect()
+    _rss_after_gc_gb = _proc.memory_info().rss / 1e9
+    logz_logger.info(
+        f"[mem-diag] PID={_proc.pid} "
+        f"rss_after_gc={_rss_after_gc_gb:.2f} GB  "
+        f"delta={_rss_after_gc_gb - _rss_start_gb:+.2f} GB"
+    )
+    objgraph.show_growth(limit=10)
 
     return True
