@@ -5,7 +5,6 @@ from typing import Optional
 
 import objgraph
 import psutil
-
 import torch
 from logzero import logger as logz_logger
 from omegaconf import OmegaConf
