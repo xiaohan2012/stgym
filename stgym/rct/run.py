@@ -12,7 +12,7 @@ from stgym.data_loader import STDataModule, STKfoldDataModule
 from stgym.tl_model import STGymModule
 from stgym.train import train
 from stgym.types import primitive_type
-from stgym.utils import log_params_and_config_in_mlflow
+from stgym.utils import gated_load, log_params_and_config_in_mlflow
 
 
 def log_training_error(e: Exception, logger: Optional, error_context: str = ""):
@@ -60,6 +60,7 @@ def run_exp(
     mlflow_cfg: MLFlowConfig,
     metadata_for_tag: dict[str, primitive_type] | None = None,
     profile: bool = False,
+    gated_datasets: frozenset[str] = frozenset(),
 ):
     logz_logger.debug(OmegaConf.to_yaml(exp_cfg.model_dump()))
 
@@ -101,8 +102,8 @@ def run_exp(
             logger = None
 
         try:
-            # regular train/val/test split
-            data_module = STDataModule(exp_cfg.task, exp_cfg.data_loader)
+            with gated_load(exp_cfg.task.dataset_name, gated_datasets):
+                data_module = STDataModule(exp_cfg.task, exp_cfg.data_loader)
             model_module = STGymModule(
                 dim_in=data_module.num_features,
                 dim_out=dim_out,
@@ -151,8 +152,8 @@ def run_exp(
                 fold_logger = None
 
             try:
-                # Create data module for this fold
-                fold_data_module = STKfoldDataModule(exp_cfg.task, fold_dl_cfg)
+                with gated_load(exp_cfg.task.dataset_name, gated_datasets):
+                    fold_data_module = STKfoldDataModule(exp_cfg.task, fold_dl_cfg)
 
                 # Create model module for this fold
                 fold_model_module = STGymModule(

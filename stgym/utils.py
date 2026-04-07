@@ -1,7 +1,9 @@
+import asyncio
 import os
 import shutil
 import socket
 import tempfile
+from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
 
@@ -139,6 +141,43 @@ class RayProgressBar:
     @staticmethod
     def check():
         assert ray.is_initialized()
+
+
+@ray.remote
+class DatasetLoadGate:
+    """Named Ray actor — asyncio semaphore limiting concurrent dataset loads.
+
+    Create once in the driver before launching workers:
+        DatasetLoadGate.options(name="dataset_load_gate").remote(max_concurrent=1)
+
+    Workers connect via get_if_exists=True to avoid races:
+        gate = DatasetLoadGate.options(name="dataset_load_gate", get_if_exists=True).remote()
+    """
+
+    def __init__(self, max_concurrent: int = 1):
+        self._sem = asyncio.Semaphore(max_concurrent)
+
+    async def acquire(self) -> None:
+        await self._sem.acquire()
+
+    def release(self) -> None:
+        self._sem.release()
+
+
+@contextmanager
+def gated_load(dataset_name: str, gated_datasets: frozenset[str]):
+    """Serialize dataset loads for gated datasets to prevent concurrent OOM kills."""
+    if dataset_name not in gated_datasets:
+        yield
+        return
+    gate = DatasetLoadGate.options(
+        name="dataset_load_gate", get_if_exists=True
+    ).remote()
+    ray.get(gate.acquire.remote())
+    try:
+        yield
+    finally:
+        gate.release.remote()
 
 
 def rand_ints(size, min=0, max=100000, seed: int = None) -> np.ndarray:
