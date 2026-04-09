@@ -21,7 +21,7 @@ There are two entry points:
 Two distinct config schemas live in `stgym/config_schema.py`:
 
 - `ExperimentConfig` — the flat per-run config used by `run_experiment_by_yaml.py` and as the output of design space sampling. Fields: `task`, `data_loader`, `model`, `train`.
-- `DesignSpace` (`stgym/design_space/schema.py`) — each field can be a scalar or list; the generator randomly samples one combination per trial. Fields with matching lists can be co-sampled using `zip_`.
+- `DesignSpace` (`stgym/design_space/schema.py`) — each field can be a scalar or list; the generator randomly samples one combination per trial.
 
 Hydra config (`conf/config.yaml`) defaults to `design_space: node_clf`, `resource: cpu-4`, `mlflow: local`. Override with `+exp=<name>` to add experiment-specific params (from `conf/exp/`).
 
@@ -33,9 +33,9 @@ Each dataset class extends `AbstractDataset` (`stgym/data_loader/base.py`), whic
 2. Graph construction (KNN or radius) and sparse tensor conversion run as `pre_transform`
 3. Processed graphs are cached to `data/<dataset-name>/processed/data_<tag>.pt` where `<tag>` encodes graph construction params (e.g., `knn10`, `radius0.1`)
 
-**Test datasets** use the `-test` suffix (e.g., `brca-test`), are stored in `tests/data/`, and apply a `num_nodes <= 500` pre-filter to keep graphs small.
+**Test datasets** contain graphs with moderate number of nodes, use the `-test` suffix (e.g., `brca-test`), and are stored in `tests/data/`.
 
-**K-fold CV** is automatically used for datasets with few samples (defined in `dataset_eval_mode` in `config_schema.py`): `human-intestine`, `spatial-vdj`, `human-pancreas`, `colorectal-cancer`, `gastric-bladder-cancer`, `cellcontrast-breast`. For k-fold, each fold runs as a separate MLflow run tagged with `fold`.
+**K-fold CV** is automatically used for datasets with few samples (defined in `dataset_eval_mode` in `config_schema.py`). For k-fold, each fold runs as a separate MLflow run tagged with `fold`.
 
 ### Model Architecture
 
@@ -44,8 +44,6 @@ Each dataset class extends `AbstractDataset` (`stgym/data_loader/base.py`), whic
 - Optional hierarchical pooling (DMoN or MinCut) after any MP layer — only valid for graph classification
 - Global pooling (mean/sum/max) + post-MP MLP for graph classification
 - Binary classification outputs `dim_out=1`; multi-class outputs `num_classes`
-
-OOM handling: if a Ray worker hits CUDA OOM, it calls `os._exit(1)` to release the GPU slot immediately.
 
 ### Experiment Launching Scripts
 
@@ -84,6 +82,11 @@ RESOURCE=gpu-4 SAMPLE_SIZE=50 ./scripts/design-dimension-sweep-all.sh
 ```
 This sweeps every `conf/exp/*.yaml` dimension for `graph_clf` and `node_clf` (excluding pooling dimensions for node_clf), grouping all runs under a single timestamped MLflow experiment.
 
+Test the sweep setup with a small smoke test:
+```bash
+bash scripts/test-design-dimension-sweep.sh
+```
+
 ### Testing
 
 ```bash
@@ -107,6 +110,79 @@ Several project-specific skills are available via `/skill-name`:
 
 ## Key Conventions
 
-- Dataset names use kebab-case strings (e.g., `mouse-kidney`, `gastric-bladder-cancer`). The canonical list is in `stgym/data_loader/const.py:DatasetName` and `stgym/data_loader/ds_info.py`.
-- Raw data is never downloaded automatically — each dataset has a preprocessing script in `scripts/data_preprocessing/`. See `stgym/data_loader/README.md` for per-dataset download and preprocessing instructions.
+- Dataset names use kebab-case strings (e.g., `mouse-kidney`). The canonical list is in `stgym/data_loader/const.py:DatasetName` and `stgym/data_loader/ds_info.py`.
+- Raw data is never downloaded automatically — one dataset may have a preprocessing script in `scripts/data_preprocessing/`. See `stgym/data_loader/README.md` for per-dataset download and preprocessing instructions.
 - Adding a new dataset requires: a loader class in `stgym/data_loader/`, an entry in `get_dataset_class()` (`stgym/data_loader/__init__.py`), and an entry in `ds_info.py` with `num_classes`, `task_type`, and spatial span bounds.
+
+## Coding Style
+
+### Unit Tests
+
+Follow the guidelines in `.claude/skills/write-test/SKILL.md` (invoke via `/write-test`). Key principles:
+- Group related tests under one class; use `pytest.parametrize` for variant cases
+- Share test data as class properties and `@mock.patch` at the class level
+- Share fixtures via `conftest.py`; avoid duplicating mock setup across test methods
+- Mock external dependencies (MLflow, network); don't mock pure calculations
+
+### Code Reuse & Cleanness
+
+- Extract shared logic into helpers when used 3+ times
+- No dead code or commented-out blocks
+- Functions do one thing; keep them under ~50 lines
+
+### Functional Style
+
+- Prefer `pydash` for collection transforms (map, filter, group_by, etc.)
+- Prefer pure functions and immutable data where practical
+- Use list/dict comprehensions over manual loops for simple transforms
+
+### Preferred Libraries
+
+- `logzero` for logging (not `print()` or stdlib `logging`)
+- `pydash` for collection operations
+- `pydantic` for config validation
+
+### Linting
+
+`pre-commit` is configured to run before each commit, invoking `ruff` (linting + formatting) and `ty` (type checking). Both are configured in `pyproject.toml`.
+
+### Other
+
+- Type hints on all public function signatures
+- `snake_case` for functions/vars, `PascalCase` for classes, `UPPER_CASE` for constants
+- Fail fast with clear error messages; no silent `except: pass`
+
+## Labeling Scheme
+
+All agents and contributors follow this labeling scheme for GitHub issues and PRs.
+
+### Status (lifecycle, mutually exclusive, prefixed `status/`)
+
+- `status/new` — just created, not yet triaged
+- `status/triaged` — PM reviewed, priority/type assigned
+- `status/ready` — all blockers resolved, can be picked up
+- `status/in-progress` — developer working on it
+- `status/needs-review` — PR opened, awaiting reviewer
+- `status/done` — merged and closed
+
+### Type (mutually exclusive)
+
+- `bug` — something broken
+- `enhancement` — new feature
+- `optimization` — performance/efficiency
+- `refactor` — code cleanup, no behavior change
+- `docs` — documentation
+- `infra` — CI/CD, tooling, dev environment
+
+### Priority
+
+- `P0` — critical, blocks everything
+- `P1` — high, do this sprint
+- `P2` — normal, planned work
+- `P3` — low, nice to have
+
+## Agent Activity Log
+
+All agents append to `ACTIVITY.log` (repo root, gitignored) when starting/finishing a task.
+
+Format: `[timestamp] [agent] [issue] [action] [summary]`
