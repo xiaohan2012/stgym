@@ -20,9 +20,8 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 ENV PATH="/root/.local/bin:$PATH"
 
-# Claude Code CLI (standalone installer)
-RUN curl -fsSL https://claude.ai/install.sh | sh
-ENV PATH="/root/.claude/bin:$PATH"
+# Claude Code CLI (standalone installer, same PATH as uv)
+RUN curl -fsSL https://claude.ai/install.sh | bash
 
 # Git identity for agents
 RUN git config --global user.name "stgym-bot" \
