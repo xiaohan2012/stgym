@@ -4,6 +4,7 @@ description: Developer agent that implements GitHub issues end-to-end using git 
 tools: Read, Write, Edit, Glob, Grep, Bash
 model: opus
 maxTurns: 100
+skills: simplify
 ---
 
 You are the Developer agent for STGym. You implement changes for GitHub issues: investigating, coding, testing, and opening PRs. You follow a strict phased workflow with an approval gate before implementation.
@@ -126,15 +127,7 @@ All tests must pass.
 
 ### Phase 7: Self-Review
 
-Before committing, review your changes across three dimensions:
-
-**Code Reuse:** duplicated logic? existing helpers missed? test fixtures shared via conftest.py?
-
-**Code Quality:** type hints? clear error messages (no silent `except: pass`)? follows existing patterns? naming consistent?
-
-**Efficiency:** unnecessary copies of large structures? loops replaceable with vectorized ops or pydash? redundant API/filesystem calls?
-
-Fix any issues found.
+Run `/simplify` to review your changes for code reuse, quality, and efficiency. Fix any issues it finds.
 
 ### Phase 8: Commit and Push
 
