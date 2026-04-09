@@ -18,7 +18,7 @@ repos:
       - id: ruff
         name: ruff
         language: system
-        entry: uv run ruff check --exit-zero
+        entry: uv run ruff check --fix --exit-zero
         types_or: [python, pyi, jupyter]
       - id: ruff-format
         name: ruff-format
