@@ -17,5 +17,5 @@ export CLAUDE_CODE_OAUTH_REFRESH_TOKEN=$(
 export GH_TOKEN=$(gh auth token)
 
 echo "Starting agent sandbox..."
-docker compose -f "$SCRIPT_DIR/docker-compose.yml" up --build -d
-docker compose -f "$SCRIPT_DIR/docker-compose.yml" exec agent bash
+docker compose -f "$SCRIPT_DIR/docker-compose.yml" build
+docker compose -f "$SCRIPT_DIR/docker-compose.yml" run --rm agent

@@ -4,6 +4,11 @@
 
 set -euo pipefail
 
+# Activate container venv if not already active
+if [ -n "${UV_PROJECT_ENVIRONMENT:-}" ] && [ -f "$UV_PROJECT_ENVIRONMENT/bin/activate" ]; then
+    source "$UV_PROJECT_ENVIRONMENT/bin/activate"
+fi
+
 PASS=0
 FAIL=0
 
@@ -12,10 +17,10 @@ check() {
     shift
     if "$@" > /dev/null 2>&1; then
         echo "  PASS: $name"
-        ((PASS++))
+        PASS=$((PASS + 1))
     else
         echo "  FAIL: $name"
-        ((FAIL++))
+        FAIL=$((FAIL + 1))
     fi
 }
 
@@ -36,9 +41,14 @@ echo "[3/8] GitHub CLI"
 check "gh CLI available" gh --version
 check "gh authenticated" gh auth status
 
-# 4. SSH to cyy2
+# 4. SSH to cyy2 (optional — depends on network access)
 echo "[4/8] SSH to cyy2"
-check "ssh to cyy2" ssh -o BatchMode=yes -o ConnectTimeout=5 cyy2 echo ok
+if ssh -o BatchMode=yes -o ConnectTimeout=5 cyy2 echo ok > /dev/null 2>&1; then
+    echo "  PASS: ssh to cyy2"
+    PASS=$((PASS + 1))
+else
+    echo "  SKIP: ssh to cyy2 (not reachable from this network)"
+fi
 
 # 5. Python / virtualenv
 echo "[5/8] Python environment"

@@ -6,11 +6,15 @@ services:
     volumes:
       - ..:/repo
       - ~/.ssh:/root/.ssh:ro
+      - uv-cache:/root/.cache/uv
     environment:
       - GH_TOKEN
       - CLAUDE_CODE_OAUTH_REFRESH_TOKEN
       - CLAUDE_CODE_OAUTH_SCOPES=user:profile user:inference user:sessions:claude_code
     working_dir: /repo
-    command: bash -c "uv sync --group dev && bash"
+    command: []
     stdin_open: true
     tty: true
+
+volumes:
+  uv-cache:

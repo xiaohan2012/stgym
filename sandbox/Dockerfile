@@ -1,4 +1,4 @@
-FROM --platform=linux/arm64 python:3.12-slim
+FROM python:3.12-slim
 
 # System dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openssh-client \
     curl \
     ripgrep \
+    procps \
     && rm -rf /var/lib/apt/lists/*
 
 # gh CLI
@@ -35,12 +36,18 @@ RUN mkdir -p /root/.ssh && chmod 700 /root/.ssh \
 # Worktree directory
 RUN mkdir -p /repo-worktrees
 
-# Dedicated virtualenv (not .venv/ in repo)
-ENV VIRTUAL_ENV=/opt/stgym-venv
-RUN uv venv "$VIRTUAL_ENV"
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+# Dedicated virtualenv so we don't overwrite host's .venv
+ENV UV_PROJECT_ENVIRONMENT=/opt/stgym-venv
+ENV UV_LINK_MODE=copy
+RUN uv venv "$UV_PROJECT_ENVIRONMENT"
+ENV VIRTUAL_ENV=$UV_PROJECT_ENVIRONMENT
+ENV PATH="$UV_PROJECT_ENVIRONMENT/bin:$PATH"
+
+# Activate venv in every bash session (for docker exec)
+RUN echo "source $UV_PROJECT_ENVIRONMENT/bin/activate" >> /root/.bashrc
 
 WORKDIR /repo
 
-# Install dependencies at build time (requires repo to be mounted or copied)
-# At runtime, run: uv sync --group dev
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
