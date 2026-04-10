@@ -28,7 +28,21 @@ If an agent consistently hits its cap, that's a signal to look at the telemetry 
 
 ### Telemetry (OpenTelemetry)
 
-The sandbox enables Claude Code's OTel output via env vars in `sandbox/docker-compose.yml`. Events (metrics + per-turn records) are written via the console exporter to `/var/log/claude-telemetry/otel-<timestamp>.jsonl` inside the container, which is bind-mounted to `sandbox/telemetry/` on the host. `sandbox/claude.sh` generates a fresh log file per invocation and runs output through a secret-scrubbing `sed` filter on the way in.
+The sandbox runs a second service alongside the agent: an **OpenTelemetry Collector** sidecar (`otel/opentelemetry-collector-contrib`). The agent emits OTel metrics + logs over OTLP/gRPC to `otel-collector:4317`; the collector batches them and writes newline-delimited JSON to `/var/log/claude-telemetry/otel.jsonl`, which is bind-mounted to `sandbox/telemetry/` on the host. Rotation (50 MB per file, 10 backups, 30 days) is configured in `sandbox/otel-collector-config.yaml`.
+
+Architecture:
+
+```
+┌─────────┐   OTLP/gRPC    ┌────────────────┐   file        ┌──────────────────┐
+│  agent  │ ─────────────> │ otel-collector │ ────────────> │ sandbox/telemetry│
+│ (claude)│   :4317        │    sidecar     │  (JSONL +     │  /otel.jsonl*    │
+└─────────┘                └────────────────┘   rotation)   └──────────────────┘
+                                                                    ▲
+                                                                    │ host bind mount
+                                                         scripts/cost-report.sh
+```
+
+Why a collector instead of the console exporter: Claude Code's console exporter writes a multi-line pretty-printed JS object to stdout, which is not trivially parseable. OTLP → collector → file exporter gives us clean single-line JSON that `jq` can consume.
 
 **What's logged (`OTEL_LOG_TOOL_DETAILS=1`, `OTEL_LOG_USER_PROMPTS=1`):**
 - Per-turn cost, tokens (input/output/cache), duration, model
@@ -57,10 +71,10 @@ For ad-hoc spot-checks inside an interactive session, use the `/cost` slash comm
 
 ### Security: never share telemetry files
 
-`sandbox/telemetry/` is gitignored — do not commit, paste, or attach these files anywhere public. Even with the scrub filter, the logs contain:
+`sandbox/telemetry/` is gitignored — do not commit, paste, or attach these files anywhere public. The raw files contain:
 
 - Bash commands the agent ran (may include env-var expansions)
 - File paths and GitHub URLs touched during work
 - Your prompt text
 
-The scrub filter redacts common secret patterns (`ghp_*`, `sk-ant-*`, `AKIA*`, private keys, etc.) but it's not exhaustive. Before sharing any output from `sandbox/telemetry/` (e.g. in a bug report), `grep` for `REDACTED` to confirm the scrubber ran, and give the file a manual skim.
+**Important:** the collector writes raw OTLP data without any scrubbing — `otel.jsonl` may contain unredacted secrets if an agent ever inlined one into a command. Scrubbing happens at **read time** inside `scripts/cost-report.sh` via a `sed` pipeline that matches common patterns (`ghp_*`, `sk-ant-*`, `sk-*`, `AKIA*`, `xox[baprs]-*`, private keys). Before sharing any excerpt from `sandbox/telemetry/` (e.g. in a bug report), run it through the report script and `grep` for `REDACTED` to confirm the scrubber fired, and still give the output a manual skim.
