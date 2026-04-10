@@ -1,4 +1,13 @@
 services:
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.113.0
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro
+      # Shared bind mount with the host — cost-report.sh reads from here.
+      - ./telemetry:/var/log/claude-telemetry
+    restart: unless-stopped
+
   agent:
     build:
       context: .
@@ -11,6 +20,19 @@ services:
       - GH_TOKEN
       - CLAUDE_CODE_OAUTH_REFRESH_TOKEN
       - CLAUDE_CODE_OAUTH_SCOPES=user:profile user:inference user:sessions:claude_code
+      # OpenTelemetry — see sandbox/README.md § Cost & Observability
+      - CLAUDE_CODE_ENABLE_TELEMETRY=1
+      - OTEL_METRICS_EXPORTER=otlp
+      - OTEL_LOGS_EXPORTER=otlp
+      - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_METRIC_EXPORT_INTERVAL=60000
+      - OTEL_LOG_TOOL_DETAILS=1
+      - OTEL_LOG_USER_PROMPTS=1
+      # Intentionally NOT set: OTEL_LOG_TOOL_CONTENT (would log file
+      # contents + command output — too much surface area).
+    depends_on:
+      - otel-collector
     working_dir: /repo
     command: []
     stdin_open: true

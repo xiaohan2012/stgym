@@ -7,6 +7,10 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
+# Ensure the host-side telemetry dir exists before docker compose mounts it.
+# Otherwise Docker creates it as root on Linux (ownership headaches).
+mkdir -p "$SCRIPT_DIR/telemetry"
+
 # Extract Claude Code OAuth refresh token from macOS Keychain
 export CLAUDE_CODE_OAUTH_REFRESH_TOKEN=$(
   security find-generic-password -s "Claude Code-credentials" -w \

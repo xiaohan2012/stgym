@@ -182,3 +182,7 @@ mlruns
 
 # Agent activity log (local, shared by all agents)
 ACTIVITY.log
+
+# OpenTelemetry logs from the sandbox — may contain bash commands with
+# inlined env vars; never commit.
+sandbox/telemetry/
