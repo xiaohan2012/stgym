@@ -7,9 +7,11 @@
 #   Custom: RESOURCE=gpu-4 SAMPLE_SIZE=10 ./scripts/design-dimension-sweep-all.sh
 
 # Get all available experiments from conf/exp/*.yaml
-EXPERIMENTS_GRAPH_CLF=$(ls conf/exp/*.yaml | xargs -n1 basename | sed 's/\.yaml$//' | tr '\n' ',' | sed 's/,$//')
+# oom_verification is excluded: it uses model.dim_inner=512 for OOM testing only,
+# not as a sweep dimension, and would conflict with mlp_dim_inner in sweep_status.py
+EXPERIMENTS_GRAPH_CLF=$(ls conf/exp/*.yaml | grep -v -E '(oom_verification)' | xargs -n1 basename | sed 's/\.yaml$//' | tr '\n' ',' | sed 's/,$//')
 # node_clf design space has pooling: null, so hpooling and clusters dimensions don't exist there
-EXPERIMENTS_NODE_CLF=$(ls conf/exp/*.yaml | grep -v -E '(hpooling|clusters)' | xargs -n1 basename | sed 's/\.yaml$//' | tr '\n' ',' | sed 's/,$//')
+EXPERIMENTS_NODE_CLF=$(ls conf/exp/*.yaml | grep -v -E '(hpooling|clusters|oom_verification)' | xargs -n1 basename | sed 's/\.yaml$//' | tr '\n' ',' | sed 's/,$//')
 
 # Configuration variables with defaults
 RESOURCE=${RESOURCE:-gpu-6}
