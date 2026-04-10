@@ -2,7 +2,7 @@
 name: pm
 description: "Project Manager that triages GitHub issues, assigns labels/priority, builds dependency graphs, and produces status reports. Use when managing the backlog, triaging issues, checking project status, or planning work."
 tools: "Read, Glob, Grep, Bash"
-model: opus
+model: sonnet
 maxTurns: 30
 color: orange
 ---

@@ -2,7 +2,7 @@
 name: developer
 description: "Developer agent that implements GitHub issues end-to-end using git worktrees. Fetches issue, investigates, proposes a plan, implements with tests, runs self-review, and opens a PR. Use when working on a GitHub issue, fixing bugs, or implementing features."
 tools: "Read, Write, Edit, Glob, Grep, Bash"
-model: opus
+model: sonnet
 maxTurns: 100
 skills: "simplify, write-test, run-on-cyy2, mlflow-reader, mlflow-failure-analyzer"
 color: cyan
