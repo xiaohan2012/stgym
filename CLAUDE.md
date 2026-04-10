@@ -146,6 +146,8 @@ Follow the guidelines in `.claude/skills/write-test/SKILL.md` (invoke via `/writ
 
 `pre-commit` is configured to run before each commit, invoking `ruff` (linting + formatting) and `ty` (type checking). Both are configured in `pyproject.toml`.
 
+`pre-commit` lives inside `.venv`, so the virtualenv must be active before running `git commit` — otherwise the commit hook fails with `pre-commit not found`. If a shell session doesn't have it on PATH, run `source ~/.zshrc && source .venv/bin/activate` before committing.
+
 ### Other
 
 - Type hints on all public function signatures
