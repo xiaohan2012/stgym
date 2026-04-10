@@ -62,6 +62,14 @@ uv sync --group dev       # install all dependencies including dev tools
 source .venv/bin/activate # activate venv
 ```
 
+> **Important — always activate `.venv` before `git commit`.** `pre-commit`, `ruff`, and `ty` all live inside `.venv`. Non-login shells (including fresh agent shells) do **not** inherit it, and commits will fail with `pre-commit not found`. Chain the activation in the same command:
+>
+> ```bash
+> source .venv/bin/activate && git commit ...
+> ```
+>
+> The same applies to `pre-commit run`, `ruff`, `ty`, and any script that invokes them.
+
 ### Running Single Experiments
 
 ```bash
@@ -146,7 +154,7 @@ Follow the guidelines in `.claude/skills/write-test/SKILL.md` (invoke via `/writ
 
 `pre-commit` is configured to run before each commit, invoking `ruff` (linting + formatting) and `ty` (type checking). Both are configured in `pyproject.toml`.
 
-`pre-commit` lives inside `.venv`, so the virtualenv must be active before running `git commit` — otherwise the commit hook fails with `pre-commit not found`. If a shell session doesn't have it on PATH, run `source ~/.zshrc && source .venv/bin/activate` before committing.
+`pre-commit` lives inside `.venv` — the virtualenv must be active before `git commit` or the hook fails with `pre-commit not found`. See **Environment** above for the one-line activation.
 
 ### Other
 
