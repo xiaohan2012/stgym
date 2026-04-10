@@ -62,6 +62,14 @@ uv sync --group dev       # install all dependencies including dev tools
 source .venv/bin/activate # activate venv
 ```
 
+> **Important — always activate `.venv` before `git commit`.** `pre-commit`, `ruff`, and `ty` all live inside `.venv`. Non-login shells (including fresh agent shells) do **not** inherit it, and commits will fail with `pre-commit not found`. Chain the activation in the same command:
+>
+> ```bash
+> source .venv/bin/activate && git commit ...
+> ```
+>
+> The same applies to `pre-commit run`, `ruff`, `ty`, and any script that invokes them.
+
 ### Running Single Experiments
 
 ```bash
@@ -146,6 +154,8 @@ Follow the guidelines in `.claude/skills/write-test/SKILL.md` (invoke via `/writ
 
 `pre-commit` is configured to run before each commit, invoking `ruff` (linting + formatting) and `ty` (type checking). Both are configured in `pyproject.toml`.
 
+`pre-commit` lives inside `.venv` — the virtualenv must be active before `git commit` or the hook fails with `pre-commit not found`. See **Environment** above for the one-line activation.
+
 ### Other
 
 - Type hints on all public function signatures
@@ -181,8 +191,43 @@ All agents and contributors follow this labeling scheme for GitHub issues and PR
 - `P2` — normal, planned work
 - `P3` — low, nice to have
 
-## Agent Activity Log
+## Agent Communication and Sync
 
-All agents append to `ACTIVITY.log` (repo root, gitignored) when starting/finishing a task.
+The autonomous dev team (PM, Developer, Reviewer — see `.claude/agents/`) coordinates through a small, explicit set of channels. Keep these conventions in sync across all agents.
 
-Format: `[timestamp] [agent] [issue] [action] [summary]`
+### GitHub is the primary bus
+
+- Issues and PRs are the source of truth for work state.
+- Labels drive the workflow: PM sets `status/ready` → Developer picks up and sets `status/in-progress` → opens PR and sets `status/needs-review` → Reviewer picks up → merge sets `status/done`.
+- Progress updates, questions, handoffs, and review feedback all live as **issue/PR comments**, not in side channels.
+
+### Orchestration: human-triggered via PM (v1)
+
+- A human invokes the PM agent manually to kick off a cycle (triage, prioritization, picking the next ready issue).
+- PM triages → Developer picks up ready issues → Reviewer picks up PRs marked `status/needs-review`.
+- **No agent-to-agent direct calls in v1.** Agents never invoke each other; they communicate through GitHub state and `ACTIVITY.log`.
+
+### `ACTIVITY.log`
+
+A concise, local activity history that sits side-by-side with GitHub. All agents append to it when starting/finishing a task.
+
+- Location: repo root, **gitignored** (not version controlled).
+- Format: `[timestamp] [agent] [issue] [action] [summary]` — timestamp is UTC ISO-8601.
+- Use `[N/A]` in the issue field for cross-cutting entries not tied to a single issue (e.g. status reports, environment setup).
+- **Shared responsibility** — each agent writes its own entries:
+  - **PM** — triage actions, e.g. `[2026-04-10T12:00:00Z] [PM] [#123] [triaged] bug P1 — stale mouse-kidney cache`
+  - **Developer** — start/finish + PR events, e.g. `[...] [Developer] [#123] [started] investigate stale cache` / `[...] [Developer] [#123] [pr-opened] https://.../pull/456`
+  - **Reviewer** — review outcomes, e.g. `[...] [Reviewer] [PR #456] [approved] LGTM` / `[...] [Reviewer] [PR #456] [changes-requested] 2 blockers`
+
+Each agent's prompt already includes the append-on-start/finish rule; this section is the canonical spec they inherit from.
+
+### What goes where
+
+| Info | Where |
+|------|-------|
+| Issue status, type, priority | GitHub labels (see Labeling Scheme above) |
+| Progress updates, questions, handoffs | GitHub issue comments |
+| Code changes | Git branches + PRs |
+| Review feedback | GitHub PR review comments |
+| Agent activity log | `ACTIVITY.log` (gitignored, repo root) |
+| Project conventions | `CLAUDE.md` (this file) |
