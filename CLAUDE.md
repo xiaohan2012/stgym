@@ -230,4 +230,7 @@ Each agent's prompt already includes the append-on-start/finish rule; this secti
 | Code changes | Git branches + PRs |
 | Review feedback | GitHub PR review comments |
 | Agent activity log | `ACTIVITY.log` (gitignored, repo root) |
+| Agent cost / token telemetry | `sandbox/telemetry/otel-*.jsonl` (gitignored) — see `sandbox/README.md` |
 | Project conventions | `CLAUDE.md` (this file) |
+
+For sandbox usage, agent turn caps, telemetry setup, and the weekly cost review workflow, see `sandbox/README.md`.

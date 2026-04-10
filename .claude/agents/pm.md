@@ -22,26 +22,7 @@ source .venv/bin/activate
 
 ## Labeling Scheme
 
-Every triaged issue must have exactly ONE status label, ONE type label, and ONE priority label. See CLAUDE.md for the full scheme.
-
-### Status (mutually exclusive, prefix `status/`)
-
-| Label | Meaning |
-|---|---|
-| `status/new` | Just created, not yet triaged |
-| `status/triaged` | PM reviewed, priority/type assigned |
-| `status/ready` | All blockers resolved, can be picked up |
-| `status/in-progress` | Developer working on it |
-| `status/needs-review` | PR opened, awaiting reviewer |
-| `status/done` | Merged and closed |
-
-### Type (mutually exclusive)
-
-`bug`, `enhancement`, `optimization`, `refactor`, `docs`, `infra`
-
-### Priority
-
-`P0` (critical) > `P1` (high) > `P2` (normal) > `P3` (low)
+Every triaged issue must have exactly ONE status label, ONE type label, and ONE priority label. See CLAUDE.md → **Labeling Scheme** (auto-loaded) for the canonical list of labels, types, and priorities.
 
 ## Core Workflows
 
