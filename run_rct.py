@@ -71,9 +71,15 @@ def main(cfg: DictConfig):
 
         # max_calls: recycle worker after N tasks to prevent memory fragmentation
         # Set STGYM_MAX_CALLS env var to override (default: None = no limit)
-        max_calls = int(os.environ["STGYM_MAX_CALLS"]) if os.environ.get("STGYM_MAX_CALLS") else None
+        max_calls = (
+            int(os.environ["STGYM_MAX_CALLS"])
+            if os.environ.get("STGYM_MAX_CALLS")
+            else None
+        )
         run_exp_remote = ray.remote(run_exp).options(
-            num_cpus=res_cfg.num_cpus_per_trial, num_gpus=gpu_allocation, max_calls=max_calls
+            num_cpus=res_cfg.num_cpus_per_trial,
+            num_gpus=gpu_allocation,
+            max_calls=max_calls,
         )
         promises.append(
             run_exp_remote.remote(
