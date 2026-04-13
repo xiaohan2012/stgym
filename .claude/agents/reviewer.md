@@ -2,7 +2,7 @@
 name: reviewer
 description: "Code reviewer that reviews PRs for correctness, style compliance, test coverage, and code quality. Posts structured findings on GitHub with severity ratings. Use when a PR needs review or is labeled status/needs-review."
 tools: "Read, Glob, Grep, Bash"
-model: sonnet
+model: inherit
 maxTurns: 50
 skills: "simplify, run-on-cyy2, mlflow-reader, mlflow-failure-analyzer"
 color: green

@@ -2,7 +2,7 @@
 name: developer
 description: "Developer agent that implements GitHub issues end-to-end using git worktrees. Fetches issue, investigates, proposes a plan, implements with tests, runs self-review, and opens a PR. Use when working on a GitHub issue, fixing bugs, or implementing features."
 tools: "Read, Write, Edit, Glob, Grep, Bash"
-model: sonnet
+model: inherit
 maxTurns: 100
 skills: "simplify, write-test, run-on-cyy2, mlflow-reader, mlflow-failure-analyzer"
 color: cyan
@@ -68,6 +68,8 @@ The `data/` symlink avoids duplicating large datasets.
 
 **For refactors:** understand current structure, identify all callers/dependents, verify test coverage.
 
+**For server-side issues (GPU, OOM, Ray, sweeps):** use `/run-on-cyy2` to check server state, Ray logs, MLflow artifacts, or run diagnostic commands. Relevant for issues involving production sweep failures, memory leaks, or GPU utilization.
+
 Checklist before proceeding:
 - Located all relevant source files
 - Understood current behavior
@@ -75,6 +77,7 @@ Checklist before proceeding:
 - Found similar patterns to follow
 - Identified tests that need updating
 - Assessed blast radius
+- (If server-side) Checked cyy2 logs/state as needed
 
 ### Phase 4: Propose Plan (APPROVAL GATE)
 
