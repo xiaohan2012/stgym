@@ -126,9 +126,18 @@ ssh cyy2 "find /root/stgym/mlruns -name 'training_error.txt' -path '*<run_id>*'"
 scp cyy2:<path-from-above> /tmp/<prefix>/training_error.txt
 ```
 
+## Installing Dependencies
+
+The server does not have `uv` installed. Use `pip` for package installation:
+
+```bash
+ssh cyy2 "cd /root/stgym && source .venv/bin/activate && pip install <package>"
+```
+
 ## Notes
 
 - Always reuse the `run` screen; never create a second one unless the user explicitly asks.
 - If a new screen must be created, activate the venv before launching any Python command.
 - MLflow tracking server runs at `http://127.0.0.1:5001` on the server (port-forwarded locally).
 - Sweep configs live in `conf/exp/*.yaml`; design spaces in `conf/design_space/`.
+- Use `pip install` for dependencies — `uv` is not available on cyy2.
