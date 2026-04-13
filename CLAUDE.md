@@ -21,7 +21,7 @@ There are two entry points:
 Two distinct config schemas live in `stgym/config_schema.py`:
 
 - `ExperimentConfig` — the flat per-run config used by `run_experiment_by_yaml.py` and as the output of design space sampling. Fields: `task`, `data_loader`, `model`, `train`.
-- `DesignSpace` (`stgym/design_space/schema.py`) — each field can be a scalar or list; the generator randomly samples one combination per trial. Fields with matching lists can be co-sampled using `zip_`.
+- `DesignSpace` (`stgym/design_space/schema.py`) — each field can be a scalar or list; the generator randomly samples one combination per trial.
 
 Hydra config (`conf/config.yaml`) defaults to `design_space: node_clf`, `resource: cpu-4`, `mlflow: local`. Override with `+exp=<name>` to add experiment-specific params (from `conf/exp/`).
 
@@ -33,9 +33,9 @@ Each dataset class extends `AbstractDataset` (`stgym/data_loader/base.py`), whic
 2. Graph construction (KNN or radius) and sparse tensor conversion run as `pre_transform`
 3. Processed graphs are cached to `data/<dataset-name>/processed/data_<tag>.pt` where `<tag>` encodes graph construction params (e.g., `knn10`, `radius0.1`)
 
-**Test datasets** use the `-test` suffix (e.g., `brca-test`), are stored in `tests/data/`, and apply a `num_nodes <= 500` pre-filter to keep graphs small.
+**Test datasets** contain graphs with moderate number of nodes, use the `-test` suffix (e.g., `brca-test`), and are stored in `tests/data/`.
 
-**K-fold CV** is automatically used for datasets with few samples (defined in `dataset_eval_mode` in `config_schema.py`): `human-intestine`, `spatial-vdj`, `human-pancreas`, `colorectal-cancer`, `gastric-bladder-cancer`, `cellcontrast-breast`. For k-fold, each fold runs as a separate MLflow run tagged with `fold`.
+**K-fold CV** is automatically used for datasets with few samples (defined in `dataset_eval_mode` in `config_schema.py`). For k-fold, each fold runs as a separate MLflow run tagged with `fold`.
 
 ### Model Architecture
 
@@ -44,8 +44,6 @@ Each dataset class extends `AbstractDataset` (`stgym/data_loader/base.py`), whic
 - Optional hierarchical pooling (DMoN or MinCut) after any MP layer — only valid for graph classification
 - Global pooling (mean/sum/max) + post-MP MLP for graph classification
 - Binary classification outputs `dim_out=1`; multi-class outputs `num_classes`
-
-OOM handling: if a Ray worker hits CUDA OOM, it calls `os._exit(1)` to release the GPU slot immediately.
 
 ### Experiment Launching Scripts
 
@@ -63,6 +61,14 @@ Ad-hoc single-run configs (for debugging, repro) live in `conf/adhoc/`.
 uv sync --group dev       # install all dependencies including dev tools
 source .venv/bin/activate # activate venv
 ```
+
+> **Important — always activate `.venv` before `git commit`.** `pre-commit`, `ruff`, and `ty` all live inside `.venv`. Non-login shells (including fresh agent shells) do **not** inherit it, and commits will fail with `pre-commit not found`. Chain the activation in the same command:
+>
+> ```bash
+> source .venv/bin/activate && git commit ...
+> ```
+>
+> The same applies to `pre-commit run`, `ruff`, `ty`, and any script that invokes them.
 
 ### Running Single Experiments
 
@@ -83,6 +89,11 @@ Run all design dimensions across both task types (the typical full sweep):
 RESOURCE=gpu-4 SAMPLE_SIZE=50 ./scripts/design-dimension-sweep-all.sh
 ```
 This sweeps every `conf/exp/*.yaml` dimension for `graph_clf` and `node_clf` (excluding pooling dimensions for node_clf), grouping all runs under a single timestamped MLflow experiment.
+
+Test the sweep setup with a small smoke test:
+```bash
+bash scripts/test-design-dimension-sweep.sh
+```
 
 ### Testing
 
@@ -107,6 +118,119 @@ Several project-specific skills are available via `/skill-name`:
 
 ## Key Conventions
 
-- Dataset names use kebab-case strings (e.g., `mouse-kidney`, `gastric-bladder-cancer`). The canonical list is in `stgym/data_loader/const.py:DatasetName` and `stgym/data_loader/ds_info.py`.
-- Raw data is never downloaded automatically — each dataset has a preprocessing script in `scripts/data_preprocessing/`. See `stgym/data_loader/README.md` for per-dataset download and preprocessing instructions.
+- Dataset names use kebab-case strings (e.g., `mouse-kidney`). The canonical list is in `stgym/data_loader/const.py:DatasetName` and `stgym/data_loader/ds_info.py`.
+- Raw data is never downloaded automatically — one dataset may have a preprocessing script in `scripts/data_preprocessing/`. See `stgym/data_loader/README.md` for per-dataset download and preprocessing instructions.
 - Adding a new dataset requires: a loader class in `stgym/data_loader/`, an entry in `get_dataset_class()` (`stgym/data_loader/__init__.py`), and an entry in `ds_info.py` with `num_classes`, `task_type`, and spatial span bounds.
+
+## Coding Style
+
+### Unit Tests
+
+Follow the guidelines in `.claude/skills/write-test/SKILL.md` (invoke via `/write-test`). Key principles:
+- Group related tests under one class; use `pytest.parametrize` for variant cases
+- Share test data as class properties and `@mock.patch` at the class level
+- Share fixtures via `conftest.py`; avoid duplicating mock setup across test methods
+- Mock external dependencies (MLflow, network); don't mock pure calculations
+
+### Code Reuse & Cleanness
+
+- Extract shared logic into helpers when used 3+ times
+- No dead code or commented-out blocks
+- Functions do one thing; keep them under ~50 lines
+
+### Functional Style
+
+- Prefer `pydash` for collection transforms (map, filter, group_by, etc.)
+- Prefer pure functions and immutable data where practical
+- Use list/dict comprehensions over manual loops for simple transforms
+
+### Preferred Libraries
+
+- `logzero` for logging (not `print()` or stdlib `logging`)
+- `pydash` for collection operations
+- `pydantic` for config validation
+
+### Linting
+
+`pre-commit` is configured to run before each commit, invoking `ruff` (linting + formatting) and `ty` (type checking). Both are configured in `pyproject.toml`.
+
+`pre-commit` lives inside `.venv` — the virtualenv must be active before `git commit` or the hook fails with `pre-commit not found`. See **Environment** above for the one-line activation.
+
+### Other
+
+- Type hints on all public function signatures
+- `snake_case` for functions/vars, `PascalCase` for classes, `UPPER_CASE` for constants
+- Fail fast with clear error messages; no silent `except: pass`
+
+## Labeling Scheme
+
+All agents and contributors follow this labeling scheme for GitHub issues and PRs.
+
+### Status (lifecycle, mutually exclusive, prefixed `status/`)
+
+- `status/new` — just created, not yet triaged
+- `status/triaged` — PM reviewed, priority/type assigned
+- `status/ready` — all blockers resolved, can be picked up
+- `status/in-progress` — developer working on it
+- `status/needs-review` — PR opened, awaiting reviewer
+- `status/done` — merged and closed
+
+### Type (mutually exclusive)
+
+- `bug` — something broken
+- `enhancement` — new feature
+- `optimization` — performance/efficiency
+- `refactor` — code cleanup, no behavior change
+- `docs` — documentation
+- `infra` — CI/CD, tooling, dev environment
+
+### Priority
+
+- `P0` — critical, blocks everything
+- `P1` — high, do this sprint
+- `P2` — normal, planned work
+- `P3` — low, nice to have
+
+## Agent Communication and Sync
+
+The autonomous dev team (PM, Developer, Reviewer — see `.claude/agents/`) coordinates through a small, explicit set of channels. Keep these conventions in sync across all agents.
+
+### GitHub is the primary bus
+
+- Issues and PRs are the source of truth for work state.
+- Labels drive the workflow: PM sets `status/ready` → Developer picks up and sets `status/in-progress` → opens PR and sets `status/needs-review` → Reviewer picks up → merge sets `status/done`.
+- Progress updates, questions, handoffs, and review feedback all live as **issue/PR comments**, not in side channels.
+
+### Orchestration: human-triggered via PM (v1)
+
+- A human invokes the PM agent manually to kick off a cycle (triage, prioritization, picking the next ready issue).
+- PM triages → Developer picks up ready issues → Reviewer picks up PRs marked `status/needs-review`.
+- **No agent-to-agent direct calls in v1.** Agents never invoke each other; they communicate through GitHub state and `ACTIVITY.log`.
+
+### `ACTIVITY.log`
+
+A concise, local activity history that sits side-by-side with GitHub. All agents append to it when starting/finishing a task.
+
+- Location: repo root, **gitignored** (not version controlled).
+- Format: `[timestamp] [agent] [issue] [action] [summary]` — timestamp is UTC ISO-8601.
+- Use `[N/A]` in the issue field for cross-cutting entries not tied to a single issue (e.g. status reports, environment setup).
+- **Shared responsibility** — each agent writes its own entries:
+  - **PM** — triage actions, e.g. `[2026-04-10T12:00:00Z] [PM] [#123] [triaged] bug P1 — stale mouse-kidney cache`
+  - **Developer** — start/finish + PR events, e.g. `[...] [Developer] [#123] [started] investigate stale cache` / `[...] [Developer] [#123] [pr-opened] https://.../pull/456`
+  - **Reviewer** — review outcomes, e.g. `[...] [Reviewer] [PR #456] [approved] LGTM` / `[...] [Reviewer] [PR #456] [changes-requested] 2 blockers`
+
+Each agent's prompt already includes the append-on-start/finish rule; this section is the canonical spec they inherit from.
+
+### What goes where
+
+| Info | Where |
+|------|-------|
+| Issue status, type, priority | GitHub labels (see Labeling Scheme above) |
+| Progress updates, questions, handoffs | GitHub issue comments |
+| Code changes | Git branches + PRs |
+| Review feedback | GitHub PR review comments |
+| Agent activity log | `ACTIVITY.log` (gitignored, repo root) |
+| Agent cost / token telemetry | `sandbox/telemetry/otel-*.jsonl` (gitignored) — see `sandbox/README.md` |
+| Project conventions | `CLAUDE.md` (this file) |
+
+For sandbox usage, agent turn caps, telemetry setup, and the weekly cost review workflow, see `sandbox/README.md`.

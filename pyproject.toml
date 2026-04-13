@@ -11,7 +11,7 @@ dependencies = [
     "torch-cluster",
     "torch-sparse",
     "torch-spline-conv",
-    "pyg-lib==0.4.0; sys_platform == 'linux'",
+    "pyg-lib==0.4.0; sys_platform == 'linux' and platform_machine == 'x86_64'",  # no aarch64 wheels available
     "mlflow",
     "ray",
     "hydra-core",
@@ -44,6 +44,7 @@ dev = [
     "ruff",
     "ty",
     "pre-commit>=4.5.1",
+    "nbconvert",
 ]
 
 [tool.ruff]

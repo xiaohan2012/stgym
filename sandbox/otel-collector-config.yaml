@@ -1,0 +1,43 @@
+# OpenTelemetry Collector config for the sandbox.
+#
+# Receives OTLP telemetry from the Claude Code agent (gRPC on :4317,
+# HTTP on :4318) and writes it as JSONL to a host-visible file via the
+# built-in file exporter. See sandbox/README.md § Cost & Observability.
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    # Flush small batches quickly so per-session data shows up in the
+    # log file without long delays during debugging.
+    timeout: 5s
+    send_batch_size: 100
+
+exporters:
+  file:
+    path: /var/log/claude-telemetry/otel.jsonl
+    rotation:
+      max_megabytes: 50
+      max_days: 30
+      max_backups: 10
+    format: json
+
+service:
+  telemetry:
+    logs:
+      level: warn
+  pipelines:
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [file]
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [file]
