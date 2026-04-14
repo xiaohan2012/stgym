@@ -69,9 +69,14 @@ def main(cfg: DictConfig):
         # Use configured GPU allocation instead of memory-based estimation
         gpu_allocation = res_cfg.num_gpus_per_trial
 
-        run_exp_remote = ray.remote(run_exp).options(
-            num_cpus=res_cfg.num_cpus_per_trial, num_gpus=gpu_allocation
-        )
+        # max_calls=1: recycle worker after each task to prevent heap fragmentation
+        # Without this, RSS grows ~70MB/task as pymalloc arenas fragment
+        # See PR #143 for diagnostic data and root cause analysis
+        run_exp_remote = ray.remote(
+            num_cpus=res_cfg.num_cpus_per_trial,
+            num_gpus=gpu_allocation,
+            max_calls=1,
+        )(run_exp)
         promises.append(
             run_exp_remote.remote(
                 exp_cfg,
