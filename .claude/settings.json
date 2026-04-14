@@ -15,5 +15,8 @@
       "Bash(git add -A *)",
       "Bash(git add --all *)"
     ]
+  },
+  "enabledPlugins": {
+    "marimo-pair@marimo-pair": true
   }
 }
