@@ -1,9 +1,7 @@
-import gc
 import os
 import traceback
 from typing import Optional
 
-import objgraph
 import psutil
 import torch
 from logzero import logger as logz_logger
@@ -68,7 +66,6 @@ def run_exp(
     _proc = psutil.Process(os.getpid())
     _rss_start_gb = _proc.memory_info().rss / 1e9
     logz_logger.info(f"[mem-diag] PID={_proc.pid} rss_start={_rss_start_gb:.2f} GB")
-    objgraph.show_growth(limit=10)
 
     logz_logger.debug(OmegaConf.to_yaml(exp_cfg.model_dump()))
 
@@ -192,19 +189,11 @@ def run_exp(
                         )
                     os._exit(1)
 
-    # Optionally disable gc.collect() for diagnostic comparison
-    # Set STGYM_DISABLE_GC=1 to skip garbage collection
-    if not os.environ.get("STGYM_DISABLE_GC"):
-        gc.collect()
-        gc_label = "rss_after_gc"
-    else:
-        gc_label = "rss_no_gc"
-    _rss_after_gb = _proc.memory_info().rss / 1e9
+    _rss_end_gb = _proc.memory_info().rss / 1e9
     logz_logger.info(
         f"[mem-diag] PID={_proc.pid} "
-        f"{gc_label}={_rss_after_gb:.2f} GB  "
-        f"delta={_rss_after_gb - _rss_start_gb:+.2f} GB"
+        f"rss_end={_rss_end_gb:.2f} GB  "
+        f"delta={_rss_end_gb - _rss_start_gb:+.2f} GB"
     )
-    objgraph.show_growth(limit=10)
 
     return True

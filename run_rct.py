@@ -69,18 +69,12 @@ def main(cfg: DictConfig):
         # Use configured GPU allocation instead of memory-based estimation
         gpu_allocation = res_cfg.num_gpus_per_trial
 
-        # max_calls: recycle worker after N tasks to prevent memory fragmentation
-        # Set STGYM_MAX_CALLS env var to override (default: None = no limit)
-        # Note: max_calls must be passed to ray.remote(), not .options()
-        max_calls = (
-            int(os.environ["STGYM_MAX_CALLS"])
-            if os.environ.get("STGYM_MAX_CALLS")
-            else None
-        )
+        # max_calls=1: recycle worker after each task to prevent memory fragmentation
+        # See issue #140 for details on heap fragmentation in long sweeps
         run_exp_remote = ray.remote(
             num_cpus=res_cfg.num_cpus_per_trial,
             num_gpus=gpu_allocation,
-            max_calls=max_calls,
+            max_calls=1,
         )(run_exp)
         promises.append(
             run_exp_remote.remote(
