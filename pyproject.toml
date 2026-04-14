@@ -32,7 +32,6 @@ dependencies = [
     "ipykernel",
     "jupyter-client",
     "python-lsp-server[all]>=1.14.0",
-    "psutil>=7.2.2",
 ]
 
 [dependency-groups]
