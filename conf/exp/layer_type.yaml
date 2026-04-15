@@ -1,0 +1,7 @@
+# @package _global_
+
+design_dimension: model.layer_type
+design_choices: ['gcnconv', 'ginconv', 'sageconv']
+
+mlflow:
+  experiment_name: layer_type
