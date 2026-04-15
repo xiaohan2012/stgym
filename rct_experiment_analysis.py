@@ -23,7 +23,7 @@ Edit with: marimo edit rct_experiment_analysis.py
 
 import marimo
 
-__generated_with = "0.10.0"
+__generated_with = "0.23.1"
 app = marimo.App(width="medium")
 
 
@@ -36,15 +36,13 @@ def _():
 
 @app.cell
 def _(mo):
-    mo.md(
-        """
-        # RCT Experiment Analysis
+    mo.md("""
+    # RCT Experiment Analysis
 
-        This notebook analyzes results from STGym RCT (Randomized Controlled Trial)
-        experiments. It fetches data from MLflow, handles k-fold cross-validation
-        aggregation, and computes within-group ranks for design choice comparison.
-        """
-    )
+    This notebook analyzes results from STGym RCT (Randomized Controlled Trial)
+    experiments. It fetches data from MLflow, handles k-fold cross-validation
+    aggregation, and computes within-group ranks for design choice comparison.
+    """)
     return
 
 
@@ -52,13 +50,11 @@ def _(mo):
 def _():
     import warnings
 
-    import pandas as pd
     import seaborn as sns
     from matplotlib import pyplot as plt
 
     warnings.filterwarnings("ignore")
-
-    return pd, plt, sns, warnings
+    return plt, sns
 
 
 @app.cell
@@ -78,7 +74,9 @@ def _():
 
 @app.cell
 def _(mo):
-    mo.md("## Configuration")
+    mo.md("""
+    ## Configuration
+    """)
     return
 
 
@@ -151,13 +149,14 @@ def _(detect_design_dimension, experiment_name_dropdown, mo):
         design_dimension = "model/mp_layers/0/pooling/type"
         metric_name = "test_roc_auc"
         design_label = "design_choice"
-
-    return design_dimension, design_label, metric_name, preset_config
+    return design_dimension, design_label, metric_name
 
 
 @app.cell
 def _(mo):
-    mo.md("## Load and Analyze Data")
+    mo.md("""
+    ## Load and Analyze Data
+    """)
     return
 
 
@@ -167,31 +166,20 @@ def _(
     design_dimension,
     experiment_id_input,
     metric_name,
-    mo,
     tracking_uri_input,
 ):
     # Only run analysis if experiment_id is provided
-    if experiment_id_input.value:
-        try:
-            df = analyze_experiment(
-                tracking_uri=tracking_uri_input.value,
-                experiment_id=experiment_id_input.value,
-                design_dimension=design_dimension,
-                metric_name=metric_name,
-                aggregate_kfold=True,
-            )
-            analysis_status = mo.md(
-                f"Loaded **{len(df)}** runs from experiment `{experiment_id_input.value}`"
-            )
-        except Exception as e:
-            df = None
-            analysis_status = mo.md(f"**Error:** {e}")
-    else:
-        df = None
-        analysis_status = mo.md("*Enter an experiment ID above to load data*")
+    assert experiment_id_input.value is not None
 
-    analysis_status
-    return analysis_status, df
+    df = analyze_experiment(
+        tracking_uri=tracking_uri_input.value,
+        experiment_id=experiment_id_input.value,
+        design_dimension=design_dimension,
+        metric_name=metric_name,
+        aggregate_kfold=True,
+    )
+
+    return (df,)
 
 
 @app.cell
@@ -220,7 +208,7 @@ def _(df, mo, summarize_ranks_by_design_choice):
     if df is not None and not df.empty:
         rank_summary = summarize_ranks_by_design_choice(df)
         mo.ui.table(rank_summary)
-    return (rank_summary,)
+    return
 
 
 @app.cell
@@ -240,7 +228,7 @@ def _(design_label, df, plt, sns):
         ax.set_title("Rank Distribution by Design Choice")
         plt.tight_layout()
         fig
-    return ax, fig
+    return
 
 
 @app.cell
@@ -260,7 +248,7 @@ def _(design_label, df, metric_name, plt, sns):
         ax2.set_title(f"{metric_name} Distribution by Design Choice")
         plt.tight_layout()
         fig2
-    return ax2, fig2
+    return
 
 
 @app.cell
