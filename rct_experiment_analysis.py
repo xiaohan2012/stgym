@@ -53,8 +53,10 @@ def _():
     import seaborn as sns
     from matplotlib import pyplot as plt
 
-    warnings.filterwarnings("ignore")
-    return plt, sns
+    # Suppress specific warnings from seaborn/matplotlib during plotting
+    warnings.filterwarnings("ignore", category=FutureWarning, module="seaborn")
+    warnings.filterwarnings("ignore", category=UserWarning, module="matplotlib")
+    return plt, sns, warnings
 
 
 @app.cell
@@ -74,9 +76,7 @@ def _():
 
 @app.cell
 def _(mo):
-    mo.md("""
-    ## Configuration
-    """)
+    mo.md("## Configuration")
     return
 
 
@@ -129,34 +129,41 @@ def _(mo):
 
 @app.cell
 def _(detect_design_dimension, experiment_name_dropdown, mo):
-    # Get preset configuration or show custom inputs
+    # Get preset configuration
     preset_config = detect_design_dimension(experiment_name_dropdown.value)
 
-    if preset_config:
-        design_dimension = preset_config["design_dimension"]
-        metric_name = preset_config["metric_name"]
-        design_label = preset_config["design_choice_label"]
-        mo.md(
-            f"""
-            **Using preset:** {experiment_name_dropdown.value}
+    # Extract values with defaults for custom mode
+    design_dimension = (
+        preset_config["design_dimension"]
+        if preset_config
+        else "model/mp_layers/0/pooling/type"
+    )
+    metric_name = preset_config["metric_name"] if preset_config else "test_roc_auc"
+    design_label = (
+        preset_config["design_choice_label"] if preset_config else "design_choice"
+    )
 
-            - Design dimension: `{design_dimension}`
-            - Metric: `{metric_name}`
-            - Label: `{design_label}`
-            """
-        )
-    else:
-        design_dimension = "model/mp_layers/0/pooling/type"
-        metric_name = "test_roc_auc"
-        design_label = "design_choice"
-    return design_dimension, design_label, metric_name
+    # Display preset info or custom mode message
+    mo.md(
+        f"""
+        **Using preset:** {experiment_name_dropdown.value}
+
+        - Design dimension: `{design_dimension}`
+        - Metric: `{metric_name}`
+        - Label: `{design_label}`
+        """
+        if preset_config
+        else "*Custom mode: using default values. Override in code if needed.*"
+    )
+    return design_dimension, design_label, metric_name, preset_config
 
 
 @app.cell
-def _(mo):
-    mo.md("""
-    ## Load and Analyze Data
-    """)
+def _(experiment_id_input, mo):
+    mo.stop(
+        not experiment_id_input.value,
+        mo.md("*Enter an experiment ID above to load data*"),
+    )
     return
 
 
@@ -168,9 +175,6 @@ def _(
     metric_name,
     tracking_uri_input,
 ):
-    # Only run analysis if experiment_id is provided
-    assert experiment_id_input.value is not None
-
     df = analyze_experiment(
         tracking_uri=tracking_uri_input.value,
         experiment_id=experiment_id_input.value,
@@ -178,91 +182,88 @@ def _(
         metric_name=metric_name,
         aggregate_kfold=True,
     )
-
     return (df,)
 
 
 @app.cell
 def _(df, mo):
-    if df is not None and not df.empty:
-        mo.md("## Data Preview")
+    mo.stop(
+        df is None or df.empty,
+        mo.md("*No data available. Check the experiment ID and MLflow connection.*"),
+    )
     return
 
 
 @app.cell
 def _(df, mo):
-    if df is not None and not df.empty:
-        mo.ui.table(df.head(20))
-    return
-
-
-@app.cell
-def _(df, mo):
-    if df is not None and not df.empty:
-        mo.md("## Rank Summary by Design Choice")
+    mo.vstack(
+        [
+            mo.md("## Data Preview"),
+            mo.ui.table(df.head(20)),
+        ]
+    )
     return
 
 
 @app.cell
 def _(df, mo, summarize_ranks_by_design_choice):
-    if df is not None and not df.empty:
-        rank_summary = summarize_ranks_by_design_choice(df)
-        mo.ui.table(rank_summary)
-    return
+    rank_summary = summarize_ranks_by_design_choice(df)
+    mo.vstack(
+        [
+            mo.md("## Rank Summary by Design Choice"),
+            mo.ui.table(rank_summary),
+        ]
+    )
+    return (rank_summary,)
 
 
 @app.cell
-def _(df, mo):
-    if df is not None and not df.empty:
-        mo.md("## Rank Distribution Visualization")
-    return
+def _(design_label, df, mo, plt, sns):
+    fig, ax = plt.subplots(figsize=(10, 6))
+    sns.violinplot(data=df, x="design_choice", y="rank", ax=ax)
+    ax.set_xlabel(design_label)
+    ax.set_ylabel("Rank (1 = best)")
+    ax.set_title("Rank Distribution by Design Choice")
+    plt.tight_layout()
+
+    mo.vstack(
+        [
+            mo.md("## Rank Distribution Visualization"),
+            fig,
+        ]
+    )
+    return ax, fig
 
 
 @app.cell
-def _(design_label, df, plt, sns):
-    if df is not None and not df.empty:
-        fig, ax = plt.subplots(figsize=(10, 6))
-        sns.violinplot(data=df, x="design_choice", y="rank", ax=ax)
-        ax.set_xlabel(design_label)
-        ax.set_ylabel("Rank (1 = best)")
-        ax.set_title("Rank Distribution by Design Choice")
-        plt.tight_layout()
-        fig
-    return
+def _(design_label, df, metric_name, mo, plt, sns):
+    fig2, ax2 = plt.subplots(figsize=(10, 6))
+    sns.boxplot(data=df, x="design_choice", y="metric", ax=ax2)
+    ax2.set_xlabel(design_label)
+    ax2.set_ylabel(metric_name)
+    ax2.set_title(f"{metric_name} Distribution by Design Choice")
+    plt.tight_layout()
+
+    mo.vstack(
+        [
+            mo.md("## Metric Distribution"),
+            fig2,
+        ]
+    )
+    return ax2, fig2
 
 
 @app.cell
-def _(df, mo):
-    if df is not None and not df.empty:
-        mo.md("## Metric Distribution")
-    return
+def _(mo):
+    mo.md(
+        """
+        ## Interpretation
 
-
-@app.cell
-def _(design_label, df, metric_name, plt, sns):
-    if df is not None and not df.empty:
-        fig2, ax2 = plt.subplots(figsize=(10, 6))
-        sns.boxplot(data=df, x="design_choice", y="metric", ax=ax2)
-        ax2.set_xlabel(design_label)
-        ax2.set_ylabel(metric_name)
-        ax2.set_title(f"{metric_name} Distribution by Design Choice")
-        plt.tight_layout()
-        fig2
-    return
-
-
-@app.cell
-def _(df, mo):
-    if df is not None and not df.empty:
-        mo.md(
-            """
-            ## Interpretation
-
-            - **Rank 1** = best performing design choice within each group
-            - Lower mean rank indicates a design choice that consistently outperforms alternatives
-            - Compare the rank distributions to assess consistency vs variability
-            """
-        )
+        - **Rank 1** = best performing design choice within each group
+        - Lower mean rank indicates a design choice that consistently outperforms alternatives
+        - Compare the rank distributions to assess consistency vs variability
+        """
+    )
     return
 
 
