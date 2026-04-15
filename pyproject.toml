@@ -24,6 +24,7 @@ dependencies = [
     "scikit-learn",
     "pyarrow",
     "matplotlib",
+    "seaborn",
     "networkx",
     "logzero",
     "tabulate",
