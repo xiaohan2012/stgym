@@ -14,6 +14,26 @@ import pydash as _
 from mlflow import MlflowClient
 from mlflow.entities import Run
 
+# Maps design dimension tag values (stored in run.data.tags.design_dimension)
+# to the actual MLflow param paths used for that dimension.
+DESIGN_DIM_TO_MLFLOW_PATH: dict[str, str] = {
+    "model.act": "model/mp_layers/0/act",
+    "model.use_batchnorm": "model/mp_layers/0/use_batchnorm",
+    "model.dim_inner": "model/mp_layers/0/dim_inner",
+    "model.layer_type": "model/mp_layers/0/layer_type",
+    "model.pooling.type": "model/mp_layers/0/pooling/type",
+    "model.pooling.n_clusters": "model/mp_layers/0/pooling/n_clusters",
+    "model.global_pooling": "model/global_pooling",
+    "model.normalize_adj": "model/normalize_adj",
+    "model.post_mp_dims": "model/post_mp_layer/dims",
+    "train.max_epoch": "train/max_epoch",
+    "train.optim.base_lr": "train/optim/base_lr",
+    "train.optim.optimizer": "train/optim/optimizer",
+    "data_loader.batch_size": "data_loader/batch_size",
+    "data_loader.knn_k": "data_loader/knn_k",
+    "data_loader.radius_ratio": "data_loader/radius_ratio",
+}
+
 
 def fetch_runs(
     tracking_uri: str,
@@ -43,36 +63,40 @@ def fetch_runs(
 def runs_to_dataframe(
     runs: list[Run],
     metric_name: str,
-    design_dimension: str,
 ) -> pd.DataFrame:
     """Convert MLflow runs to a DataFrame with essential columns.
 
-    Extracts group_id, fold, metric value, design choice, and run status
-    from each run.
+    Extracts group_id, fold, metric value, design choice, design_dimension,
+    and run status from each run. The design_dimension is read from
+    ``run.data.tags.design_dimension`` and the corresponding param value is
+    looked up via :data:`DESIGN_DIM_TO_MLFLOW_PATH`.
 
     Args:
         runs: List of MLflow Run objects.
         metric_name: Name of the metric to extract (e.g., "test_roc_auc").
-        design_dimension: Dot-path to design choice in params
-            (e.g., "model/mp_layers/0/pooling/type").
 
     Returns:
-        DataFrame with columns: group_id, fold, metric, design_choice, run_status.
+        DataFrame with columns: group_id, fold, metric, design_choice,
+        design_dimension, run_status.
     """
     metric_path = f"data.metrics.{metric_name}"
-    design_path = f"data.params.{design_dimension}"
 
-    rows = _.map_(
-        runs,
-        lambda r: {
+    def _run_to_row(r: Run) -> dict[str, Any]:
+        design_dim = _.get(r, "data.tags.design_dimension")
+        mlflow_path = (
+            DESIGN_DIM_TO_MLFLOW_PATH.get(design_dim, "") if design_dim else ""
+        )
+        design_choice = _.get(r, f"data.params.{mlflow_path}") if mlflow_path else None
+        return {
             "group_id": _.get(r, "data.tags.group_id"),
             "fold": _.get(r, "data.tags.fold"),
             "metric": _.get(r, metric_path),
-            "design_choice": _.get(r, design_path),
+            "design_choice": design_choice,
+            "design_dimension": design_dim,
             "run_status": _.get(r, "info.status"),
-        },
-    )
-    return pd.DataFrame(rows)
+        }
+
+    return pd.DataFrame(_.map_(runs, _run_to_row))
 
 
 def aggregate_kfold_metrics(df: pd.DataFrame) -> pd.DataFrame:
@@ -221,45 +245,43 @@ def detect_design_dimension(experiment_name: str) -> dict[str, Any] | None:
 def analyze_experiment(
     tracking_uri: str,
     experiment_id: str,
-    design_dimension: str,
     metric_name: str = "test_roc_auc",
     aggregate_kfold: bool = True,
-) -> pd.DataFrame:
+) -> dict[str, pd.DataFrame]:
     """High-level function to analyze an RCT experiment.
 
-    Fetches runs, converts to DataFrame, optionally aggregates k-fold results,
+    Fetches runs, groups them by ``design_dimension`` tag, then for each
+    dimension: converts to DataFrame, optionally aggregates k-fold results,
     filters incomplete groups, and computes ranks.
+
+    An experiment may contain runs from multiple design dimensions; each is
+    analyzed independently.
 
     Args:
         tracking_uri: MLflow tracking server URI.
         experiment_id: The experiment ID to analyze.
-        design_dimension: Dot-path to design choice in params.
         metric_name: Name of the metric to analyze.
         aggregate_kfold: If True, aggregate k-fold results before ranking.
 
     Returns:
-        DataFrame with group_id, design_choice, metric, rank, and run_status.
+        Dict mapping each design dimension name to a DataFrame with columns:
+        group_id, design_choice, metric, rank, and run_status.
+        Returns an empty dict when there are no runs.
     """
     runs = fetch_runs(tracking_uri, experiment_id)
 
     if not runs:
-        return pd.DataFrame(
-            columns=[
-                "group_id",
-                "fold",
-                "metric",
-                "design_choice",
-                "run_status",
-                "rank",
-            ]
-        )
+        return {}
 
-    df = runs_to_dataframe(runs, metric_name, design_dimension)
+    df = runs_to_dataframe(runs, metric_name)
 
-    if aggregate_kfold:
-        df = aggregate_kfold_metrics(df)
+    results: dict[str, pd.DataFrame] = {}
+    for design_dim, dim_df in df.groupby("design_dimension"):
+        dim_df = dim_df.copy()
+        if aggregate_kfold:
+            dim_df = aggregate_kfold_metrics(dim_df)
+        dim_df = filter_complete_groups(dim_df)
+        dim_df = compute_within_group_ranks(dim_df)
+        results[str(design_dim)] = dim_df
 
-    df = filter_complete_groups(df)
-    df = compute_within_group_ranks(df)
-
-    return df
+    return results

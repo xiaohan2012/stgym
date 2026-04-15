@@ -49,6 +49,10 @@ class TestMarimoNotebook:
         assert hasattr(module.app, "run")
 
 
+_POOLING_DIM = "model.pooling.type"
+_POOLING_PARAM = "model/mp_layers/0/pooling/type"
+
+
 @mock.patch("stgym.rct_analysis.fetch_runs")
 class TestAnalyzeExperimentWithRealisticData:
     """Test analyze_experiment with realistic mock data including k-fold runs."""
@@ -67,9 +71,12 @@ class TestAnalyzeExperimentWithRealisticData:
                 metric = 0.75 + group_id * 0.02 + idx * 0.05
                 run = MockRun(
                     data=MockRunData(
-                        tags={"group_id": f"group_{group_id}"},
+                        tags={
+                            "group_id": f"group_{group_id}",
+                            "design_dimension": _POOLING_DIM,
+                        },
                         metrics={"test_roc_auc": metric},
-                        params={"model/mp_layers/0/pooling/type": design_choice},
+                        params={_POOLING_PARAM: design_choice},
                     ),
                     info=MockRunInfo(status="FINISHED"),
                 )
@@ -101,9 +108,10 @@ class TestAnalyzeExperimentWithRealisticData:
                             tags={
                                 "group_id": f"kfold_group_{group_id}_{design_choice}",
                                 "fold": str(fold),
+                                "design_dimension": _POOLING_DIM,
                             },
                             metrics={"test_roc_auc": metric},
-                            params={"model/mp_layers/0/pooling/type": design_choice},
+                            params={_POOLING_PARAM: design_choice},
                         ),
                         info=MockRunInfo(status="FINISHED"),
                     )
@@ -122,14 +130,15 @@ class TestAnalyzeExperimentWithRealisticData:
 
         mock_fetch_runs.return_value = self.regular_runs
 
-        result = analyze_experiment(
+        results = analyze_experiment(
             tracking_uri="http://localhost:5001",
             experiment_id="test_exp",
-            design_dimension="model/mp_layers/0/pooling/type",
             metric_name="test_roc_auc",
             aggregate_kfold=True,
         )
 
+        assert _POOLING_DIM in results
+        result = results[_POOLING_DIM]
         assert isinstance(result, pd.DataFrame)
         assert len(result) == 6
         assert "rank" in result.columns
@@ -143,14 +152,15 @@ class TestAnalyzeExperimentWithRealisticData:
 
         mock_fetch_runs.return_value = self.kfold_runs
 
-        result = analyze_experiment(
+        results = analyze_experiment(
             tracking_uri="http://localhost:5001",
             experiment_id="test_exp",
-            design_dimension="model/mp_layers/0/pooling/type",
             metric_name="test_roc_auc",
             aggregate_kfold=True,
         )
 
+        assert _POOLING_DIM in results
+        result = results[_POOLING_DIM]
         assert isinstance(result, pd.DataFrame)
         assert len(result) == 4
         assert result["fold"].isna().all()
@@ -162,14 +172,15 @@ class TestAnalyzeExperimentWithRealisticData:
 
         mock_fetch_runs.return_value = self.mixed_runs
 
-        result = analyze_experiment(
+        results = analyze_experiment(
             tracking_uri="http://localhost:5001",
             experiment_id="test_exp",
-            design_dimension="model/mp_layers/0/pooling/type",
             metric_name="test_roc_auc",
             aggregate_kfold=True,
         )
 
+        assert _POOLING_DIM in results
+        result = results[_POOLING_DIM]
         assert isinstance(result, pd.DataFrame)
         assert len(result) == 10
         assert "rank" in result.columns
@@ -183,11 +194,7 @@ class TestAnalyzeExperimentWithRealisticData:
 
         mock_fetch_runs.return_value = self.kfold_runs
 
-        df = runs_to_dataframe(
-            self.kfold_runs,
-            metric_name="test_roc_auc",
-            design_dimension="model/mp_layers/0/pooling/type",
-        )
+        df = runs_to_dataframe(self.kfold_runs, metric_name="test_roc_auc")
 
         aggregated = aggregate_kfold_metrics(df)
 
@@ -215,11 +222,7 @@ class TestAnalyzeExperimentWithRealisticData:
             info=MockRunInfo(status="FAILED"),
         )
 
-        df = runs_to_dataframe(
-            kfold_runs_with_failure,
-            metric_name="test_roc_auc",
-            design_dimension="model/mp_layers/0/pooling/type",
-        )
+        df = runs_to_dataframe(kfold_runs_with_failure, metric_name="test_roc_auc")
 
         aggregated = aggregate_kfold_metrics(df)
         filtered = filter_complete_groups(aggregated)
@@ -235,15 +238,15 @@ class TestAnalyzeExperimentWithRealisticData:
 
         mock_fetch_runs.return_value = self.kfold_runs
 
-        df = analyze_experiment(
+        results = analyze_experiment(
             tracking_uri="http://localhost:5001",
             experiment_id="test_exp",
-            design_dimension="model/mp_layers/0/pooling/type",
             metric_name="test_roc_auc",
             aggregate_kfold=True,
         )
 
-        rank_summary = summarize_ranks_by_design_choice(df)
+        assert _POOLING_DIM in results
+        rank_summary = summarize_ranks_by_design_choice(results[_POOLING_DIM])
 
         assert len(rank_summary) == 2
         assert set(rank_summary["design_choice"].unique()) == {"dmon", "mincut"}

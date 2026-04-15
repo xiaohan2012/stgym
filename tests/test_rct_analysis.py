@@ -7,6 +7,7 @@ import pandas as pd
 import pytest
 
 from stgym.rct_analysis import (
+    DESIGN_DIM_TO_MLFLOW_PATH,
     aggregate_kfold_metrics,
     compute_within_group_ranks,
     detect_design_dimension,
@@ -16,20 +17,27 @@ from stgym.rct_analysis import (
 )
 from tests.mock_mlflow import MockRun, MockRunData, MockRunInfo
 
+_DESIGN_DIM = "model.use_batchnorm"
+_MLFLOW_PARAM = DESIGN_DIM_TO_MLFLOW_PATH[_DESIGN_DIM]
+
 
 class TestRunsToDataframe:
     """Test runs_to_dataframe conversion."""
 
     @property
     def mock_runs(self) -> list[MockRun]:
-        """Create mock MLflow Run objects."""
+        """Create mock MLflow Run objects with design_dimension tag."""
         runs = []
         for i in range(4):
             run = MockRun(
                 data=MockRunData(
-                    tags={"group_id": str(i // 2), "fold": str(i % 2)},
+                    tags={
+                        "group_id": str(i // 2),
+                        "fold": str(i % 2),
+                        "design_dimension": _DESIGN_DIM,
+                    },
                     metrics={"test_roc_auc": 0.8 + i * 0.05},
-                    params={"model/use_batchnorm": str(i % 2 == 0).lower()},
+                    params={_MLFLOW_PARAM: str(i % 2 == 0).lower()},
                 ),
                 info=MockRunInfo(status="FINISHED"),
             )
@@ -38,20 +46,29 @@ class TestRunsToDataframe:
 
     def test_extracts_correct_columns(self):
         """Verify all expected columns are extracted."""
-        df = runs_to_dataframe(
-            self.mock_runs,
-            metric_name="test_roc_auc",
-            design_dimension="model/use_batchnorm",
-        )
+        df = runs_to_dataframe(self.mock_runs, metric_name="test_roc_auc")
 
         assert set(df.columns) == {
             "group_id",
             "fold",
             "metric",
             "design_choice",
+            "design_dimension",
             "run_status",
         }
         assert len(df) == 4
+
+    def test_design_dimension_from_tag(self):
+        """Verify design_dimension column is populated from run tags."""
+        df = runs_to_dataframe(self.mock_runs, metric_name="test_roc_auc")
+
+        assert (df["design_dimension"] == _DESIGN_DIM).all()
+
+    def test_design_choice_resolved_via_mapping(self):
+        """Verify design_choice is resolved from DESIGN_DIM_TO_MLFLOW_PATH."""
+        df = runs_to_dataframe(self.mock_runs, metric_name="test_roc_auc")
+
+        assert df["design_choice"].notna().all()
 
     def test_handles_missing_values(self):
         """Verify graceful handling when run lacks expected fields."""
@@ -60,15 +77,13 @@ class TestRunsToDataframe:
             info=MockRunInfo(status="FAILED"),
         )
 
-        df = runs_to_dataframe(
-            [run],
-            metric_name="test_roc_auc",
-            design_dimension="model/use_batchnorm",
-        )
+        df = runs_to_dataframe([run], metric_name="test_roc_auc")
 
         assert len(df) == 1
         assert df["group_id"].iloc[0] is None
         assert df["metric"].iloc[0] is None
+        assert df["design_dimension"].iloc[0] is None
+        assert df["design_choice"].iloc[0] is None
 
 
 class TestAggregateKfoldMetrics:
@@ -280,8 +295,8 @@ class TestDetectDesignDimension:
 class TestAnalyzeExperiment:
     """Test the high-level analyze_experiment function."""
 
-    def test_returns_empty_df_when_no_runs(self, mock_fetch_runs: MagicMock):
-        """Verify empty DataFrame is returned when no runs exist."""
+    def test_returns_empty_dict_when_no_runs(self, mock_fetch_runs: MagicMock):
+        """Verify empty dict is returned when no runs exist."""
         from stgym.rct_analysis import analyze_experiment
 
         mock_fetch_runs.return_value = []
@@ -289,25 +304,21 @@ class TestAnalyzeExperiment:
         result = analyze_experiment(
             tracking_uri="http://localhost:5001",
             experiment_id="123",
-            design_dimension="model/use_batchnorm",
         )
 
-        assert isinstance(result, pd.DataFrame)
-        assert len(result) == 0
-        assert "rank" in result.columns
+        assert result == {}
 
-    def test_full_pipeline(self, mock_fetch_runs: MagicMock):
-        """Verify full analysis pipeline runs correctly."""
+    def test_full_pipeline_single_dimension(self, mock_fetch_runs: MagicMock):
+        """Verify full analysis pipeline runs correctly for a single design dimension."""
         from stgym.rct_analysis import analyze_experiment
 
-        # Create mock runs using dataclass
         runs = []
         for i in range(4):
             run = MockRun(
                 data=MockRunData(
-                    tags={"group_id": str(i // 2)},
+                    tags={"group_id": str(i // 2), "design_dimension": _DESIGN_DIM},
                     metrics={"test_roc_auc": 0.8 + i * 0.05},
-                    params={"model/use_batchnorm": str(i % 2 == 0).lower()},
+                    params={_MLFLOW_PARAM: str(i % 2 == 0).lower()},
                 ),
                 info=MockRunInfo(status="FINISHED"),
             )
@@ -318,9 +329,46 @@ class TestAnalyzeExperiment:
         result = analyze_experiment(
             tracking_uri="http://localhost:5001",
             experiment_id="123",
-            design_dimension="model/use_batchnorm",
         )
 
-        assert isinstance(result, pd.DataFrame)
-        assert "rank" in result.columns
-        assert len(result) > 0
+        assert isinstance(result, dict)
+        assert _DESIGN_DIM in result
+        df = result[_DESIGN_DIM]
+        assert isinstance(df, pd.DataFrame)
+        assert "rank" in df.columns
+        assert len(df) > 0
+
+    def test_multiple_dimensions_analyzed_separately(self, mock_fetch_runs: MagicMock):
+        """Verify runs with different design dimensions are analyzed independently."""
+        from stgym.rct_analysis import analyze_experiment
+
+        dim_a = "model.act"
+        param_a = DESIGN_DIM_TO_MLFLOW_PATH[dim_a]
+        dim_b = "train.optim.optimizer"
+        param_b = DESIGN_DIM_TO_MLFLOW_PATH[dim_b]
+
+        runs = []
+        for i in range(4):
+            dim = dim_a if i < 2 else dim_b
+            param = param_a if i < 2 else param_b
+            runs.append(
+                MockRun(
+                    data=MockRunData(
+                        tags={"group_id": "0", "design_dimension": dim},
+                        metrics={"test_roc_auc": 0.8 + i * 0.05},
+                        params={param: f"choice_{i}"},
+                    ),
+                    info=MockRunInfo(status="FINISHED"),
+                )
+            )
+
+        mock_fetch_runs.return_value = runs
+
+        result = analyze_experiment(
+            tracking_uri="http://localhost:5001",
+            experiment_id="123",
+        )
+
+        assert set(result.keys()) == {dim_a, dim_b}
+        assert len(result[dim_a]) == 2
+        assert len(result[dim_b]) == 2
