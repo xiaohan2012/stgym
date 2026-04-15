@@ -1,5 +1,6 @@
 """Tests for the Marimo notebook rct_experiment_analysis.py."""
 
+import importlib.util
 import subprocess
 import sys
 from pathlib import Path
@@ -9,6 +10,13 @@ from unittest.mock import MagicMock
 import pandas as pd
 import pytest
 
+from stgym.rct_utils import (
+    aggregate_kfold_metrics,
+    analyze_experiment,
+    filter_complete_groups,
+    runs_to_dataframe,
+    summarize_ranks_by_design_choice,
+)
 from tests.mock_mlflow import MockRun, MockRunData, MockRunInfo
 
 
@@ -34,8 +42,6 @@ class TestMarimoNotebook:
 
     def test_notebook_importable(self):
         """Verify the notebook can be imported as a Python module."""
-        import importlib.util
-
         spec = importlib.util.spec_from_file_location(
             "rct_experiment_analysis", self.notebook_path
         )
@@ -126,8 +132,6 @@ class TestAnalyzeExperimentWithRealisticData:
 
     def test_with_regular_runs_only(self, mock_fetch_runs: MagicMock):
         """Verify analysis works with regular (non-k-fold) runs."""
-        from stgym.rct_utils import analyze_experiment
-
         mock_fetch_runs.return_value = self.regular_runs
 
         results = analyze_experiment(
@@ -148,8 +152,6 @@ class TestAnalyzeExperimentWithRealisticData:
 
     def test_with_kfold_runs_only(self, mock_fetch_runs: MagicMock):
         """Verify analysis correctly aggregates k-fold runs by mean metric."""
-        from stgym.rct_utils import analyze_experiment
-
         mock_fetch_runs.return_value = self.kfold_runs
 
         results = analyze_experiment(
@@ -168,8 +170,6 @@ class TestAnalyzeExperimentWithRealisticData:
 
     def test_with_mixed_runs(self, mock_fetch_runs: MagicMock):
         """Verify analysis handles mixed regular and k-fold runs."""
-        from stgym.rct_utils import analyze_experiment
-
         mock_fetch_runs.return_value = self.mixed_runs
 
         results = analyze_experiment(
@@ -187,11 +187,6 @@ class TestAnalyzeExperimentWithRealisticData:
 
     def test_kfold_aggregation_computes_mean(self, mock_fetch_runs: MagicMock):
         """Verify k-fold aggregation computes correct mean metrics."""
-        from stgym.rct_utils import (
-            aggregate_kfold_metrics,
-            runs_to_dataframe,
-        )
-
         mock_fetch_runs.return_value = self.kfold_runs
 
         df = runs_to_dataframe(self.kfold_runs, metric_name="test_roc_auc")
@@ -210,12 +205,6 @@ class TestAnalyzeExperimentWithRealisticData:
 
     def test_failed_fold_marks_group_failed(self, mock_fetch_runs: MagicMock):
         """Verify a failed fold marks the entire aggregated group as failed."""
-        from stgym.rct_utils import (
-            aggregate_kfold_metrics,
-            filter_complete_groups,
-            runs_to_dataframe,
-        )
-
         kfold_runs_with_failure = list(self.kfold_runs)
         kfold_runs_with_failure[0] = MockRun(
             data=kfold_runs_with_failure[0].data,
@@ -231,11 +220,6 @@ class TestAnalyzeExperimentWithRealisticData:
 
     def test_rank_summary_with_kfold_data(self, mock_fetch_runs: MagicMock):
         """Verify rank summary statistics work with k-fold aggregated data."""
-        from stgym.rct_utils import (
-            analyze_experiment,
-            summarize_ranks_by_design_choice,
-        )
-
         mock_fetch_runs.return_value = self.kfold_runs
 
         results = analyze_experiment(
