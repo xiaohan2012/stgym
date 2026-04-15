@@ -132,35 +132,40 @@ def _(
     metric_name_input,
     tracking_uri_input,
 ):
-    results_by_dim = analyze_experiment(
+    results_df = analyze_experiment(
         tracking_uri=tracking_uri_input.value,
         experiment_id=experiment_id_input.value,
         metric_name=metric_name_input.value,
         aggregate_kfold=True,
     )
-    return (results_by_dim,)
+    return (results_df,)
 
 
 @app.cell
-def _(mo, results_by_dim):
+def _(mo, results_df):
     mo.stop(
-        not results_by_dim,
+        results_df.empty,
         mo.md("*No data available. Check the experiment ID and MLflow connection.*"),
     )
+    # Re-export so downstream cells depend on this gate and don't run when empty.
+    active_df = results_df
+    return (active_df,)
+
+
+@app.cell
+def _(active_df, mo):
+    _dims = sorted(active_df["design_dimension"].unique())
+    _dim_list = ", ".join(f"`{d}`" for d in _dims)
+    mo.md(f"Loaded **{len(_dims)}** design dimension(s): {_dim_list}")
     return
 
 
 @app.cell
-def _(mo, results_by_dim):
-    dim_list = ", ".join(f"`{d}`" for d in sorted(results_by_dim))
-    mo.md(f"Loaded **{len(results_by_dim)}** design dimension(s): {dim_list}")
-    return
-
-
-@app.cell
-def _(mo, plt, results_by_dim, sns, summarize_ranks_by_design_choice):
+def _(active_df, mo, plt, sns, summarize_ranks_by_design_choice):
     sections = []
-    for _dim, _df in sorted(results_by_dim.items()):
+    for _dim in sorted(active_df["design_dimension"].unique()):
+        _df = active_df[active_df["design_dimension"] == _dim]
+
         sections.append(mo.md(f"## Design Dimension: `{_dim}`"))
 
         sections.append(mo.md("### Data Preview"))
@@ -170,23 +175,21 @@ def _(mo, plt, results_by_dim, sns, summarize_ranks_by_design_choice):
         _rank_summary = summarize_ranks_by_design_choice(_df)
         sections.append(mo.ui.table(_rank_summary))
 
-        sections.append(mo.md("### Rank Distribution"))
-        _fig, _ax = plt.subplots(figsize=(10, 6))
-        sns.violinplot(data=_df, x="design_choice", y="rank", ax=_ax)
-        _ax.set_xlabel(_dim)
-        _ax.set_ylabel("Rank (1 = best)")
-        _ax.set_title(f"Rank Distribution — {_dim}")
-        plt.tight_layout()
-        sections.append(_fig)
+    sections.append(mo.md("### Rank Distribution"))
+    _g = sns.FacetGrid(active_df, col="design_dimension", sharey=False)
+    _g.map_dataframe(sns.violinplot, x="design_choice", y="rank")
+    _g.set_axis_labels("Design Choice", "Rank (1 = best)")
+    _g.set_titles("{col_name}")
+    plt.tight_layout()
+    sections.append(_g.figure)
 
-        sections.append(mo.md("### Metric Distribution"))
-        _fig2, _ax2 = plt.subplots(figsize=(10, 6))
-        sns.boxplot(data=_df, x="design_choice", y="metric", ax=_ax2)
-        _ax2.set_xlabel(_dim)
-        _ax2.set_ylabel("metric")
-        _ax2.set_title(f"Metric Distribution — {_dim}")
-        plt.tight_layout()
-        sections.append(_fig2)
+    sections.append(mo.md("### Metric Distribution"))
+    _g2 = sns.FacetGrid(active_df, col="design_dimension", sharey=False)
+    _g2.map_dataframe(sns.boxplot, x="design_choice", y="metric")
+    _g2.set_axis_labels("Design Choice", "Metric")
+    _g2.set_titles("{col_name}")
+    plt.tight_layout()
+    sections.append(_g2.figure)
 
     mo.vstack(sections)
     return

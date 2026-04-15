@@ -121,9 +121,14 @@ def aggregate_kfold_metrics(df: pd.DataFrame) -> pd.DataFrame:
     kfold_df = df[has_fold].copy()
     non_kfold_df = df[~has_fold].copy()
 
-    # Aggregate k-fold runs: mean metric per (group_id, design_choice)
+    # Aggregate k-fold runs: mean metric per (group_id, design_choice).
+    # Include design_dimension in the groupby if present so it is preserved.
+    group_cols = ["group_id", "design_choice"]
+    if "design_dimension" in kfold_df.columns:
+        group_cols.append("design_dimension")
+
     aggregated = (
-        kfold_df.groupby(["group_id", "design_choice"], as_index=False)
+        kfold_df.groupby(group_cols, as_index=False)
         .agg(
             {
                 "metric": "mean",
@@ -204,7 +209,7 @@ def analyze_experiment(
     experiment_id: str,
     metric_name: str = "test_roc_auc",
     aggregate_kfold: bool = True,
-) -> dict[str, pd.DataFrame]:
+) -> pd.DataFrame:
     """High-level function to analyze an RCT experiment.
 
     Fetches runs, groups them by ``design_dimension`` tag, then for each
@@ -212,7 +217,7 @@ def analyze_experiment(
     filters incomplete groups, and computes ranks.
 
     An experiment may contain runs from multiple design dimensions; each is
-    analyzed independently.
+    analyzed independently (ranks are computed within each dimension).
 
     Args:
         tracking_uri: MLflow tracking server URI.
@@ -221,24 +226,24 @@ def analyze_experiment(
         aggregate_kfold: If True, aggregate k-fold results before ranking.
 
     Returns:
-        Dict mapping each design dimension name to a DataFrame with columns:
-        group_id, design_choice, metric, rank, and run_status.
-        Returns an empty dict when there are no runs.
+        DataFrame with columns: group_id, design_choice, metric, rank,
+        run_status, and design_dimension. Returns an empty DataFrame when
+        there are no runs.
     """
     runs = fetch_runs(tracking_uri, experiment_id)
 
     if not runs:
-        return {}
+        return pd.DataFrame()
 
     df = runs_to_dataframe(runs, metric_name)
 
-    results: dict[str, pd.DataFrame] = {}
-    for design_dim, dim_df in df.groupby("design_dimension"):
+    dfs: list[pd.DataFrame] = []
+    for _, dim_df in df.groupby("design_dimension"):
         dim_df = dim_df.copy()
         if aggregate_kfold:
             dim_df = aggregate_kfold_metrics(dim_df)
         dim_df = filter_complete_groups(dim_df)
         dim_df = compute_within_group_ranks(dim_df)
-        results[str(design_dim)] = dim_df
+        dfs.append(dim_df)
 
-    return results
+    return pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame()
