@@ -1,6 +1,5 @@
 """Tests for stgym/rct_analysis.py."""
 
-from dataclasses import dataclass, field
 from unittest import mock
 from unittest.mock import MagicMock
 
@@ -15,30 +14,7 @@ from stgym.rct_analysis import (
     runs_to_dataframe,
     summarize_ranks_by_design_choice,
 )
-
-
-@dataclass
-class MockRunData:
-    """Mock MLflow run data structure for testing."""
-
-    tags: dict = field(default_factory=dict)
-    metrics: dict = field(default_factory=dict)
-    params: dict = field(default_factory=dict)
-
-
-@dataclass
-class MockRunInfo:
-    """Mock MLflow run info structure for testing."""
-
-    status: str = "FINISHED"
-
-
-@dataclass
-class MockRun:
-    """Mock MLflow Run object for testing."""
-
-    data: MockRunData = field(default_factory=MockRunData)
-    info: MockRunInfo = field(default_factory=MockRunInfo)
+from tests.mock_mlflow import MockRun, MockRunData, MockRunInfo
 
 
 class TestRunsToDataframe:
