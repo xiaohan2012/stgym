@@ -4,7 +4,6 @@ This module provides reusable functions for:
 - Loading and preprocessing MLflow run data
 - Aggregating k-fold cross-validation results
 - Computing within-group ranks for design choice comparison
-- Detecting design dimensions from experiment configurations
 """
 
 from typing import Any
@@ -198,48 +197,6 @@ def summarize_ranks_by_design_choice(
         .agg(["mean", "count", "std", "median"])
         .reset_index()
     )
-
-
-def detect_design_dimension(experiment_name: str) -> dict[str, Any] | None:
-    """Detect design dimension configuration from experiment name.
-
-    Maps known experiment names to their design dimension paths and
-    metric configurations.
-
-    Args:
-        experiment_name: Name of the MLflow experiment (e.g., "bn", "hpooling").
-
-    Returns:
-        Dict with keys: design_dimension, metric_name, design_choice_label.
-        Returns None if experiment name is not recognized.
-    """
-    # Mapping: experiment_name -> (design_dimension, design_choice_label)
-    # All experiments currently use test_roc_auc as the metric
-    dimension_map: dict[str, tuple[str, str]] = {
-        "bn": ("model/post_mp_layer/use_batchnorm", "use_batchnorm"),
-        "hpooling": ("model/mp_layers/0/pooling/type", "hpooling_type"),
-        "activation": ("model/mp_layers/0/act", "activation"),
-        "lr": ("train/optim/base_lr", "learning_rate"),
-        "optimizer": ("train/optim/optimizer", "optimizer"),
-        "batch_size": ("data_loader/batch_size", "batch_size"),
-        "epochs": ("train/max_epoch", "max_epoch"),
-        "clusters": ("model/mp_layers/0/pooling/n_clusters", "n_clusters"),
-        "knn": ("data_loader/knn_k", "knn_k"),
-        "radius": ("data_loader/radius_ratio", "radius_ratio"),
-        "n_mlp_layers": ("model/post_mp_layer/n_layers", "n_mlp_layers"),
-        "mlp_dim_inner": ("model/post_mp_layer/dim_inner", "mlp_dim_inner"),
-        "postmp": ("model/post_mp_layer/type", "postmp_type"),
-    }
-
-    if experiment_name not in dimension_map:
-        return None
-
-    design_dimension, design_choice_label = dimension_map[experiment_name]
-    return {
-        "design_dimension": design_dimension,
-        "metric_name": "test_roc_auc",
-        "design_choice_label": design_choice_label,
-    }
 
 
 def analyze_experiment(

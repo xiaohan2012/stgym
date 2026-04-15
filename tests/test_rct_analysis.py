@@ -1,4 +1,4 @@
-"""Tests for stgym/rct_analysis.py."""
+"""Tests for stgym/rct_utils.py."""
 
 from unittest import mock
 from unittest.mock import MagicMock
@@ -6,11 +6,10 @@ from unittest.mock import MagicMock
 import pandas as pd
 import pytest
 
-from stgym.rct_analysis import (
+from stgym.rct_utils import (
     DESIGN_DIM_TO_MLFLOW_PATH,
     aggregate_kfold_metrics,
     compute_within_group_ranks,
-    detect_design_dimension,
     filter_complete_groups,
     runs_to_dataframe,
     summarize_ranks_by_design_choice,
@@ -260,44 +259,13 @@ class TestSummarizeRanksByDesignChoice:
         assert row_a["median"].iloc[0] == 1.0
 
 
-class TestDetectDesignDimension:
-    """Test design dimension detection from experiment name."""
-
-    @pytest.mark.parametrize(
-        "experiment_name,expected_dimension",
-        [
-            ("bn", "model/post_mp_layer/use_batchnorm"),
-            ("hpooling", "model/mp_layers/0/pooling/type"),
-            ("activation", "model/mp_layers/0/act"),
-            ("lr", "train/optim/base_lr"),
-            ("optimizer", "train/optim/optimizer"),
-            ("knn", "data_loader/knn_k"),
-            ("radius", "data_loader/radius_ratio"),
-        ],
-    )
-    def test_known_experiments(self, experiment_name: str, expected_dimension: str):
-        """Verify known experiments return correct design dimension."""
-        result = detect_design_dimension(experiment_name)
-
-        assert result is not None
-        assert result["design_dimension"] == expected_dimension
-        assert "metric_name" in result
-        assert "design_choice_label" in result
-
-    def test_unknown_experiment_returns_none(self):
-        """Verify unknown experiment name returns None."""
-        result = detect_design_dimension("unknown_experiment")
-
-        assert result is None
-
-
-@mock.patch("stgym.rct_analysis.fetch_runs")
+@mock.patch("stgym.rct_utils.fetch_runs")
 class TestAnalyzeExperiment:
     """Test the high-level analyze_experiment function."""
 
     def test_returns_empty_dict_when_no_runs(self, mock_fetch_runs: MagicMock):
         """Verify empty dict is returned when no runs exist."""
-        from stgym.rct_analysis import analyze_experiment
+        from stgym.rct_utils import analyze_experiment
 
         mock_fetch_runs.return_value = []
 
@@ -310,7 +278,7 @@ class TestAnalyzeExperiment:
 
     def test_full_pipeline_single_dimension(self, mock_fetch_runs: MagicMock):
         """Verify full analysis pipeline runs correctly for a single design dimension."""
-        from stgym.rct_analysis import analyze_experiment
+        from stgym.rct_utils import analyze_experiment
 
         runs = []
         for i in range(4):
@@ -340,7 +308,7 @@ class TestAnalyzeExperiment:
 
     def test_multiple_dimensions_analyzed_separately(self, mock_fetch_runs: MagicMock):
         """Verify runs with different design dimensions are analyzed independently."""
-        from stgym.rct_analysis import analyze_experiment
+        from stgym.rct_utils import analyze_experiment
 
         dim_a = "model.act"
         param_a = DESIGN_DIM_TO_MLFLOW_PATH[dim_a]

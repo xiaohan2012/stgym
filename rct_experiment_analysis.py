@@ -64,25 +64,24 @@ def _():
     # Suppress specific warnings from seaborn/matplotlib during plotting
     warnings.filterwarnings("ignore", category=FutureWarning, module="seaborn")
     warnings.filterwarnings("ignore", category=UserWarning, module="matplotlib")
-    return plt, sns, warnings
+    return plt, sns
 
 
 @app.cell
 def _():
-    from stgym.rct_analysis import (
+    from stgym.rct_utils import (
         analyze_experiment,
         summarize_ranks_by_design_choice,
     )
 
-    return (
-        analyze_experiment,
-        summarize_ranks_by_design_choice,
-    )
+    return analyze_experiment, summarize_ranks_by_design_choice
 
 
 @app.cell
 def _(mo):
-    mo.md("## Configuration")
+    mo.md("""
+    ## Configuration
+    """)
     return
 
 
@@ -155,7 +154,7 @@ def _(mo, results_by_dim):
 def _(mo, results_by_dim):
     dim_list = ", ".join(f"`{d}`" for d in sorted(results_by_dim))
     mo.md(f"Loaded **{len(results_by_dim)}** design dimension(s): {dim_list}")
-    return (dim_list,)
+    return
 
 
 @app.cell
@@ -190,20 +189,18 @@ def _(mo, plt, results_by_dim, sns, summarize_ranks_by_design_choice):
         sections.append(_fig2)
 
     mo.vstack(sections)
-    return (sections,)
+    return
 
 
 @app.cell
 def _(mo):
-    mo.md(
-        """
-        ## Interpretation
+    mo.md("""
+    ## Interpretation
 
-        - **Rank 1** = best performing design choice within each group
-        - Lower mean rank indicates a design choice that consistently outperforms alternatives
-        - Compare the rank distributions to assess consistency vs variability
-        """
-    )
+    - **Rank 1** = best performing design choice within each group
+    - Lower mean rank indicates a design choice that consistently outperforms alternatives
+    - Compare the rank distributions to assess consistency vs variability
+    """)
     return
 
 
