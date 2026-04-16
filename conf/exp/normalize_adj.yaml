@@ -1,0 +1,7 @@
+# @package _global_
+
+design_dimension: model.normalize_adj
+design_choices: [true, false]
+
+mlflow:
+  experiment_name: normalize_adj

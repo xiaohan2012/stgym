@@ -77,6 +77,44 @@ def test_on_group_ids(mock_design_space):
             assert exp_cfgs[gid + i * k].group_id == gid
 
 
+@pytest.mark.parametrize(
+    "design_dimension, design_choices, cfg_accessor",
+    [
+        (
+            "model.layer_type",
+            ["gcnconv", "ginconv", "sageconv"],
+            lambda cfg: cfg.model.mp_layers[0].layer_type,
+        ),
+        (
+            "model.global_pooling",
+            ["mean", "max"],
+            lambda cfg: cfg.model.global_pooling,
+        ),
+        (
+            "model.normalize_adj",
+            [True, False],
+            lambda cfg: cfg.model.mp_layers[0].normalize_adj,
+        ),
+    ],
+)
+def test_new_design_dimensions(
+    mock_design_space, design_dimension, design_choices, cfg_accessor
+):
+    """Verify generate_experiment_configs works for layer_type, global_pooling, normalize_adj."""
+    k = 2
+    exp_cfgs = generate_experiment_configs(
+        mock_design_space,
+        design_dimension=design_dimension,
+        design_choices=design_choices,
+        sample_size=k,
+        random_seed=42,
+    )
+
+    assert len(exp_cfgs) == k * len(design_choices)
+    actual_choices = _.sort(_.uniq(_.map_(exp_cfgs, cfg_accessor)))
+    assert actual_choices == _.sort(design_choices)
+
+
 def test_invalid_design_dimension(mock_design_space):
     with pytest.raises(ValueError, match="Non-exisitent design dimension: .*"):
         generate_experiment_configs(
