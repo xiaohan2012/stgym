@@ -2,6 +2,7 @@ from pathlib import Path
 
 import h5py
 import numpy as np
+import scipy.sparse
 import torch
 from torch_geometric.data import Data
 
@@ -125,8 +126,6 @@ class InflammatorySkinDataset(AbstractDataset):
                 shape = (n_rows, n_cols)
 
             # Create sparse matrix
-            import scipy.sparse
-
             sparse_matrix = scipy.sparse.csr_matrix(
                 (data, indices, indptr), shape=shape
             )

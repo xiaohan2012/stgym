@@ -18,6 +18,8 @@ Features:
 from typing import Any
 
 import torch
+import torch_geometric.transforms as T
+from torch_geometric.data import Batch, Data
 
 from stgym.cache import DatasetStatistics, generate_cache_key, load_cached_statistics
 from stgym.config_schema import (
@@ -169,9 +171,6 @@ def _initialize_model_with_dummy_data(
         num_features: Number of input features
         device: Device to create dummy data on
     """
-    import torch_geometric.transforms as T
-    from torch_geometric.data import Batch, Data
-
     # Create minimal dummy graph
     dummy_x = torch.randn(5, num_features).to(device)
     dummy_edge_index = torch.tensor([[0, 1, 2, 3], [1, 2, 3, 4]], dtype=torch.long).to(

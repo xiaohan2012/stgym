@@ -1,4 +1,5 @@
 import os
+import resource
 from pathlib import Path
 
 import pandas as pd
@@ -12,8 +13,6 @@ from .base import AbstractDataset
 
 def _mem_gb():
     """Return current process RSS in GB."""
-    import resource
-
     rss_kb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
     # macOS reports bytes, Linux reports KB
     if os.uname().sysname == "Darwin":
