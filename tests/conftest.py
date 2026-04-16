@@ -5,8 +5,8 @@ import pytest
 from stgym.rct_utils import DESIGN_DIM_TO_MLFLOW_PATH
 from tests.mock_mlflow import MockRun, MockRunData, MockRunInfo
 
-POOLING_DIM = "model.pooling.type"
-POOLING_PARAM = DESIGN_DIM_TO_MLFLOW_PATH[POOLING_DIM]
+_POOLING_DIM = "model.pooling.type"
+_POOLING_PARAM = DESIGN_DIM_TO_MLFLOW_PATH[_POOLING_DIM]
 
 
 @pytest.fixture
@@ -21,10 +21,10 @@ def regular_runs() -> list[MockRun]:
                     data=MockRunData(
                         tags={
                             "group_id": f"group_{group_id}",
-                            "design_dimension": POOLING_DIM,
+                            "design_dimension": _POOLING_DIM,
                         },
                         metrics={"test_roc_auc": metric},
-                        params={POOLING_PARAM: design_choice},
+                        params={_POOLING_PARAM: design_choice},
                     ),
                     info=MockRunInfo(status="FINISHED"),
                 )
@@ -49,10 +49,10 @@ def kfold_runs() -> list[MockRun]:
                             tags={
                                 "group_id": f"kfold_group_{group_id}_{design_choice}",
                                 "fold": str(fold),
-                                "design_dimension": POOLING_DIM,
+                                "design_dimension": _POOLING_DIM,
                             },
                             metrics={"test_roc_auc": metric},
-                            params={POOLING_PARAM: design_choice},
+                            params={_POOLING_PARAM: design_choice},
                         ),
                         info=MockRunInfo(status="FINISHED"),
                     )
