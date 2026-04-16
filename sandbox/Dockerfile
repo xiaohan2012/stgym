@@ -54,10 +54,8 @@ RUN echo "source $UV_PROJECT_ENVIRONMENT/bin/activate" >> /home/agent/.bashrc
 RUN su agent -c 'git config --global user.name "stgym-bot" \
     && git config --global user.email "stgym-bot@users.noreply.github.com"'
 
-# Marimo config: bind to all interfaces so the server is reachable from the host
-RUN mkdir -p /home/agent/.config/marimo \
-    && printf '[server]\nhost = "0.0.0.0"\n' > /home/agent/.config/marimo/marimo.toml \
-    && chown -R agent:agent /home/agent/.config
+# Marimo: wrap edit/run to always bind to 0.0.0.0 so the server is reachable from the host
+RUN echo '\nmarimo() {\n    if [[ "$1" == "edit" || "$1" == "run" ]]; then\n        command marimo "$1" --host 0.0.0.0 "${@:2}"\n    else\n        command marimo "$@"\n    fi\n}' >> /home/agent/.bashrc
 
 # SSH config for agent user
 RUN mkdir -p /home/agent/.ssh && chmod 700 /home/agent/.ssh \

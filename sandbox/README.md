@@ -14,7 +14,7 @@ bash sandbox/claude.sh "take issue #150 and implement it"   # one-shot
 
 ## Marimo notebooks
 
-Port 2718 is forwarded from the container to the host and `MARIMO_HOST=0.0.0.0` is set so marimo binds to all interfaces. To edit a notebook from inside the sandbox:
+Port 2718 is forwarded from the container to the host. A bash wrapper automatically adds `--host 0.0.0.0` to `marimo edit` and `marimo run` so the server is reachable from outside the container. To edit a notebook from inside the sandbox:
 
 ```bash
 marimo edit rct_experiment_analysis.py
