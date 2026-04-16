@@ -62,6 +62,7 @@ class TestSTGraphClassifier(BatchLoaderMixin):
             ),
         ),
     ],
+    ids=["graph_clf", "node_clf"],
 )
 class TestConfigImmutability(BatchLoaderMixin):
     """Verify that model construction does not mutate the shared PostMPConfig."""
@@ -70,8 +71,11 @@ class TestConfigImmutability(BatchLoaderMixin):
         """Config dims must not be mutated when building the model."""
         cfg = cfg_factory()
         original_dims = list(cfg.post_mp_layer.dims)
-        model_cls(self.num_features, self.num_classes, cfg)
+        model = model_cls(self.num_features, self.num_classes, cfg)
         assert cfg.post_mp_layer.dims == original_dims
+        # Verify dim_out is wired correctly via a forward pass
+        _, pred, _ = model(self.load_batch())
+        assert pred.shape[-1] == self.num_classes
 
     def test_repeated_construction_stable_dims(self, model_cls, cfg_factory):
         """Simulates k-fold: constructing the model N times with the same config
@@ -79,7 +83,9 @@ class TestConfigImmutability(BatchLoaderMixin):
         cfg = cfg_factory()
         original_dims = list(cfg.post_mp_layer.dims)
         for _ in range(5):
-            model_cls(self.num_features, self.num_classes, cfg)
+            model = model_cls(self.num_features, self.num_classes, cfg)
+            _, pred, _ = model(self.load_batch())
+            assert pred.shape[-1] == self.num_classes
         assert cfg.post_mp_layer.dims == original_dims
 
 
