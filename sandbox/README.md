@@ -12,6 +12,16 @@ bash sandbox/claude.sh "take issue #150 and implement it"   # one-shot
 
 `run.sh` extracts the Claude Code OAuth refresh token from the macOS Keychain and `GH_TOKEN` from `gh auth token`, then starts the container with the repo bind-mounted at `/repo`.
 
+## Marimo notebooks
+
+Port 2718 is forwarded from the container to the host and `MARIMO_HOST=0.0.0.0` is set so marimo binds to all interfaces. To edit a notebook from inside the sandbox:
+
+```bash
+marimo edit rct_experiment_analysis.py
+```
+
+Then open `http://localhost:2718/` in your host browser.
+
 ## Cost & Observability
 
 Autonomous agents can burn tokens silently — loops, wasted re-reads, runaway retries. Two safeguards: **turn caps** to bound a single run, and **telemetry** to review spend after the fact.
