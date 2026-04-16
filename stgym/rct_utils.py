@@ -181,29 +181,6 @@ def compute_within_group_ranks(
     return df
 
 
-def summarize_ranks_by_design_choice(
-    df: pd.DataFrame,
-    design_choice_col: str = "design_choice",
-) -> pd.DataFrame:
-    """Summarize rank statistics by design choice.
-
-    Computes mean rank, count, standard deviation, and median rank
-    for each design choice.
-
-    Args:
-        df: DataFrame with columns including design_choice, rank.
-        design_choice_col: Name of the design choice column.
-
-    Returns:
-        DataFrame with summary statistics per design choice.
-    """
-    return (
-        df.groupby(design_choice_col)["rank"]
-        .agg(["mean", "count", "std", "median"])
-        .reset_index()
-    )
-
-
 def analyze_experiment(
     tracking_uri: str,
     experiment_id: str,

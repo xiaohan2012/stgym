@@ -12,7 +12,6 @@ from stgym.rct_utils import (
     compute_within_group_ranks,
     filter_complete_groups,
     runs_to_dataframe,
-    summarize_ranks_by_design_choice,
 )
 from tests.mock_mlflow import MockRun, MockRunData, MockRunInfo
 
@@ -227,38 +226,6 @@ class TestComputeWithinGroupRanks:
         pd.testing.assert_frame_equal(self.sample_df, original)
 
 
-class TestSummarizeRanksByDesignChoice:
-    """Test rank summary statistics."""
-
-    @property
-    def ranked_df(self) -> pd.DataFrame:
-        """DataFrame with precomputed ranks."""
-        return pd.DataFrame(
-            {
-                "design_choice": ["a", "b", "a", "b", "a", "b"],
-                "rank": [1.0, 2.0, 2.0, 1.0, 1.0, 2.0],
-            }
-        )
-
-    def test_computes_correct_statistics(self):
-        """Verify mean, count, std, median are computed."""
-        result = summarize_ranks_by_design_choice(self.ranked_df)
-
-        assert set(result.columns) == {
-            "design_choice",
-            "mean",
-            "count",
-            "std",
-            "median",
-        }
-
-        # Design a: ranks [1, 2, 1] -> mean ~1.33
-        row_a = result[result["design_choice"] == "a"]
-        assert row_a["mean"].iloc[0] == pytest.approx(4 / 3)
-        assert row_a["count"].iloc[0] == 3
-        assert row_a["median"].iloc[0] == 1.0
-
-
 @mock.patch("stgym.rct_utils.fetch_runs")
 class TestAnalyzeExperiment:
     """Test the high-level analyze_experiment function."""
@@ -453,27 +420,3 @@ class TestAnalyzeExperimentWithRealisticData:
         filtered = filter_complete_groups(aggregated)
 
         assert len(filtered) < len(aggregated)
-
-    def test_rank_summary_with_kfold_data(self, mock_fetch_runs: MagicMock, kfold_runs):
-        """Verify rank summary statistics work with k-fold aggregated data."""
-        from stgym.rct_utils import analyze_experiment, summarize_ranks_by_design_choice
-
-        mock_fetch_runs.return_value = kfold_runs
-
-        result = analyze_experiment(
-            tracking_uri="http://localhost:5001",
-            experiment_id="test_exp",
-            metric_name="test_roc_auc",
-            aggregate_kfold=True,
-        )
-
-        assert POOLING_DIM in result["design_dimension"].values
-        df = result[result["design_dimension"] == POOLING_DIM]
-        rank_summary = summarize_ranks_by_design_choice(df)
-
-        assert len(rank_summary) == 2
-        assert set(rank_summary["design_choice"].unique()) == {"dmon", "mincut"}
-        assert "mean" in rank_summary.columns
-        assert "count" in rank_summary.columns
-        assert "std" in rank_summary.columns
-        assert "median" in rank_summary.columns

@@ -71,7 +71,6 @@ def _():
 def _():
     from stgym.rct_utils import (
         analyze_experiment,
-        summarize_ranks_by_design_choice,
     )
 
     return (analyze_experiment,)
@@ -186,13 +185,9 @@ def _(active_df, mo, plt, sns):
     )
     _order_df = _order_df.sort_values(["design_dimension", "rank"])
 
-
     # Create ordered categorical for each dimension
     def _get_order(dim):
-        return _order_df[_order_df["design_dimension"] == dim][
-            "design_choice"
-        ].tolist()
-
+        return _order_df[_order_df["design_dimension"] == dim]["design_choice"].tolist()
 
     sections = []
 
@@ -201,14 +196,10 @@ def _(active_df, mo, plt, sns):
         active_df, col="design_dimension", sharey=False, sharex=False, col_wrap=3
     )
 
-
     def _violin_with_order(data, **kwargs):
         dim = data["design_dimension"].iloc[0]
         order = _get_order(dim)
-        sns.violinplot(
-            data=data, x="design_choice", y="rank", order=order, **kwargs
-        )
-
+        sns.violinplot(data=data, x="design_choice", y="rank", order=order, **kwargs)
 
     _g.map_dataframe(_violin_with_order)
     _g.set_axis_labels("Design Choice", "Rank (1 = best)")
@@ -229,15 +220,6 @@ def _(mo):
     - Lower mean rank indicates a design choice that consistently outperforms alternatives
     - Compare the rank distributions to assess consistency vs variability
     """)
-    return
-
-
-@app.cell(hide_code=True)
-def _(mo, rank_stats):
-    import os
-
-    rank_stats.to_excel(os.path.expanduser("~/Desktop/rank_stats.xlsx"))
-    mo.md("Exported to `~/Desktop/rank_stats.xlsx`")
     return
 
 
