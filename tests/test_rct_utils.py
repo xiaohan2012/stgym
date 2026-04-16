@@ -310,7 +310,7 @@ class TestAnalyzeExperiment:
         assert len(result[result["design_dimension"] == dim_b]) == 2
 
 
-from tests.conftest import POOLING_DIM
+_POOLING_DIM = "model.pooling.type"
 
 
 @mock.patch("stgym.rct_utils.fetch_runs")
@@ -331,8 +331,8 @@ class TestAnalyzeExperimentWithRealisticData:
         )
 
         assert isinstance(result, pd.DataFrame)
-        assert POOLING_DIM in result["design_dimension"].values
-        df = result[result["design_dimension"] == POOLING_DIM]
+        assert _POOLING_DIM in result["design_dimension"].values
+        df = result[result["design_dimension"] == _POOLING_DIM]
         assert len(df) == 6
         assert "rank" in df.columns
         assert set(df["design_choice"].unique()) == {"dmon", "mincut"}
@@ -353,8 +353,8 @@ class TestAnalyzeExperimentWithRealisticData:
         )
 
         assert isinstance(result, pd.DataFrame)
-        assert POOLING_DIM in result["design_dimension"].values
-        df = result[result["design_dimension"] == POOLING_DIM]
+        assert _POOLING_DIM in result["design_dimension"].values
+        df = result[result["design_dimension"] == _POOLING_DIM]
         assert len(df) == 4
         assert df["fold"].isna().all()
         assert "rank" in df.columns
@@ -373,18 +373,16 @@ class TestAnalyzeExperimentWithRealisticData:
         )
 
         assert isinstance(result, pd.DataFrame)
-        assert POOLING_DIM in result["design_dimension"].values
-        df = result[result["design_dimension"] == POOLING_DIM]
+        assert _POOLING_DIM in result["design_dimension"].values
+        df = result[result["design_dimension"] == _POOLING_DIM]
         assert len(df) == 10
         assert "rank" in df.columns
 
     def test_kfold_aggregation_computes_mean(
-        self, mock_fetch_runs: MagicMock, kfold_runs
+        self, _mock_fetch_runs: MagicMock, kfold_runs
     ):
         """Verify k-fold aggregation computes correct mean metrics."""
         from stgym.rct_utils import aggregate_kfold_metrics, runs_to_dataframe
-
-        mock_fetch_runs.return_value = kfold_runs
 
         df = runs_to_dataframe(kfold_runs, metric_name="test_roc_auc")
         aggregated = aggregate_kfold_metrics(df)

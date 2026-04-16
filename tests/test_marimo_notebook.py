@@ -5,7 +5,8 @@ from unittest import mock
 import pandas as pd
 
 from rct_experiment_analysis import app
-from tests.conftest import POOLING_DIM
+
+_POOLING_DIM = "model.pooling.type"
 
 
 class TestMarimoNotebook:
@@ -24,4 +25,4 @@ class TestMarimoNotebook:
         assert len(results_df) == 6
         assert "rank" in results_df.columns
         assert "design_dimension" in results_df.columns
-        assert POOLING_DIM in results_df["design_dimension"].values
+        assert _POOLING_DIM in results_df["design_dimension"].values

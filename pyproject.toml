@@ -33,7 +33,6 @@ dependencies = [
     "ipykernel",
     "jupyter-client",
     "python-lsp-server[all]>=1.14.0",
-    "openpyxl>=3.1.5",
 ]
 
 [dependency-groups]

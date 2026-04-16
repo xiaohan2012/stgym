@@ -8,6 +8,7 @@ This module provides reusable functions for:
 
 from typing import Any
 
+import mlflow
 import pandas as pd
 import pydash as _
 from mlflow import MlflowClient
@@ -49,8 +50,6 @@ def fetch_runs(
     Returns:
         List of MLflow Run objects.
     """
-    import mlflow
-
     mlflow.set_tracking_uri(tracking_uri)
     client = MlflowClient()
     return client.search_runs(
