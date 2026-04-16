@@ -100,8 +100,8 @@ def test_on_group_ids(mock_design_space):
 def test_new_design_dimensions(
     mock_design_space, design_dimension, design_choices, cfg_accessor
 ):
-    """Verify generate_experiment_configs works for layer_type, global_pooling, normalize_adj."""
-    k = 2
+    """Verify generate_experiment_configs correctly handles a design dimension."""
+    k = 10
     exp_cfgs = generate_experiment_configs(
         mock_design_space,
         design_dimension=design_dimension,
