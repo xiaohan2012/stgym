@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     ripgrep \
     procps \
+    jq \
     && rm -rf /var/lib/apt/lists/*
 
 # gh CLI
