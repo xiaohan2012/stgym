@@ -1,43 +1,53 @@
 """Tests for the Marimo notebook rct_experiment_analysis.py."""
 
-import importlib.util
-from pathlib import Path
 from unittest import mock
 
-NOTEBOOK_PATH = Path(__file__).parent.parent / "rct_experiment_analysis.py"
+import pandas as pd
 
+from rct_experiment_analysis import app
+from stgym.rct_utils import DESIGN_DIM_TO_MLFLOW_PATH
+from tests.mock_mlflow import MockRun, MockRunData, MockRunInfo
 
-def _load_notebook_module():
-    """Import the notebook as a Python module and return it."""
-    spec = importlib.util.spec_from_file_location(
-        "rct_experiment_analysis", NOTEBOOK_PATH
-    )
-    assert spec is not None and spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+_POOLING_DIM = "model.pooling.type"
+_POOLING_PARAM = DESIGN_DIM_TO_MLFLOW_PATH[_POOLING_DIM]
 
 
 class TestMarimoNotebook:
     """Tests for the Marimo notebook via programmatic execution."""
 
-    def test_notebook_importable(self):
-        """Verify the notebook can be imported and exposes a marimo App object."""
-        module = _load_notebook_module()
-
-        assert hasattr(module, "app")
-        assert hasattr(module.app, "run")
+    @property
+    def mock_runs(self) -> list[MockRun]:
+        """Create mock runs: 3 groups × 2 design choices = 6 runs."""
+        runs = []
+        for group_id in range(3):
+            for idx, design_choice in enumerate(["dmon", "mincut"]):
+                metric = 0.75 + group_id * 0.02 + idx * 0.05
+                runs.append(
+                    MockRun(
+                        data=MockRunData(
+                            tags={
+                                "group_id": f"group_{group_id}",
+                                "design_dimension": _POOLING_DIM,
+                            },
+                            metrics={"test_roc_auc": metric},
+                            params={_POOLING_PARAM: design_choice},
+                        ),
+                        info=MockRunInfo(status="FINISHED"),
+                    )
+                )
+        return runs
 
     @mock.patch("stgym.rct_utils.fetch_runs")
-    def test_notebook_runs_with_no_data(self, mock_fetch_runs):
-        """Verify notebook runs without error when no MLflow data is available.
+    def test_notebook_runs_and_populates_results(self, mock_fetch_runs):
+        """Verify notebook runs end-to-end and populates results_df with analysis."""
+        mock_fetch_runs.return_value = self.mock_runs
 
-        With an empty experiment_id (the default), mo.stop() halts execution
-        early before any MLflow calls are made.
-        """
-        mock_fetch_runs.return_value = []
-        module = _load_notebook_module()
+        _outputs, variables = app.run()
 
-        result = module.app.run()
-
-        assert result is not None
+        assert "results_df" in variables
+        results_df = variables["results_df"]
+        assert isinstance(results_df, pd.DataFrame)
+        assert len(results_df) == 6
+        assert "rank" in results_df.columns
+        assert "design_dimension" in results_df.columns
+        assert _POOLING_DIM in results_df["design_dimension"].values
