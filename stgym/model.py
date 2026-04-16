@@ -23,9 +23,11 @@ class STGraphClassifier(torch.nn.Module):
         self.global_pooling = get_pooling_operator(cfg.global_pooling)
 
         # dim_out should be passed to MLP
-        cfg.post_mp_layer.dims.append(dim_out)
+        post_mp_config = cfg.post_mp_layer.model_copy(
+            update={"dims": cfg.post_mp_layer.dims + [dim_out]}
+        )
         # TODO: what does it mean for dim equal -1? when to use it?
-        self.post_mp = MLP(-1, cfg.post_mp_layer, cfg.mem)
+        self.post_mp = MLP(-1, post_mp_config, cfg.mem)
 
     def forward(self, batch: Data) -> tuple[Data, Tensor, list[dict[str, Tensor]]]:
         """return the batch before global pooling and the predictions by post MP layers"""
@@ -48,9 +50,11 @@ class STNodeClassifier(torch.nn.Module):
             dim_in=dim_in, layer_configs=cfg.mp_layers, mem_config=cfg.mem
         )
         # dim_out should be passed to MLP
-        cfg.post_mp_layer.dims.append(dim_out)
+        post_mp_config = cfg.post_mp_layer.model_copy(
+            update={"dims": cfg.post_mp_layer.dims + [dim_out]}
+        )
         # TODO: what does it mean for dim equal -1? when to use it?
-        self.post_mp = MLP(-1, cfg.post_mp_layer, cfg.mem)
+        self.post_mp = MLP(-1, post_mp_config, cfg.mem)
 
     def forward(self, batch: Data) -> tuple[Data, Tensor, list[dict[str, Tensor]]]:
         check_edge_index(batch)
