@@ -216,26 +216,6 @@ def _(active_df, mo, plt, sns):
     plt.tight_layout()
     sections.append(_g.figure)
 
-    sections.append(mo.md("### Metric Distribution"))
-    _g2 = sns.FacetGrid(
-        active_df, col="design_dimension", sharey=False, sharex=False, col_wrap=3
-    )
-
-
-    def _box_with_order(data, **kwargs):
-        dim = data["design_dimension"].iloc[0]
-        order = _get_order(dim)
-        sns.boxplot(
-            data=data, x="design_choice", y="metric", order=order, **kwargs
-        )
-
-
-    _g2.map_dataframe(_box_with_order)
-    _g2.set_axis_labels("Design Choice", "Metric")
-    _g2.set_titles("{col_name}")
-    plt.tight_layout()
-    sections.append(_g2.figure)
-
     mo.vstack(sections)
     return
 
