@@ -16,6 +16,8 @@ services:
       - ..:/repo
       - ~/.ssh:/home/agent/.ssh:ro
       - uv-cache:/home/agent/.cache/uv
+    ports:
+      - "2718:2718"
     environment:
       - GH_TOKEN
       - CLAUDE_CODE_OAUTH_REFRESH_TOKEN

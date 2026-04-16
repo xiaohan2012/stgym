@@ -22,4 +22,4 @@ export GH_TOKEN=$(gh auth token)
 
 echo "Starting agent sandbox..."
 docker compose -f "$SCRIPT_DIR/docker-compose.yml" build
-docker compose -f "$SCRIPT_DIR/docker-compose.yml" run --rm agent
+docker compose -f "$SCRIPT_DIR/docker-compose.yml" run --rm --service-ports agent
