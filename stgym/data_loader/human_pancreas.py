@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import torch
 from torch_geometric.data import Data
@@ -64,8 +65,6 @@ class HumanPancreasDataset(AbstractDataset):
             # Handle NaN values in the feature matrix
             # Check if there are any NaN values
             if pd.isnull(features).any():
-                import numpy as np
-
                 nan_count = np.isnan(features).sum()
                 total_features = features.shape[0] * features.shape[1]
                 print(

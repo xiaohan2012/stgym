@@ -1,10 +1,10 @@
+import argparse
+
 from stgym.data_loader import get_dataset_class
 from stgym.utils import get_coord_span
 
 
 def main():
-    import argparse
-
     parser = argparse.ArgumentParser(
         description="Get maximum coordinate span for a dataset"
     )
