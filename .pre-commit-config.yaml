@@ -36,3 +36,8 @@ repos:
         files: \.ipynb$
         language: system
         entry: jupyter nbconvert --ClearOutputPreprocessor.enabled=True --inplace
+      - id: marimo-check
+        name: marimo-check
+        language: system
+        entry: uv run marimo check --ignore-scripts
+        types: [python]
