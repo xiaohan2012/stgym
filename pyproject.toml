@@ -24,6 +24,7 @@ dependencies = [
     "scikit-learn",
     "pyarrow",
     "matplotlib",
+    "seaborn",
     "networkx",
     "logzero",
     "tabulate",
@@ -43,6 +44,7 @@ dev = [
     "ty",
     "pre-commit>=4.5.1",
     "nbconvert",
+    "marimo>=0.23.1",
 ]
 
 [tool.ruff]

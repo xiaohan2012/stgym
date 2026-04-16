@@ -33,6 +33,9 @@ def generate_experiment(
     train_designs = generate_train_config(space.train, k, seed)
     task_designs = generate_task_config(space.task, k, seed)
     dl_designs = generate_data_loader_config(space.data_loader, k, seed)
+    assert (
+        len(model_designs) == len(train_designs) == len(task_designs) == len(dl_designs)
+    )
     return [
         ExperimentConfig(model=m, train=tr, task=ta, data_loader=dl)
         for m, tr, ta, dl in zip(model_designs, train_designs, task_designs, dl_designs)
