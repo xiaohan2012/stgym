@@ -238,7 +238,7 @@ def analyze_experiment(
     df = runs_to_dataframe(runs, metric_name)
 
     dfs: list[pd.DataFrame] = []
-    for _, dim_df in df.groupby("design_dimension"):
+    for _dim, dim_df in df.groupby("design_dimension"):
         dim_df = dim_df.copy()
         if aggregate_kfold:
             dim_df = aggregate_kfold_metrics(dim_df)
