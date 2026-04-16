@@ -4,6 +4,7 @@ from unittest.mock import patch
 import pytest
 import torch
 from torch.utils.data import DataLoader
+from torch_geometric.data import Data
 
 from stgym.config_schema import DataLoaderConfig, TaskConfig
 from stgym.data_loader import (
@@ -140,7 +141,6 @@ class TestSTDataModuleNaNDetection:
     @property
     def mock_dataset_with_nans(self):
         """Create a mock dataset with NaN values in features"""
-        from torch_geometric.data import Data
 
         # Create a simple mock dataset with NaN values
         class MockDataset:
@@ -201,7 +201,6 @@ class TestDropLastBehavior:
     @property
     def small_mock_dataset(self):
         """Create a small mock dataset to reproduce drop_last issues."""
-        from torch_geometric.data import Data
 
         class MockDataset:
             def __init__(self, num_samples):

@@ -53,8 +53,14 @@ target-version = "py312"
 exclude = [".claude"]
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP"]
+select = ["E", "F", "I", "UP", "PLC"]
 ignore = ["E501", "E402", "F821"]
+
+[tool.ruff.lint.per-file-ignores]
+# Marimo notebooks require imports inside @app.cell functions by design
+"rct_experiment_analysis.py" = ["PLC0415"]
+# Scripts use lazy/conditional imports for ergonomic reasons
+"scripts/**" = ["PLC0415"]
 
 [tool.uv]
 find-links = ["https://data.pyg.org/whl/torch-2.7.0+cpu.html"]
