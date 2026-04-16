@@ -1,7 +1,0 @@
-# @package _global_
-
-design_dimension: model.dim_inner
-design_choices: [512]
-
-mlflow:
-  experiment_name: oom_verification
