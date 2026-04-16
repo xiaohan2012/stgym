@@ -74,7 +74,7 @@ def _():
         summarize_ranks_by_design_choice,
     )
 
-    return analyze_experiment, summarize_ranks_by_design_choice
+    return (analyze_experiment,)
 
 
 @app.cell
@@ -161,31 +161,76 @@ def _(active_df, mo):
 
 
 @app.cell
-def _(active_df, mo, plt, sns, summarize_ranks_by_design_choice):
+def _(active_df, mo):
+    rank_stats = (
+        active_df.groupby(["design_dimension", "design_choice"])["rank"]
+        .agg(["mean", "std", "min", "max", "count"])
+        .sort_values(["design_dimension", "mean"])
+    )
+    mo.vstack(
+        [
+            mo.md("## Rank Statistics by Design Choice"),
+            mo.ui.table(rank_stats),
+        ]
+    )
+    return (rank_stats,)
+
+
+@app.cell
+def _(active_df, mo, plt, sns):
+    # Compute order by mean rank for each dimension
+    _order_df = (
+        active_df.groupby(["design_dimension", "design_choice"])["rank"]
+        .mean()
+        .reset_index()
+    )
+    _order_df = _order_df.sort_values(["design_dimension", "rank"])
+
+
+    # Create ordered categorical for each dimension
+    def _get_order(dim):
+        return _order_df[_order_df["design_dimension"] == dim][
+            "design_choice"
+        ].tolist()
+
+
     sections = []
-    for _dim in sorted(active_df["design_dimension"].unique()):
-        _df = active_df[active_df["design_dimension"] == _dim]
-
-        sections.append(mo.md(f"## Design Dimension: `{_dim}`"))
-
-        sections.append(mo.md("### Data Preview"))
-        sections.append(mo.ui.table(_df.head(20)))
-
-        sections.append(mo.md("### Rank Summary by Design Choice"))
-        _rank_summary = summarize_ranks_by_design_choice(_df)
-        sections.append(mo.ui.table(_rank_summary))
 
     sections.append(mo.md("### Rank Distribution"))
-    _g = sns.FacetGrid(active_df, col="design_dimension", sharey=False)
-    _g.map_dataframe(sns.violinplot, x="design_choice", y="rank")
+    _g = sns.FacetGrid(
+        active_df, col="design_dimension", sharey=False, sharex=False, col_wrap=3
+    )
+
+
+    def _violin_with_order(data, **kwargs):
+        dim = data["design_dimension"].iloc[0]
+        order = _get_order(dim)
+        sns.violinplot(
+            data=data, x="design_choice", y="rank", order=order, **kwargs
+        )
+
+
+    _g.map_dataframe(_violin_with_order)
     _g.set_axis_labels("Design Choice", "Rank (1 = best)")
     _g.set_titles("{col_name}")
     plt.tight_layout()
     sections.append(_g.figure)
 
     sections.append(mo.md("### Metric Distribution"))
-    _g2 = sns.FacetGrid(active_df, col="design_dimension", sharey=False)
-    _g2.map_dataframe(sns.boxplot, x="design_choice", y="metric")
+    _g2 = sns.FacetGrid(
+        active_df, col="design_dimension", sharey=False, sharex=False, col_wrap=3
+    )
+
+
+    def _box_with_order(data, **kwargs):
+        dim = data["design_dimension"].iloc[0]
+        order = _get_order(dim)
+        sns.boxplot(
+            data=data, x="design_choice", y="metric", order=order, **kwargs
+        )
+
+
+    _g2.map_dataframe(_box_with_order)
     _g2.set_axis_labels("Design Choice", "Metric")
     _g2.set_titles("{col_name}")
     plt.tight_layout()
@@ -204,6 +249,15 @@ def _(mo):
     - Lower mean rank indicates a design choice that consistently outperforms alternatives
     - Compare the rank distributions to assess consistency vs variability
     """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo, rank_stats):
+    import os
+
+    rank_stats.to_excel(os.path.expanduser("~/Desktop/rank_stats.xlsx"))
+    mo.md("Exported to `~/Desktop/rank_stats.xlsx`")
     return
 
 
