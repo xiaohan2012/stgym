@@ -146,7 +146,7 @@ All tests must pass.
 
 ### Phase 7: Self-Review
 
-Run `/simplify` to review your changes for code reuse, quality, and efficiency. Fix any issues it finds.
+Run `/simplify` to review your changes for code reuse, quality, and efficiency. Present the findings to the user and confirm which issues to fix before making changes.
 
 ### Phase 8: Commit and Push
 
