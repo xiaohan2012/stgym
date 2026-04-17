@@ -60,9 +60,9 @@ Determine branch prefix from type label:
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 git fetch origin main
 BRANCH="<prefix>/issue-<N>-<short-desc>"
-git worktree add "$REPO_ROOT/../repo-worktrees/issue-<N>" -b "$BRANCH" origin/main
-ln -s "$REPO_ROOT/data" "$REPO_ROOT/../repo-worktrees/issue-<N>/data"
-cd "$REPO_ROOT/../repo-worktrees/issue-<N>"
+git worktree add "$REPO_ROOT/../repo-worktrees/issue-<N>-<short-desc>" -b "$BRANCH" origin/main
+ln -s "$REPO_ROOT/data" "$REPO_ROOT/../repo-worktrees/issue-<N>-<short-desc>/data"
+cd "$REPO_ROOT/../repo-worktrees/issue-<N>-<short-desc>"
 source .venv/bin/activate
 ```
 
@@ -209,7 +209,7 @@ Cleanup worktree (if used):
 ```bash
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "$REPO_ROOT"
-git worktree remove "$REPO_ROOT/../repo-worktrees/issue-<N>"
+git worktree remove "$REPO_ROOT/../repo-worktrees/issue-<N>-<short-desc>"
 ```
 
 ## Handling Human Feedback
