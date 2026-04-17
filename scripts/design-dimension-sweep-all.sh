@@ -8,8 +8,10 @@
 
 # Get all available experiments from conf/exp/*.yaml
 EXPERIMENTS_GRAPH_CLF=$(ls conf/exp/*.yaml | xargs -n1 basename | sed 's/\.yaml$//' | tr '\n' ',' | sed 's/,$//')
-# node_clf design space has pooling: null, so hpooling and clusters dimensions don't exist there
-EXPERIMENTS_NODE_CLF=$(ls conf/exp/*.yaml | grep -v -E '(hpooling|clusters)' | xargs -n1 basename | sed 's/\.yaml$//' | tr '\n' ',' | sed 's/,$//')
+# node_clf design space has pooling: null, so hpooling and clusters dimensions don't exist there.
+# global_pooling is also excluded: NodeClassifierModelConfig has no global_pooling field, so
+# running it against node_clf would silently produce identical configs for every choice value.
+EXPERIMENTS_NODE_CLF=$(ls conf/exp/*.yaml | grep -v -E '(hpooling|clusters|global_pooling)' | xargs -n1 basename | sed 's/\.yaml$//' | tr '\n' ',' | sed 's/,$//')
 
 # Configuration variables with defaults
 RESOURCE=${RESOURCE:-gpu-6}

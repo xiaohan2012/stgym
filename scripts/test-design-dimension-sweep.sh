@@ -14,8 +14,9 @@
 # Configuration variables
 # remove 'epochs' experiment for efficiency reasons
 EXPERIMENTS_FULL_GRAPH_CLF=$(ls conf/exp/*.yaml | xargs -n1 basename | sed 's/\.yaml$//' | grep -v '^epochs$' | tr '\n' ',' | sed 's/,$//')
-# node_clf design space has pooling: null, so hpooling and clusters dimensions don't exist there
-EXPERIMENTS_FULL_NODE_CLF=$(ls conf/exp/*.yaml | grep -v -E '(hpooling|clusters)' | xargs -n1 basename | sed 's/\.yaml$//' | grep -v '^epochs$' | tr '\n' ',' | sed 's/,$//')
+# node_clf design space has pooling: null, so hpooling and clusters dimensions don't exist there.
+# global_pooling is also excluded: NodeClassifierModelConfig has no global_pooling field.
+EXPERIMENTS_FULL_NODE_CLF=$(ls conf/exp/*.yaml | grep -v -E '(hpooling|clusters|global_pooling)' | xargs -n1 basename | sed 's/\.yaml$//' | grep -v '^epochs$' | tr '\n' ',' | sed 's/,$//')
 EXPERIMENTS_DEBUG="hpooling,bn"
 
 # Set mode (default to debug, can be overridden with MODE environment variable)

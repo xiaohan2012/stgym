@@ -12,6 +12,11 @@ def mock_design_space():
     return DesignSpace.from_yaml("./tests/data/design-space-graph-clf.yaml")
 
 
+@pytest.fixture
+def mock_node_clf_design_space():
+    return DesignSpace.from_yaml("./tests/data/design-space-node-clf.yaml")
+
+
 @pytest.mark.parametrize("k", [1, 2, 3])
 def test_generation(mock_design_space, k):
     exp_cfgs = generate_experiment_configs(
@@ -75,6 +80,64 @@ def test_on_group_ids(mock_design_space):
     for gid in range(k):
         for i in range(choice_multiplicity):
             assert exp_cfgs[gid + i * k].group_id == gid
+
+
+@pytest.mark.parametrize(
+    "design_dimension, design_choices, cfg_accessor",
+    [
+        (
+            "model.layer_type",
+            ["gcnconv", "ginconv", "sageconv"],
+            lambda cfg: cfg.model.mp_layers[0].layer_type,
+        ),
+        (
+            "model.global_pooling",
+            ["mean", "max"],
+            lambda cfg: cfg.model.global_pooling,
+        ),
+        (
+            "model.normalize_adj",
+            [True, False],
+            lambda cfg: cfg.model.mp_layers[0].normalize_adj,
+        ),
+    ],
+)
+def test_new_design_dimensions(
+    mock_design_space, design_dimension, design_choices, cfg_accessor
+):
+    """Verify generate_experiment_configs correctly handles a design dimension."""
+    k = 10
+    exp_cfgs = generate_experiment_configs(
+        mock_design_space,
+        design_dimension=design_dimension,
+        design_choices=design_choices,
+        sample_size=k,
+        random_seed=42,
+    )
+
+    assert len(exp_cfgs) == k * len(design_choices)
+    actual_choices = _.sort(_.uniq(_.map_(exp_cfgs, cfg_accessor)))
+    assert actual_choices == _.sort(design_choices)
+
+
+def test_global_pooling_is_ignored_in_node_clf(mock_node_clf_design_space):
+    """global_pooling has no effect on node_clf configs — all choices produce identical values.
+
+    This documents why global_pooling must be excluded from node_clf sweeps in
+    design-dimension-sweep-all.sh: NodeClassifierModelConfig has no global_pooling field,
+    so the design choice is silently discarded and every run is a wasted duplicate.
+    """
+    design_choices = ["mean", "max", "add"]
+    exp_cfgs = generate_experiment_configs(
+        mock_node_clf_design_space,
+        design_dimension="model.global_pooling",
+        design_choices=design_choices,
+        sample_size=3,
+        random_seed=42,
+    )
+
+    # NodeClassifierModelConfig has no global_pooling field — the choice is silently discarded
+    assert all(not hasattr(cfg.model, "global_pooling") for cfg in exp_cfgs)
 
 
 def test_invalid_design_dimension(mock_design_space):
