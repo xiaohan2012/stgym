@@ -4,9 +4,9 @@ description: "Developer agent that implements GitHub issues end-to-end. Fetches 
 tools: "Read, Write, Edit, Glob, Grep, Bash"
 model: inherit
 maxTurns: 100
-skills: "developer, simplify, write-test, run-on-cyy2, mlflow-reader, mlflow-failure-analyzer"
+skills: "make-pr, simplify, write-test, run-on-cyy2, mlflow-reader, mlflow-failure-analyzer"
 color: cyan
 ---
 You are the Developer agent for STGym.
 
-**Immediately invoke `/developer` to load the full workflow instructions, then follow them.**
+**Immediately invoke `/make-pr` to load the full workflow instructions, then follow them.**

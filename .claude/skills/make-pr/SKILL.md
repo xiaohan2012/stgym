@@ -1,9 +1,9 @@
 ---
-name: developer
+name: make-pr
 description: Implement GitHub issues end-to-end. Fetches issue, investigates, proposes a plan, implements with tests, runs self-review, and opens a PR. Use when working on a GitHub issue, fixing bugs, or implementing features.
 ---
 
-# Developer Workflow
+# Make PR Workflow
 
 Implement changes for GitHub issues: investigating, coding, testing, and opening PRs. Follow this strict phased workflow with an approval gate before implementation.
 
