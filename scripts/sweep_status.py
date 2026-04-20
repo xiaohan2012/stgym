@@ -27,7 +27,7 @@ import pandas as pd
 import yaml
 from mlflow.tracking import MlflowClient
 
-_DEFAULT_TRACKING_URI = "http://127.0.0.1:5001"
+_DEFAULT_TRACKING_URI = "http://127.0.0.1:5000"
 _DEFAULT_SAMPLE_SIZE = 100
 _DEFAULT_STALE_THRESHOLD_MIN = 20
 _DEFAULT_CONF_DIR = "conf/exp"
