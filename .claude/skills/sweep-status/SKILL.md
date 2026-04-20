@@ -16,68 +16,58 @@ Check sweep progress on the cyy2 GPU server with persistent logging.
 
 ## Workflow
 
-### 1. Ensure screen session exists
+### Step 1: Submit command (do this first)
+
+The script may take a minute or more to run. Just submit the command and let it run.
 
 ```bash
-# Check if sweep-status screen exists
-ssh cyy2 "screen -ls | grep sweep-status"
+# Ensure screen exists, then send command
+ssh cyy2 "screen -ls | grep sweep-status" || ssh cyy2 "screen -dmS sweep-status bash -c 'cd /root/stgym && source .venv/bin/activate && exec bash'"
 
-# If not found, create it
-ssh cyy2 "screen -dmS sweep-status bash -c 'cd /root/stgym && source .venv/bin/activate && exec bash'"
-```
-
-### 2. Run sweep_status.py
-
-```bash
-# Send command to the sweep-status screen
+# Submit the command (returns immediately)
 ssh cyy2 "screen -S sweep-status -X stuff 'python scripts/sweep_status.py -i <experiment-id> [options]\n'"
 ```
 
-### 3. Capture output to local log
+### Step 2: Check output (do this later)
+
+After the script finishes (typically 30-60 seconds), capture and save the output.
 
 ```bash
-# Create log directory if needed
+# Capture screen output to local log
 mkdir -p logs/sweep-status
-
-# Wait briefly for command to execute, then capture screen output
-sleep 3
 ssh cyy2 "screen -S sweep-status -X hardcopy /tmp/sweep_status_dump && cat /tmp/sweep_status_dump" > "logs/sweep-status/<experiment-id>-$(date -u +'%Y-%m-%dT%H:%M:%SZ').log"
-```
 
-### 4. Display output
-
-```bash
-cat "logs/sweep-status/<experiment-id>-<datetime>.log"
+# Display the output
+cat logs/sweep-status/<experiment-id>-*.log | tail -100
 ```
 
 ## Examples
 
-### Check status by experiment ID
+### Submit status check by experiment ID
 
 ```bash
-# 1. Ensure screen exists
 ssh cyy2 "screen -ls | grep sweep-status" || ssh cyy2 "screen -dmS sweep-status bash -c 'cd /root/stgym && source .venv/bin/activate && exec bash'"
-
-# 2. Run status check
 ssh cyy2 "screen -S sweep-status -X stuff 'python scripts/sweep_status.py -i 42\n'"
-
-# 3. Capture and display
-mkdir -p logs/sweep-status
-sleep 3
-ssh cyy2 "screen -S sweep-status -X hardcopy /tmp/sweep_status_dump && cat /tmp/sweep_status_dump" > "logs/sweep-status/42-$(date -u +'%Y-%m-%dT%H:%M:%SZ').log"
-cat logs/sweep-status/42-*.log | tail -100
 ```
 
-### Check status by experiment name
+### Submit status check by experiment name
 
 ```bash
 ssh cyy2 "screen -S sweep-status -X stuff 'python scripts/sweep_status.py -n sweep-all-20260323\n'"
 ```
 
-### With custom options
+### Submit with custom options
 
 ```bash
 ssh cyy2 "screen -S sweep-status -X stuff 'python scripts/sweep_status.py -i 42 --sample-size 50 --stale-threshold 30\n'"
+```
+
+### Capture output later
+
+```bash
+mkdir -p logs/sweep-status
+ssh cyy2 "screen -S sweep-status -X hardcopy /tmp/sweep_status_dump && cat /tmp/sweep_status_dump" > "logs/sweep-status/42-$(date -u +'%Y-%m-%dT%H:%M:%SZ').log"
+cat logs/sweep-status/42-*.log | tail -100
 ```
 
 ## Output Interpretation
