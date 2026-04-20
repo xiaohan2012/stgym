@@ -115,6 +115,7 @@ Several project-specific skills are available via `/skill-name`:
 - **`/mlflow-reader`** — Query MLflow servers, list/filter experiments and runs, extract metrics/parameters, read artifact files. Activates automatically when given MLflow URLs or asked about experiment results.
 - **`/mlflow-failure-analyzer`** — Analyze failed MLflow runs: retrieves `training_error.txt` and `experiment_config.yaml` artifacts (including via SCP from cyy2), categorizes errors, and produces a structured debugging report.
 - **`/run-on-cyy2`** — Run commands, sync code, and manage long-running jobs on the `cyy2` GPU server. Handles screen session management, `git pull` + launch workflows for single experiments and sweeps, and fetching MLflow artifacts from the remote `mlruns/` store.
+- **`/sweep-status`** — Check sweep progress on cyy2. Runs `sweep_status.py` in a dedicated `sweep-status` screen session and saves output to `logs/sweep-status/<experiment-id>-<datetime>.log`.
 
 ## Key Conventions
 
