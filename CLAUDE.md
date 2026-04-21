@@ -106,7 +106,10 @@ bash scripts/test_on_gpu.sh    # quick GPU smoke test
 
 ### MLflow Tracking
 
-Default local MLflow URI is `http://127.0.0.1:5000`. Start the server with the launch script if needed (see `scripts/`).
+- **On cyy2**: MLflow server runs on port **5000** (`http://127.0.0.1:5000`)
+- **From local**: Use port **5001** (`http://127.0.0.1:5001`) via SSH port forwarding. If queries fail with "connection refused", the port forwarding is likely not set up.
+
+Start the server with the launch script if needed (see `scripts/`).
 
 ## Claude Code Skills
 
