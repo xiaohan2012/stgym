@@ -221,6 +221,42 @@ def build_sweep_status_df(
     return df
 
 
+def compute_overall_progress(df: pd.DataFrame, exp_stats: dict) -> dict:
+    """Aggregate progress across all dimensions and compute ETA."""
+    total_finished = exp_stats.get("total_finished", 0)
+    total_failed = exp_stats.get("total_failed", 0)
+    total_completed = total_finished + total_failed
+    total_active = int(df["active"].sum())
+    total_stale = int(df["stale"].sum())
+
+    trials = df["trials"].dropna()
+    total_expected = int(trials.sum()) if not trials.empty else None
+
+    throughput_per_h = exp_stats.get("throughput_per_h", 0)
+    throughput_per_min = throughput_per_h / 60
+
+    if (
+        total_expected is not None
+        and throughput_per_min > 0
+        and total_completed < total_expected
+    ):
+        remaining = total_expected - total_completed
+        eta_min = remaining / throughput_per_min
+    else:
+        eta_min = None
+
+    return {
+        "total_completed": total_completed,
+        "total_finished": total_finished,
+        "total_failed": total_failed,
+        "total_active": total_active,
+        "total_stale": total_stale,
+        "total_expected": total_expected,
+        "throughput_per_min": throughput_per_min,
+        "eta_min": eta_min,
+    }
+
+
 def print_summary(
     exp_name: str,
     exp_id: str,
@@ -238,6 +274,30 @@ def print_summary(
     print(f"Dimensions : {n_started} started, {n_pending} pending")
 
     if exp_stats:
+        overall = compute_overall_progress(df, exp_stats)
+        total_expected_str = (
+            str(overall["total_expected"])
+            if overall["total_expected"] is not None
+            else "?"
+        )
+        pct_str = (
+            f" ({100 * overall['total_completed'] / overall['total_expected']:.1f}%)"
+            if overall["total_expected"]
+            else ""
+        )
+        print(
+            f"\nOverall    : {overall['total_completed']}/{total_expected_str}{pct_str} completed"
+            f" ({overall['total_finished']} success, {overall['total_failed']} failed),"
+            f" {overall['total_active']} running, {overall['total_stale']} stale"
+        )
+        if overall["eta_min"] is not None:
+            print(
+                f"ETA        : ~{overall['eta_min'] / 60:.1f} h"
+                f" (throughput: {overall['throughput_per_min']:.1f} runs/min)"
+            )
+        else:
+            print("ETA        : N/A")
+
         start_dt = datetime.datetime.fromtimestamp(
             exp_stats["exp_start_ms"] / 1000, tz=datetime.UTC
         ).strftime("%Y-%m-%d %H:%M UTC")
