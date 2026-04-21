@@ -59,5 +59,5 @@ The script outputs a table per design dimension showing:
 ## Notes
 
 - Logs are saved locally to `logs/sweep-status/` for later analysis
-- The MLflow tracking server on cyy2 runs at `http://127.0.0.1:5001`
+- The MLflow tracking server on cyy2 runs at `http://127.0.0.1:5000`
 - A RUNNING run is considered stale when its age exceeds the stale threshold (default 20 minutes)
