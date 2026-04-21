@@ -280,14 +280,19 @@ def print_summary(
             if overall["total_expected"] is not None
             else "?"
         )
+        pct_str = (
+            f" ({100 * overall['total_completed'] / overall['total_expected']:.1f}%)"
+            if overall["total_expected"]
+            else ""
+        )
         print(
-            f"\nOverall    : {overall['total_completed']}/{total_expected_str} completed"
+            f"\nOverall    : {overall['total_completed']}/{total_expected_str}{pct_str} completed"
             f" ({overall['total_finished']} success, {overall['total_failed']} failed),"
             f" {overall['total_active']} running, {overall['total_stale']} stale"
         )
         if overall["eta_min"] is not None:
             print(
-                f"ETA        : ~{overall['eta_min']:.0f} min"
+                f"ETA        : ~{overall['eta_min'] / 60:.1f} h"
                 f" (throughput: {overall['throughput_per_min']:.1f} runs/min)"
             )
         else:
