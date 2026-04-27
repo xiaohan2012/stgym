@@ -27,10 +27,24 @@ import pandas as pd
 import yaml
 from mlflow.tracking import MlflowClient
 
+from stgym.config_schema import dataset_eval_mode
+
 _DEFAULT_TRACKING_URI = "http://127.0.0.1:5000"
 _DEFAULT_SAMPLE_SIZE = 100
 _DEFAULT_STALE_THRESHOLD_MIN = 20
 _DEFAULT_CONF_DIR = "conf/exp"
+
+
+def _get_k_for_run(run) -> int:
+    """Return the number of MLflow runs per trial for this run's dataset.
+
+    A trial is one sampled config from the design space. For datasets with
+    train/val/test split, k=1. For k-fold CV datasets, k=num_folds.
+    """
+    name = run.data.tags.get("dataset_name")
+    if name and name in dataset_eval_mode:
+        return dataset_eval_mode[name].num_folds
+    return 1
 
 
 def _get_choices(runs: list) -> str:
@@ -67,7 +81,12 @@ def load_expected_dims(conf_dir: str) -> dict[str, str]:
 
 
 def compute_exp_stats(runs: list, now_ms: float) -> dict:
-    """Compute experiment-level timing and throughput statistics."""
+    """Compute experiment-level timing and throughput statistics.
+
+    Throughput and completed counts are reported in trial units, where each
+    k-fold MLflow run contributes 1/k to a trial. Run-count fields
+    (total_finished, total_failed) are kept for context.
+    """
     terminal = [r for r in runs if r.info.status in ("FINISHED", "FAILED")]
     finished = [r for r in runs if r.info.status == "FINISHED"]
     failed = [r for r in runs if r.info.status == "FAILED"]
@@ -77,6 +96,11 @@ def compute_exp_stats(runs: list, now_ms: float) -> dict:
 
     exp_start_ms = min(r.info.start_time for r in runs)
     exp_duration_h = (now_ms - exp_start_ms) / 3_600_000
+
+    total_completed_trials = sum(1.0 / _get_k_for_run(r) for r in terminal)
+    throughput_trials_per_h = (
+        total_completed_trials / exp_duration_h if exp_duration_h > 0 else 0
+    )
 
     def _completed_in_last(hours: float) -> int:
         cutoff_ms = now_ms - hours * 3_600_000
@@ -89,7 +113,8 @@ def compute_exp_stats(runs: list, now_ms: float) -> dict:
         "exp_duration_h": exp_duration_h,
         "total_finished": len(finished),
         "total_failed": len(failed),
-        "throughput_per_h": len(finished) / exp_duration_h if exp_duration_h > 0 else 0,
+        "total_completed_trials": total_completed_trials,
+        "throughput_trials_per_h": throughput_trials_per_h,
         "completed_2h": _completed_in_last(2),
         "completed_12h": _completed_in_last(12),
         "completed_24h": _completed_in_last(24),
@@ -222,37 +247,41 @@ def build_sweep_status_df(
 
 
 def compute_overall_progress(df: pd.DataFrame, exp_stats: dict) -> dict:
-    """Aggregate progress across all dimensions and compute ETA."""
+    """Aggregate progress across all dimensions and compute ETA.
+
+    Both total_completed_trials and total_expected are in trial units, so
+    k-fold over-runs do not mask remaining work in PENDING dimensions.
+    """
     total_finished = exp_stats.get("total_finished", 0)
     total_failed = exp_stats.get("total_failed", 0)
-    total_completed = total_finished + total_failed
+    total_completed_trials = exp_stats.get("total_completed_trials", 0.0)
     total_active = int(df["active"].sum())
     total_stale = int(df["stale"].sum())
 
     trials = df["trials"].dropna()
     total_expected = int(trials.sum()) if not trials.empty else None
 
-    throughput_per_h = exp_stats.get("throughput_per_h", 0)
-    throughput_per_min = throughput_per_h / 60
+    throughput_trials_per_h = exp_stats.get("throughput_trials_per_h", 0)
+    throughput_trials_per_min = throughput_trials_per_h / 60
 
     if (
         total_expected is not None
-        and throughput_per_min > 0
-        and total_completed < total_expected
+        and throughput_trials_per_min > 0
+        and total_completed_trials < total_expected
     ):
-        remaining = total_expected - total_completed
-        eta_min = remaining / throughput_per_min
+        remaining = total_expected - total_completed_trials
+        eta_min = remaining / throughput_trials_per_min
     else:
         eta_min = None
 
     return {
-        "total_completed": total_completed,
+        "total_completed_trials": total_completed_trials,
         "total_finished": total_finished,
         "total_failed": total_failed,
         "total_active": total_active,
         "total_stale": total_stale,
         "total_expected": total_expected,
-        "throughput_per_min": throughput_per_min,
+        "throughput_trials_per_min": throughput_trials_per_min,
         "eta_min": eta_min,
     }
 
@@ -281,19 +310,19 @@ def print_summary(
             else "?"
         )
         pct_str = (
-            f" ({100 * overall['total_completed'] / overall['total_expected']:.1f}%)"
+            f" ({100 * overall['total_completed_trials'] / overall['total_expected']:.1f}%)"
             if overall["total_expected"]
             else ""
         )
         print(
-            f"\nOverall    : {overall['total_completed']}/{total_expected_str}{pct_str} completed"
-            f" ({overall['total_finished']} success, {overall['total_failed']} failed),"
+            f"\nOverall    : {overall['total_completed_trials']:.1f}/{total_expected_str}{pct_str} trials completed"
+            f" (runs: {overall['total_finished']} success, {overall['total_failed']} failed),"
             f" {overall['total_active']} running, {overall['total_stale']} stale"
         )
         if overall["eta_min"] is not None:
             print(
                 f"ETA        : ~{overall['eta_min'] / 60:.1f} h"
-                f" (throughput: {overall['throughput_per_min']:.1f} runs/min)"
+                f" (throughput: {overall['throughput_trials_per_min']:.2f} trials/min)"
             )
         else:
             print("ETA        : N/A")
@@ -342,6 +371,7 @@ def print_summary(
 
     print(
         "\nNote: trials = sample_size × num_choices (one k-fold CV job = 1 trial).\n"
+        "      Each k-fold MLflow run counts as 1/k of a trial in 'trials completed'.\n"
         "      cumul_min = sum of individual run durations; "
         "time_span_min = wall-clock span (first start to last end)."
     )
