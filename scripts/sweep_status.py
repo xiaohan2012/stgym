@@ -340,7 +340,7 @@ def print_summary(
             f"Finished    : {exp_stats['total_finished']} ok"
             f"  /  {exp_stats['total_failed']} failed"
         )
-        print(f"Throughput  : ~{exp_stats['throughput_per_h']:.1f} runs/h")
+        print(f"Throughput  : ~{exp_stats['throughput_trials_per_h']:.1f} trials/h")
         print(f"\nCompleted last  2 h : {exp_stats['completed_2h']:>5}")
         print(f"Completed last 12 h : {exp_stats['completed_12h']:>5}")
         print(f"Completed last 24 h : {exp_stats['completed_24h']:>5}")
