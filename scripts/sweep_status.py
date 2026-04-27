@@ -21,13 +21,16 @@ import os
 import sys
 import time
 from collections import defaultdict
+from pathlib import Path
 
 import mlflow
 import pandas as pd
 import yaml
 from mlflow.tracking import MlflowClient
 
-from stgym.config_schema import dataset_eval_mode
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from stgym.config_schema import dataset_eval_mode  # noqa: E402
 
 _DEFAULT_TRACKING_URI = "http://127.0.0.1:5000"
 _DEFAULT_SAMPLE_SIZE = 100
