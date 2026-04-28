@@ -320,14 +320,23 @@ def print_summary(
     sample_size: int,
     exp_stats: dict,
 ):
-    n_started = (df["state"] == "STARTED").sum()
+    started_df = df[df["state"] == "STARTED"]
+    n_started = len(started_df)
     n_pending = (df["state"] == "PENDING").sum()
+    n_completed = (
+        (started_df["done_trials"] >= started_df["trials"]).sum()
+        if not started_df.empty
+        else 0
+    )
+    n_in_progress = n_started - n_completed
     sep = "=" * 80
 
     print(f"\nExperiment : {exp_name}")
     print(f"ID         : {exp_id}")
     print(f"Sample size: {sample_size} groups/dimension")
-    print(f"Dimensions : {n_started} started, {n_pending} pending")
+    print(
+        f"Dimensions : {n_completed} completed, {n_in_progress} in-progress, {n_pending} pending"
+    )
 
     if exp_stats:
         overall = compute_overall_progress(df, exp_stats)
