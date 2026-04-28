@@ -37,6 +37,11 @@ _DEFAULT_SAMPLE_SIZE = 100
 _DEFAULT_STALE_THRESHOLD_MIN = 20
 _DEFAULT_CONF_DIR = "conf/exp"
 
+# Dim file basenames excluded from node_clf sweep by scripts/design-dimension-sweep-all.sh.
+# Dims not in this set run under both design_spaces (graph_clf + node_clf), so their
+# expected trial count is doubled.
+_NODE_CLF_EXCLUDED_DIM_FILES = frozenset({"hpooling", "clusters", "global_pooling"})
+
 
 def _get_k_for_run(run) -> int:
     """Return the number of MLflow runs per trial for this run's dataset.
@@ -70,16 +75,24 @@ def _fmt_task_types(task_types: set) -> str:
     return "?"
 
 
-def load_expected_dims(conf_dir: str) -> dict[str, str]:
-    """Return {design_dimension: choices_str} from all conf/exp/*.yaml files."""
+def load_expected_dims(conf_dir: str) -> dict[str, dict]:
+    """Return {design_dimension: {choices: str, task_factor: int}} from conf/exp/*.yaml.
+
+    task_factor is 2 for dims launched under both design_spaces, 1 for graph-only dims.
+    """
     result = {}
     for path in glob.glob(os.path.join(conf_dir, "*.yaml")):
+        basename = Path(path).stem
         with open(path) as f:
             cfg = yaml.safe_load(f)
         dim = cfg.get("design_dimension")
         choices = cfg.get("design_choices", [])
         if dim:
-            result[dim] = "|".join(str(c) for c in choices)
+            task_factor = 1 if basename in _NODE_CLF_EXCLUDED_DIM_FILES else 2
+            result[dim] = {
+                "choices": "|".join(str(c) for c in choices),
+                "task_factor": task_factor,
+            }
     return result
 
 
@@ -171,7 +184,11 @@ def classify_dims(runs: list, stale_threshold_min: float, now_ms: float) -> dict
         num_choices = len(choices.split("|")) if choices != "?" else None
         avg_dur = sum(b["durations"]) / len(b["durations"]) if b["durations"] else None
         time_span_min = (b["max_end_ms"] - b["min_start_ms"]) / 60_000
-        total_runs = b["finished"] + b["failed"] + b["active"] + b["stale"]
+        done_trials = sum(
+            1.0 / _get_k_for_run(r)
+            for r in b["runs"]
+            if r.info.status in ("FINISHED", "FAILED")
+        )
         result[dim] = {
             "state": "STARTED",
             "task_types": b["task_types"],
@@ -181,7 +198,7 @@ def classify_dims(runs: list, stale_threshold_min: float, now_ms: float) -> dict
             "failed": b["failed"],
             "active": b["active"],
             "stale": b["stale"],
-            "total_runs": total_runs,
+            "done_trials": done_trials,
             "avg_dur_min": avg_dur,
             "cumul_min": sum(b["durations"]),
             "time_span_min": time_span_min,
@@ -201,15 +218,19 @@ def build_sweep_status_df(
     rows = []
 
     for dim, s in dim_stats.items():
-        trials = sample_size * s["num_choices"] if s["num_choices"] else None
+        task_str = _fmt_task_types(s["task_types"])
+        task_factor = 2 if task_str == "both" else 1
+        trials = (
+            sample_size * s["num_choices"] * task_factor if s["num_choices"] else None
+        )
         rows.append(
             {
                 "dimension": dim,
                 "state": s["state"],
-                "task": _fmt_task_types(s["task_types"]),
+                "task": task_str,
                 "choices": s["choices"],
                 "trials": trials,
-                "total_runs": s["total_runs"],
+                "done_trials": round(s["done_trials"], 1),
                 "finished": s["finished"],
                 "failed": s["failed"],
                 "active": s["active"],
@@ -222,17 +243,20 @@ def build_sweep_status_df(
 
     # Add PENDING rows for dims in conf/exp/ but not yet in MLflow
     seen_dims = set(dim_stats.keys())
-    for dim, choices_str in expected_dims.items():
+    for dim, info in expected_dims.items():
         if dim not in seen_dims:
+            choices_str = info["choices"]
             num_choices = len(choices_str.split("|")) if choices_str else None
+            task_factor = info["task_factor"]
+            trials = sample_size * num_choices * task_factor if num_choices else None
             rows.append(
                 {
                     "dimension": dim,
                     "state": "PENDING",
                     "task": "?",
                     "choices": choices_str,
-                    "trials": sample_size * num_choices if num_choices else None,
-                    "total_runs": 0,
+                    "trials": trials,
+                    "done_trials": 0.0,
                     "finished": 0,
                     "failed": 0,
                     "active": 0,
@@ -351,7 +375,7 @@ def print_summary(
             "task",
             "choices",
             "trials",
-            "total_runs",
+            "done_trials",
             "finished",
             "failed",
             "active",
@@ -373,10 +397,12 @@ def print_summary(
         print(sub[display_cols[state]].to_string(index=False))
 
     print(
-        "\nNote: trials = sample_size × num_choices (one k-fold CV job = 1 trial).\n"
-        "      Each k-fold MLflow run counts as 1/k of a trial in 'trials completed'.\n"
-        "      cumul_min = sum of individual run durations; "
-        "time_span_min = wall-clock span (first start to last end)."
+        "\nNote: trials = sample_size × num_choices × task_factor "
+        "(task_factor=2 for both-task dims, 1 for graph/node-only).\n"
+        "      done_trials = sum of 1/k per terminal run. "
+        "Each k-fold MLflow run counts as 1/k of a trial.\n"
+        "      cumul_min = sum of run durations; "
+        "time_span_min = wall-clock span."
     )
 
 

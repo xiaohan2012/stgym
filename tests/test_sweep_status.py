@@ -12,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 
 from sweep_status import (  # noqa: E402
     _get_k_for_run,
+    build_sweep_status_df,
     compute_exp_stats,
     compute_overall_progress,
 )
@@ -224,3 +225,79 @@ class TestComputeOverallProgress:
         ] == pytest.approx(50.0)
         # ETA is computed (not None): remaining = 50, throughput = 0.1 trials/min
         assert result["eta_min"] == pytest.approx(500.0)
+
+
+class TestBuildSweepStatusDf:
+    """Tests for build_sweep_status_df task_factor and done_trials."""
+
+    def test_both_task_dim_doubles_trials(self) -> None:
+        dim_stats = {
+            "model.dim_inner": {
+                "state": "STARTED",
+                "task_types": {"graph-classification", "node-classification"},
+                "choices": "16|32|64",
+                "num_choices": 3,
+                "finished": 10,
+                "failed": 2,
+                "active": 0,
+                "stale": 0,
+                "done_trials": 12.0,
+                "avg_dur_min": 2.0,
+                "cumul_min": 24.0,
+                "time_span_min": 100.0,
+            }
+        }
+        expected_dims: dict = {}
+        df = build_sweep_status_df(
+            dim_stats, sample_size=100, expected_dims=expected_dims
+        )
+
+        row = df.iloc[0]
+        assert row["task"] == "both"
+        assert row["trials"] == 600  # 100 * 3 * 2
+        assert row["done_trials"] == 12.0
+
+    def test_single_task_dim_no_multiplier(self) -> None:
+        dim_stats = {
+            "model.global_pooling": {
+                "state": "STARTED",
+                "task_types": {"graph-classification"},
+                "choices": "mean|max|add",
+                "num_choices": 3,
+                "finished": 6,
+                "failed": 0,
+                "active": 0,
+                "stale": 0,
+                "done_trials": 6.0,
+                "avg_dur_min": 3.0,
+                "cumul_min": 18.0,
+                "time_span_min": 50.0,
+            }
+        }
+        expected_dims: dict = {}
+        df = build_sweep_status_df(
+            dim_stats, sample_size=100, expected_dims=expected_dims
+        )
+
+        row = df.iloc[0]
+        assert row["task"] == "graph-clf"
+        assert row["trials"] == 300  # 100 * 3 * 1
+        assert row["done_trials"] == 6.0
+
+    def test_pending_dim_uses_expected_task_factor(self) -> None:
+        dim_stats: dict = {}
+        expected_dims = {
+            "model.act": {"choices": "relu|prelu", "task_factor": 2},
+            "model.pooling.type": {"choices": "dmon|mincut", "task_factor": 1},
+        }
+        df = build_sweep_status_df(
+            dim_stats, sample_size=100, expected_dims=expected_dims
+        )
+
+        df = df.sort_values("dimension").reset_index(drop=True)
+        assert df.iloc[0]["dimension"] == "model.act"
+        assert df.iloc[0]["trials"] == 400  # 100 * 2 * 2
+        assert df.iloc[0]["done_trials"] == 0.0
+
+        assert df.iloc[1]["dimension"] == "model.pooling.type"
+        assert df.iloc[1]["trials"] == 200  # 100 * 2 * 1
