@@ -17,6 +17,8 @@ class MockRunInfo:
     """Mock MLflow run info structure for testing."""
 
     status: str = "FINISHED"
+    start_time: int = 0
+    end_time: int | None = None
 
 
 @dataclass
