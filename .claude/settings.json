@@ -18,6 +18,7 @@
   },
   "enabledPlugins": {
     "marimo-pair@marimo-pair": true,
-    "context7-plugin@context7-marketplace": true
+    "context7-plugin@context7-marketplace": true,
+    "wiki-skills@wiki-skills": true
   }
 }
