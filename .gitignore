@@ -186,3 +186,5 @@ ACTIVITY.log
 # OpenTelemetry logs from the sandbox — may contain bash commands with
 # inlined env vars; never commit.
 sandbox/telemetry/
+
+wiki/raw/*
