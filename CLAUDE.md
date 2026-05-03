@@ -60,6 +60,7 @@ Ad-hoc single-run configs (for debugging, repro) live in `conf/adhoc/`.
 ```bash
 uv sync --group dev       # install all dependencies including dev tools
 source .venv/bin/activate # activate venv
+bash scripts/setup-sandbox-plugins.sh  # register plugin marketplaces (idempotent)
 ```
 
 > **Important — always activate `.venv` before `git commit`.** `pre-commit`, `ruff`, and `ty` all live inside `.venv`. Non-login shells (including fresh agent shells) do **not** inherit it, and commits will fail with `pre-commit not found`. Chain the activation in the same command:
