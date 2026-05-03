@@ -24,7 +24,7 @@ DESIGN_DIM_TO_MLFLOW_PATH: dict[str, str] = {
     "model.pooling.type": "model/mp_layers/0/pooling/type",
     "model.pooling.n_clusters": "model/mp_layers/0/pooling/n_clusters",
     "model.global_pooling": "model/global_pooling",
-    "model.normalize_adj": "model/normalize_adj",
+    "model.normalize_adj": "model/mp_layers/0/normalize_adj",
     "model.post_mp_dims": "model/post_mp_layer/dims",
     "train.max_epoch": "train/max_epoch",
     "train.optim.base_lr": "train/optim/base_lr",
@@ -38,7 +38,7 @@ DESIGN_DIM_TO_MLFLOW_PATH: dict[str, str] = {
 def fetch_runs(
     tracking_uri: str,
     experiment_id: str,
-    max_results: int = 10000,
+    max_results: int = 20000,
 ) -> list[Run]:
     """Fetch all runs from an MLflow experiment.
 
