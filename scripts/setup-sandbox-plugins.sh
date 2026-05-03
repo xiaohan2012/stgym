@@ -1,17 +1,30 @@
 #!/usr/bin/env bash
-# Registers project-required plugin marketplaces in the local Claude Code installation.
-# Run once after setting up a fresh sandbox/Docker environment.
+# Registers project-required plugin marketplaces and installs plugins.
+# Idempotent — safe to run multiple times.
 set -euo pipefail
 
-MARKETPLACES_FILE="${HOME}/.claude/plugins/known_marketplaces.json"
+PLUGINS_DIR="${HOME}/.claude/plugins"
+MARKETPLACES_FILE="${PLUGINS_DIR}/known_marketplaces.json"
 
+# Bootstrap known_marketplaces.json if Claude hasn't been initialised yet
 if [ ! -f "$MARKETPLACES_FILE" ]; then
-  echo "known_marketplaces.json not found at $MARKETPLACES_FILE — is Claude Code installed?"
-  exit 1
+  mkdir -p "$PLUGINS_DIR"
+  NOW="$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"
+  cat > "$MARKETPLACES_FILE" <<JSON
+{
+  "claude-plugins-official": {
+    "source": {"source": "github", "repo": "anthropics/claude-plugins-official"},
+    "installLocation": "${PLUGINS_DIR}/marketplaces/claude-plugins-official",
+    "lastUpdated": "${NOW}"
+  }
+}
+JSON
+  echo "Initialised ${MARKETPLACES_FILE}"
 fi
 
+# Register any missing marketplaces
 python3 - <<'EOF'
-import json, os, sys
+import json, os
 from datetime import datetime, timezone
 
 path = os.path.expanduser("~/.claude/plugins/known_marketplaces.json")
@@ -55,3 +68,17 @@ if added:
 else:
     print("All marketplaces already registered.")
 EOF
+
+# Install plugins (project scope, idempotent — failures are non-fatal)
+install_plugin() {
+  local plugin="$1"
+  if claude plugins install "$plugin" --scope project 2>/dev/null; then
+    echo "Installed plugin: $plugin"
+  else
+    echo "Plugin already installed or unavailable: $plugin"
+  fi
+}
+
+install_plugin "marimo-pair@marimo-pair"
+install_plugin "context7-plugin@context7-marketplace"
+install_plugin "wiki-skills@wiki-skills"
