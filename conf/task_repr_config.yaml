@@ -1,0 +1,13 @@
+defaults:
+  - task_repr: node_clf
+  - resource: cpu-4
+  - mlflow: local
+  - _self_
+
+n_designs: 96
+n_anchors: 12
+random_seed: 42
+
+gated_datasets:
+  - mouse-kidney
+  - breast-cancer
