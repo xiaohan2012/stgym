@@ -69,7 +69,7 @@ def main(cfg: DictConfig) -> None:
                 task=task_cfg,
                 model=design.model,
                 train=design.train,
-                data_loader=design.data_loader,
+                data_loader=design.data_loader.model_copy(deep=True),
             )
             promises.append(
                 run_exp_remote.remote(
