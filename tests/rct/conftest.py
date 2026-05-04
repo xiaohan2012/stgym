@@ -7,4 +7,5 @@ def ray_cluster():
     if not ray.is_initialized():
         ray.init(num_cpus=2, ignore_reinit_error=True)
     yield
-    ray.shutdown()
+    if ray.is_initialized():
+        ray.shutdown()

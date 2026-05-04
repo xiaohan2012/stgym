@@ -1,8 +1,20 @@
-"""Shared pytest fixtures for RCT analysis tests."""
+"""Shared pytest fixtures."""
 
 import pytest
+import ray
 
 from stgym.rct_utils import DESIGN_DIM_TO_MLFLOW_PATH
+
+
+@pytest.fixture(scope="session")
+def ray_cluster():
+    if not ray.is_initialized():
+        ray.init(num_cpus=2, ignore_reinit_error=True)
+    yield
+    if ray.is_initialized():
+        ray.shutdown()
+
+
 from tests.mock_mlflow import MockRun, MockRunData, MockRunInfo
 
 _POOLING_DIM = "model.pooling.type"

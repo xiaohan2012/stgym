@@ -95,7 +95,6 @@ def main(cfg: DictConfig):
 
     if promises:
         RayProgressBar.show(promises)
-        ray.get(promises)
 
     ray.shutdown()
 

@@ -2,10 +2,12 @@ from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
+import ray
 import torch
 from torch_geometric.data import Data
 
 from stgym.utils import (
+    RayProgressBar,
     batch2ptr,
     collapse_ptr_list,
     flatten_dict,
@@ -190,3 +192,37 @@ class TestLogExperimentConfigAsArtifact:
         log_experiment_config_as_artifact(logger, self.config_dict)
         run_id_arg = logger.experiment.log_artifact.call_args[0][0]
         assert run_id_arg == "my-run-42"
+
+
+@ray.remote
+def _succeed():
+    return True
+
+
+@ray.remote
+def _fail():
+    raise RuntimeError("task failed")
+
+
+class TestRayProgressBar:
+    def test_all_succeed(self, ray_cluster):
+        promises = [_succeed.remote() for _ in range(4)]
+        n_succeeded, n_failed = RayProgressBar.show(promises)
+        assert n_succeeded == 4
+        assert n_failed == 0
+
+    def test_some_fail_warn(self, ray_cluster):
+        promises = [
+            _succeed.remote(),
+            _fail.remote(),
+            _succeed.remote(),
+            _fail.remote(),
+        ]
+        n_succeeded, n_failed = RayProgressBar.show(promises)
+        assert n_succeeded == 2
+        assert n_failed == 2
+
+    def test_fail_raises_with_errors_raise(self, ray_cluster):
+        promises = [_succeed.remote(), _fail.remote()]
+        with pytest.raises(Exception):
+            RayProgressBar.show(promises, errors="raise")

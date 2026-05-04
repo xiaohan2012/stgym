@@ -8,7 +8,6 @@ import ray
 import torch
 from logzero import logger
 from omegaconf import DictConfig, OmegaConf
-from tqdm import tqdm
 
 from stgym.config_schema import (
     ExperimentConfig,
@@ -20,7 +19,7 @@ from stgym.data_loader.ds_info import get_info
 from stgym.design_space.schema import TaskReprDesignSpace
 from stgym.rct import run_exp
 from stgym.task_repr import sample_task_free_designs
-from stgym.utils import DatasetLoadGate, create_mlflow_experiment
+from stgym.utils import DatasetLoadGate, RayProgressBar, create_mlflow_experiment
 
 
 @hydra.main(
@@ -85,22 +84,9 @@ def main(cfg: DictConfig) -> None:
                 )
             )
 
-    n_total = len(promises)
-    logger.info(f"Total experiments to run: {n_total}")
-    n_succeeded = 0
-    n_failed = 0
-    remaining = list(promises)
-    with tqdm(total=n_total) as pbar:
-        while remaining:
-            done, remaining = ray.wait(remaining)
-            try:
-                ray.get(done[0])
-                n_succeeded += 1
-            except Exception as e:
-                logger.warning(f"Task failed: {e}")
-                n_failed += 1
-            pbar.update(1)
-    logger.info(f"Finished: {n_succeeded}/{n_total} succeeded, {n_failed} failed")
+    logger.info(f"Total experiments to run: {len(promises)}")
+    n_succeeded, n_failed = RayProgressBar.show(promises)
+    logger.info(f"Finished: {n_succeeded}/{len(promises)} succeeded, {n_failed} failed")
 
     ray.shutdown()
 
