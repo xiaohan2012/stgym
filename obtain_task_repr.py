@@ -77,7 +77,7 @@ def main(cfg: DictConfig) -> None:
                     mlflow_cfg,
                     gated_datasets=gated_datasets,
                     metadata_for_tag={
-                        "design_id": design.design_id,
+                        "design_id": str(design.design_id),
                         "dataset_name": dataset_name,
                     },
                 )
