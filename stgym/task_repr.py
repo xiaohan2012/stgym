@@ -6,6 +6,7 @@ from stgym.config_schema import (
     NodeClassifierModelConfig,
     TaskType,
     TrainConfig,
+    dataset_eval_mode,
 )
 from stgym.design_space.design_gen import (
     generate_data_loader_config,
@@ -23,6 +24,17 @@ class TaskFreeDesign:
     model: ModelConfig
     train: TrainConfig
     data_loader: DataLoaderConfig
+
+
+def expected_mlflow_run_count(n_designs: int, tasks: list[str]) -> int:
+    """Return the number of MLflow runs a task-repr sweep will produce.
+
+    k-fold datasets create one run per fold; all others create one run.
+    """
+    runs_per_design = sum(
+        dataset_eval_mode[t].num_folds if t in dataset_eval_mode else 1 for t in tasks
+    )
+    return n_designs * runs_per_design
 
 
 def sample_task_free_designs(

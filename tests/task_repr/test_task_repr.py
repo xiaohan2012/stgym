@@ -2,7 +2,11 @@ import pytest
 
 from stgym.config_schema import GraphClassifierModelConfig, NodeClassifierModelConfig
 from stgym.design_space.schema import TaskReprDesignSpace
-from stgym.task_repr import TaskFreeDesign, sample_task_free_designs
+from stgym.task_repr import (
+    TaskFreeDesign,
+    expected_mlflow_run_count,
+    sample_task_free_designs,
+)
 from stgym.utils import load_yaml
 
 
@@ -106,3 +110,32 @@ class TestSampleTaskFreeDesigns:
         for d in designs:
             assert isinstance(d, TaskFreeDesign)
             assert not hasattr(d, "task")
+
+
+class TestExpectedMlflowRunCount:
+    # Tasks from conf/obtain_task_repr_node_clf.yaml
+    NODE_CLF_TASKS = [
+        "breast-cancer",
+        "human-intestine",  # k=8
+        "colorectal-cancer",  # k=4
+        "upmc",
+        "charville",
+        "mouse-spleen",
+        "human-crc",
+        "human-pancreas",  # k=3
+        "human-lung",
+        "cellcontrast-breast",  # k=5
+    ]
+
+    def test_node_clf_smoke_count(self):
+        # 4 designs × (1+8+4+1+1+1+1+3+1+5) = 4 × 26 = 104
+        assert expected_mlflow_run_count(4, self.NODE_CLF_TASKS) == 104
+
+    def test_scales_linearly_with_n_designs(self):
+        count_4 = expected_mlflow_run_count(4, self.NODE_CLF_TASKS)
+        count_8 = expected_mlflow_run_count(8, self.NODE_CLF_TASKS)
+        assert count_8 == 2 * count_4
+
+    def test_non_kfold_only_tasks(self):
+        tasks = ["upmc", "charville", "mouse-spleen"]
+        assert expected_mlflow_run_count(3, tasks) == 9  # 3 designs × 3 tasks × 1 run
