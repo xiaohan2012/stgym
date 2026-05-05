@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 import pandas as pd
+from logzero import logger
 from mlflow.entities import Run
 
 from stgym.config_schema import (
@@ -84,7 +85,10 @@ def select_anchor_models(
     divides into n_anchors equal bins, and picks the design at index n//2
     within each bin (upper-mid for even bin sizes).
     """
-    complete = matrix.dropna()
+    dropped_cols = matrix.columns[matrix.isna().all()].tolist()
+    if dropped_cols:
+        logger.warning(f"Dropping all-NaN datasets from matrix: {dropped_cols}")
+    complete = matrix.drop(columns=dropped_cols).dropna()
     if len(complete) < n_anchors:
         raise ValueError(
             f"Only {len(complete)} complete designs after dropping NaN rows, "

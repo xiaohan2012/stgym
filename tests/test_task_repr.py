@@ -1,4 +1,7 @@
+from unittest.mock import patch
+
 import numpy as np
+import pandas as pd
 import pytest
 
 from stgym.config_schema import GraphClassifierModelConfig, NodeClassifierModelConfig
@@ -229,7 +232,6 @@ class TestSelectAnchorModels:
         assert anchors == [1, 3, 5, 7]
 
     def test_nan_rows_dropped(self):
-        import pandas as pd
 
         matrix = pd.DataFrame(
             {
@@ -242,8 +244,33 @@ class TestSelectAnchorModels:
         anchors = select_anchor_models(matrix, n_anchors=2)
         assert set(anchors).issubset({0, 3})
 
+    def test_all_nan_column_dropped_before_row_dropna(self):
+
+        # ds-bad is all-NaN (e.g. ROC AUC undefined for this dataset)
+        # without column-drop, every row would be removed; with it, 4 rows survive
+        matrix = pd.DataFrame(
+            {
+                "ds-a": [0.8, 0.6, 0.4, 0.2],
+                "ds-b": [0.7, 0.5, 0.3, 0.1],
+                "ds-bad": [float("nan")] * 4,
+            }
+        )
+        anchors = select_anchor_models(matrix, n_anchors=2)
+        assert len(anchors) == 2
+
+    def test_warns_when_all_nan_column_dropped(self):
+        matrix = pd.DataFrame(
+            {
+                "ds-a": [0.8, 0.6, 0.4, 0.2],
+                "ds-bad": [float("nan")] * 4,
+            }
+        )
+        with patch("stgym.task_repr.logger") as mock_logger:
+            select_anchor_models(matrix, n_anchors=2)
+        mock_logger.warning.assert_called_once()
+        assert "ds-bad" in mock_logger.warning.call_args[0][0]
+
     def test_raises_if_too_few_complete_designs(self):
-        import pandas as pd
 
         matrix = pd.DataFrame(
             {"ds-a": [0.8, float("nan")], "ds-b": [float("nan"), 0.6]}
