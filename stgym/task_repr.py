@@ -68,6 +68,7 @@ def build_performance_matrix(
     if not records:
         return pd.DataFrame()
     df = pd.DataFrame(records)
+    # k-fold runs for the same (design_id, dataset_name) cell are averaged
     return (
         df.groupby(["design_id", "dataset_name"])["value"]
         .mean()
@@ -88,13 +89,19 @@ def select_anchor_models(
     dropped_cols = matrix.columns[matrix.isna().all()].tolist()
     if dropped_cols:
         logger.warning(f"Dropping all-NaN datasets from matrix: {dropped_cols}")
-    complete = matrix.drop(columns=dropped_cols).dropna()
-    if len(complete) < n_anchors:
+    trimmed = matrix.drop(columns=dropped_cols)
+    means = trimmed.mean(axis=1, skipna=True)
+    valid = means.dropna()
+    n_excluded = len(matrix) - len(valid)
+    logger.info(
+        f"Anchor selection: {len(valid)} valid designs, {n_excluded} excluded (all-NaN)"
+    )
+    if len(valid) < n_anchors:
         raise ValueError(
-            f"Only {len(complete)} complete designs after dropping NaN rows, "
+            f"Only {len(valid)} complete designs after dropping NaN rows, "
             f"need at least {n_anchors}."
         )
-    ranked = complete.mean(axis=1).sort_values()
+    ranked = valid.sort_values()
     design_ids = ranked.index.tolist()
     bin_size = len(design_ids) // n_anchors
     return [design_ids[i * bin_size + bin_size // 2] for i in range(n_anchors)]

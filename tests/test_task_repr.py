@@ -211,8 +211,6 @@ class TestBuildPerformanceMatrix:
 
 class TestSelectAnchorModels:
     def _matrix(self, scores: dict[int, list[float]], datasets=None) -> "pd.DataFrame":
-        import pandas as pd
-
         if datasets is None:
             datasets = [f"ds-{i}" for i in range(len(next(iter(scores.values()))))]
         return pd.DataFrame.from_dict(scores, orient="index", columns=datasets)
@@ -231,32 +229,18 @@ class TestSelectAnchorModels:
         anchors = select_anchor_models(matrix, n_anchors=4)
         assert anchors == [1, 3, 5, 7]
 
-    def test_nan_rows_dropped(self):
-
+    def test_all_nan_rows_dropped(self):
+        # designs 1 and 2 have partial NaN → kept (mean computed over valid values)
+        # design 4 is all-NaN → excluded
         matrix = pd.DataFrame(
             {
-                "ds-a": [0.8, float("nan"), 0.6, 0.4],
-                "ds-b": [0.7, 0.9, float("nan"), 0.3],
+                "ds-a": [0.8, float("nan"), 0.6, 0.4, float("nan")],
+                "ds-b": [0.7, 0.9, float("nan"), 0.3, float("nan")],
             },
-            index=[0, 1, 2, 3],
-        )
-        # designs 0 and 3 are complete; designs 1 and 2 have NaN → dropped
-        anchors = select_anchor_models(matrix, n_anchors=2)
-        assert set(anchors).issubset({0, 3})
-
-    def test_all_nan_column_dropped_before_row_dropna(self):
-
-        # ds-bad is all-NaN (e.g. ROC AUC undefined for this dataset)
-        # without column-drop, every row would be removed; with it, 4 rows survive
-        matrix = pd.DataFrame(
-            {
-                "ds-a": [0.8, 0.6, 0.4, 0.2],
-                "ds-b": [0.7, 0.5, 0.3, 0.1],
-                "ds-bad": [float("nan")] * 4,
-            }
+            index=[0, 1, 2, 3, 4],
         )
         anchors = select_anchor_models(matrix, n_anchors=2)
-        assert len(anchors) == 2
+        assert 4 not in anchors
 
     def test_warns_when_all_nan_column_dropped(self):
         matrix = pd.DataFrame(
@@ -271,9 +255,8 @@ class TestSelectAnchorModels:
         assert "ds-bad" in mock_logger.warning.call_args[0][0]
 
     def test_raises_if_too_few_complete_designs(self):
-
         matrix = pd.DataFrame(
-            {"ds-a": [0.8, float("nan")], "ds-b": [float("nan"), 0.6]}
+            {"ds-a": [float("nan"), float("nan")], "ds-b": [float("nan"), float("nan")]}
         )
         with pytest.raises(ValueError, match="complete designs"):
             select_anchor_models(matrix, n_anchors=2)
