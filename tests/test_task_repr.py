@@ -1,13 +1,17 @@
+import numpy as np
 import pytest
 
 from stgym.config_schema import GraphClassifierModelConfig, NodeClassifierModelConfig
 from stgym.design_space.schema import TaskReprDesignSpace
 from stgym.task_repr import (
     TaskFreeDesign,
+    build_performance_matrix,
     expected_mlflow_run_count,
     sample_task_free_designs,
+    select_anchor_models,
 )
 from stgym.utils import load_yaml
+from tests.mock_mlflow import MockRun, MockRunData
 
 
 @pytest.fixture
@@ -139,3 +143,110 @@ class TestExpectedMlflowRunCount:
     def test_non_kfold_only_tasks(self):
         tasks = ["upmc", "charville", "mouse-spleen"]
         assert expected_mlflow_run_count(3, tasks) == 9  # 3 designs × 3 tasks × 1 run
+
+
+def _make_run(design_id: int, dataset_name: str, metric: str, value: float) -> MockRun:
+    return MockRun(
+        data=MockRunData(
+            tags={"design_id": str(design_id), "dataset_name": dataset_name},
+            metrics={metric: value},
+        )
+    )
+
+
+class TestBuildPerformanceMatrix:
+    METRIC = "test_accuracy"
+    TASK_TYPE = "node-classification"
+
+    def _runs(self, design_id, dataset_name, value):
+        return _make_run(design_id, dataset_name, self.METRIC, value)
+
+    def test_basic_shape(self):
+        runs = [
+            self._runs(0, "ds-a", 0.8),
+            self._runs(0, "ds-b", 0.6),
+            self._runs(1, "ds-a", 0.7),
+            self._runs(1, "ds-b", 0.5),
+        ]
+        matrix = build_performance_matrix(runs, self.TASK_TYPE)
+        assert matrix.shape == (2, 2)
+        assert list(matrix.index) == [0, 1]
+        assert sorted(matrix.columns) == ["ds-a", "ds-b"]
+
+    def test_values_correct(self):
+        runs = [
+            self._runs(0, "ds-a", 0.8),
+            self._runs(1, "ds-a", 0.6),
+        ]
+        matrix = build_performance_matrix(runs, self.TASK_TYPE)
+        assert matrix.loc[0, "ds-a"] == pytest.approx(0.8)
+        assert matrix.loc[1, "ds-a"] == pytest.approx(0.6)
+
+    def test_kfold_runs_averaged(self):
+        runs = [
+            self._runs(0, "ds-a", 0.6),
+            self._runs(0, "ds-a", 0.8),
+            self._runs(0, "ds-a", 0.7),
+        ]
+        matrix = build_performance_matrix(runs, self.TASK_TYPE)
+        assert matrix.loc[0, "ds-a"] == pytest.approx(0.7)
+
+    def test_missing_cell_is_nan(self):
+        runs = [
+            self._runs(0, "ds-a", 0.8),
+            self._runs(1, "ds-b", 0.6),
+        ]
+        matrix = build_performance_matrix(runs, self.TASK_TYPE)
+        assert np.isnan(matrix.loc[0, "ds-b"])
+        assert np.isnan(matrix.loc[1, "ds-a"])
+
+    def test_uses_correct_metric_for_graph_clf(self):
+        runs = [_make_run(0, "ds-a", "test_roc_auc", 0.9)]
+        matrix = build_performance_matrix(runs, "graph-classification")
+        assert matrix.loc[0, "ds-a"] == pytest.approx(0.9)
+
+
+class TestSelectAnchorModels:
+    def _matrix(self, scores: dict[int, list[float]], datasets=None) -> "pd.DataFrame":
+        import pandas as pd
+
+        if datasets is None:
+            datasets = [f"ds-{i}" for i in range(len(next(iter(scores.values()))))]
+        return pd.DataFrame.from_dict(scores, orient="index", columns=datasets)
+
+    def test_returns_correct_count(self):
+        scores = {i: [float(i)] for i in range(12)}
+        matrix = self._matrix(scores)
+        anchors = select_anchor_models(matrix, n_anchors=4)
+        assert len(anchors) == 4
+
+    def test_anchors_span_performance_range(self):
+        # 8 designs with scores 0..7, 4 anchors → bins [0,1], [2,3], [4,5], [6,7]
+        # upper-mid (n//2=1) of each bin → designs 1, 3, 5, 7
+        scores = {i: [float(i)] for i in range(8)}
+        matrix = self._matrix(scores)
+        anchors = select_anchor_models(matrix, n_anchors=4)
+        assert anchors == [1, 3, 5, 7]
+
+    def test_nan_rows_dropped(self):
+        import pandas as pd
+
+        matrix = pd.DataFrame(
+            {
+                "ds-a": [0.8, float("nan"), 0.6, 0.4],
+                "ds-b": [0.7, 0.9, float("nan"), 0.3],
+            },
+            index=[0, 1, 2, 3],
+        )
+        # designs 0 and 3 are complete; designs 1 and 2 have NaN → dropped
+        anchors = select_anchor_models(matrix, n_anchors=2)
+        assert set(anchors).issubset({0, 3})
+
+    def test_raises_if_too_few_complete_designs(self):
+        import pandas as pd
+
+        matrix = pd.DataFrame(
+            {"ds-a": [0.8, float("nan")], "ds-b": [float("nan"), 0.6]}
+        )
+        with pytest.raises(ValueError, match="complete designs"):
+            select_anchor_models(matrix, n_anchors=2)
