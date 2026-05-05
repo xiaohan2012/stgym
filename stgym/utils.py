@@ -133,10 +133,25 @@ class RayProgressBar:
             yield ray.get(done[0])
 
     @staticmethod
-    def show(obj_ids):
-        seq = RayProgressBar.num_jobs_done_iter(obj_ids)
-        for x in tqdm(seq, total=len(obj_ids)):
-            pass
+    def show(obj_ids, errors: str = "warn") -> tuple[int, int]:
+        n_total = len(obj_ids)
+        n_succeeded = 0
+        n_failed = 0
+        remaining = list(obj_ids)
+        with tqdm(total=n_total) as pbar:
+            while remaining:
+                done, remaining = ray.wait(remaining)
+                try:
+                    ray.get(done[0])
+                    n_succeeded += 1
+                except Exception as e:
+                    if errors == "raise":
+                        raise
+                    logger.warning(f"Task failed: {e}")
+                    n_failed += 1
+                pbar.update(1)
+        logger.info(f"Finished: {n_succeeded}/{n_total} succeeded, {n_failed} failed")
+        return n_succeeded, n_failed
 
     @staticmethod
     def check():
