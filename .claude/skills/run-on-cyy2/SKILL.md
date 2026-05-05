@@ -44,20 +44,50 @@ ssh cyy2 "screen -ls | grep run"
 ssh cyy2 "screen -S run -X hardcopy /tmp/screen_dump && cat /tmp/screen_dump" | tail -50
 ```
 
-## Code Sync
+## Pre-flight Checklist (required before running experiments or sweeps)
 
-The server pulls from git — push locally, then pull on the server. The branch must match on both sides.
+Run these steps before every code-execution operation (single experiment or sweep). Skip for status checks, artifact fetches, or screen inspection.
+
+### Step 1: Check and reconcile branches
 
 ```bash
-# 1. Check current branch locally
-git branch --show-current
+# Get local branch
+LOCAL_BRANCH=$(git branch --show-current)
 
-# 2. Push local changes
-git push
+# Get cyy2 branch
+REMOTE_BRANCH=$(ssh cyy2 "cd /root/stgym && git branch --show-current")
 
-# 3. Pull on the server (confirm it's on the same branch)
-ssh cyy2 "cd /root/stgym && git branch --show-current && git pull"
+echo "Local: $LOCAL_BRANCH  |  cyy2: $REMOTE_BRANCH"
 ```
+
+If they differ, **inform the user** and ask which branch to use. Default recommendation: check out the local branch on cyy2. Claude will perform the checkout:
+
+```bash
+# Check out local branch on cyy2 (default resolution)
+ssh cyy2 "cd /root/stgym && git fetch origin && git checkout <LOCAL_BRANCH>"
+```
+
+Do not proceed until both sides are on the same branch.
+
+### Step 2: Push local changes
+
+```bash
+git push
+```
+
+If the push is rejected (remote has diverged), **stop and inform the user**. Offer two options:
+1. **Resolve via Claude Code** — Claude will run the appropriate git commands (pull + rebase, or merge)
+2. **Resolve manually** — user handles the divergence themselves
+
+Do not proceed until the push succeeds.
+
+### Step 3: Pull on cyy2
+
+```bash
+ssh cyy2 "cd /root/stgym && git pull"
+```
+
+If `git pull` fails, **stop and surface the full error** to the user. Do not proceed.
 
 ## Data Sync
 
@@ -89,12 +119,10 @@ ssh cyy2 "df -h /root"
 ## Typical Workflow 1: Run a Single Experiment
 
 ```bash
-# 1. Push code
-git push
+# 1. Run the Pre-flight Checklist (branch sync + push + pull)
 
-# 2. Pull on server + launch in screen
+# 2. Launch in screen
 ssh cyy2 "cd /root/stgym && \
-  git pull && \
   source .venv/bin/activate && \
   screen -S run -X stuff 'python run_experiment_by_yaml.py <config_path> [--no-tracking] [--mlflow-uri URI]\n'"
 ```
@@ -102,12 +130,10 @@ ssh cyy2 "cd /root/stgym && \
 ## Typical Workflow 2: Run a Sweep
 
 ```bash
-# 1. Push code
-git push
+# 1. Run the Pre-flight Checklist (branch sync + push + pull)
 
-# 2. Pull on server + launch sweep in screen
+# 2. Launch sweep in screen
 ssh cyy2 "cd /root/stgym && \
-  git pull && \
   source .venv/bin/activate && \
   screen -S run -X stuff 'python run_rct.py +exp=<exp> design_space=<space> resource=gpu-6 sample_size=<n>\n'"
 ```
