@@ -1,0 +1,44 @@
+task_type: graph-classification
+datasets:
+  - brca
+  - spatial-vdj
+  - glioblastoma
+  - brca-grade
+  - gastric-bladder-cancer
+  - mouse-kidney
+  - inflammatory-skin
+  - mouse-preoptic
+  - brca-ptnm-m
+
+design_space:
+  model:
+    num_mp_layers: 1
+    global_pooling: ['mean', 'max']
+    normalize_adj: [false, true]
+    layer_type: ["gcnconv", "ginconv", "sageconv"]
+    dim_inner: [16, 32, 64, 128]
+    act: ['prelu', 'relu', 'swish']
+    use_batchnorm: [true, false]
+    pooling:
+      type:
+        - dmon
+        - mincut
+      n_clusters: [10, 20]
+    post_mp_dims:
+      - '16'
+      - '32'
+      - '64'
+      - '64,32'
+      - '32, 16'
+  train:
+    optim:
+      optimizer: ['adam', 'sgd']
+      base_lr: [0.1, 0.01, 0.001]
+    lr_schedule:
+      type: null
+    max_epoch: [100, 200, 300]
+  data_loader:
+    graph_const: ['knn', 'radius']
+    knn_k: [10, 20, 30]
+    radius_ratio: [0.05, 0.075, 0.1]
+    batch_size: [4, 8, 16, 32]
