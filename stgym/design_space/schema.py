@@ -85,3 +85,14 @@ class DesignSpace(ModelWithZip, YamlLoaderMixin):
     train: TrainSpace
     task: TaskSpace
     data_loader: DataLoaderSpace
+
+
+class TaskReprDesignSpace(ModelWithZip, YamlLoaderMixin):
+    """Design space for task representation sweeps — no task field.
+
+    task_type and datasets are provided separately in the Hydra config.
+    """
+
+    model: ModelSpace
+    train: TrainSpace
+    data_loader: DataLoaderSpace
